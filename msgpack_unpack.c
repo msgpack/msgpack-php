@@ -474,7 +474,7 @@ int msgpack_unserialize_raw(
     }
     else
     {
-        ZVAL_STRINGL(*obj, data, len, 1);
+        ZVAL_STRINGL(*obj, (char *)data, len, 1);
     }
 
     return 0;

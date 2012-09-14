@@ -1,4 +1,3 @@
-
 #include "php.h"
 
 #include "php_msgpack.h"
@@ -104,7 +103,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_msgpack_base_unpacker, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-static const zend_function_entry msgpack_base_methods[] = {
+static zend_function_entry msgpack_base_methods[] = {
     ZEND_ME(msgpack, __construct,
             arginfo_msgpack_base___construct, ZEND_ACC_PUBLIC)
     ZEND_ME(msgpack, setOption, arginfo_msgpack_base_setOption, ZEND_ACC_PUBLIC)
@@ -153,7 +152,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_msgpack_unpacker_reset, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-static const zend_function_entry msgpack_unpacker_methods[] = {
+static zend_function_entry msgpack_unpacker_methods[] = {
     ZEND_ME(msgpack_unpacker, __construct,
             arginfo_msgpack_unpacker___construct, ZEND_ACC_PUBLIC)
     ZEND_ME(msgpack_unpacker, __destruct,
