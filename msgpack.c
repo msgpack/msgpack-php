@@ -5,11 +5,10 @@
 
 #include "php.h"
 #include "php_ini.h"
-#include "ext/standard/info.h"
-#include "ext/standard/php_smart_str.h"
-#include "ext/standard/php_incomplete_class.h"
-#include "ext/standard/php_var.h"
-#include "ext/session/php_session.h"
+#include "ext/standard/info.h" /* for php_info */
+#include "ext/standard/php_incomplete_class.h" /* for incomplete_class */
+#include "ext/standard/php_var.h" /* for PHP_VAR_SERIALIZE */
+#include "ext/session/php_session.h" /* for php_session_register_serializer */
 
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
@@ -47,7 +46,7 @@ PHP_INI_END()
 
 PS_SERIALIZER_FUNCS(msgpack);
 
-static const zend_function_entry msgpack_functions[] = {
+static zend_function_entry msgpack_functions[] = {
     ZEND_FE(msgpack_serialize, arginfo_msgpack_serialize)
     ZEND_FE(msgpack_unserialize, arginfo_msgpack_unserialize)
     ZEND_FALIAS(msgpack_pack, msgpack_serialize, arginfo_msgpack_serialize)

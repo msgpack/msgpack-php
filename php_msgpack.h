@@ -1,10 +1,9 @@
-
 #ifndef PHP_MSGPACK_H
 #define PHP_MSGPACK_H
 
-#define MSGPACK_EXTENSION_VERSION "0.5.2"
+#include "ext/standard/php_smart_str.h" /* for smart_str */
 
-#include "ext/standard/php_smart_str.h"
+#define MSGPACK_EXTENSION_VERSION "0.5.2"
 
 extern zend_module_entry msgpack_module_entry;
 #define phpext_msgpack_ptr &msgpack_module_entry
