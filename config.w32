@@ -5,7 +5,6 @@ ARG_ENABLE("msgpack", "for msgpack support", "yes");
 
 if (PHP_MSGPACK != "no") {
 	if (PHP_SESSION == "yes") {
-		AC_DEFINE('HAVE_PHP_SESSION', 1);
 		EXTENSION("msgpack", "msgpack.c", PHP_MSGPACK_SHARED, "");
 		ADD_SOURCES(configure_module_dirname, "msgpack_pack.c msgpack_unpack.c msgpack_class.c msgpack_convert.c", "msgpack");
 	} else {
