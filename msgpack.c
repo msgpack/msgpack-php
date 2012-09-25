@@ -44,7 +44,9 @@ STD_PHP_INI_BOOLEAN(
     illegal_key_insert, zend_msgpack_globals, msgpack_globals)
 PHP_INI_END()
 
+#if HAVE_PHP_SESSION
 PS_SERIALIZER_FUNCS(msgpack);
+#endif
 
 static zend_function_entry msgpack_functions[] = {
     ZEND_FE(msgpack_serialize, arginfo_msgpack_serialize)
@@ -137,6 +139,7 @@ zend_module_entry msgpack_module_entry = {
 ZEND_GET_MODULE(msgpack)
 #endif
 
+#if HAVE_PHP_SESSION
 PS_SERIALIZER_ENCODE_FUNC(msgpack)
 {
     smart_str buf = {0};
@@ -224,6 +227,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 
     return SUCCESS;
 }
+#endif
 
 PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val TSRMLS_DC)
 {

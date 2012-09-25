@@ -1,7 +1,12 @@
 --TEST--
 Msgpack module info
 --SKIPIF--
-<?php if (!extension_loaded("msgpack")) print "skip"; ?>
+<?php
+if (!extension_loaded("msgpack")) print "skip";
+if (!extension_loaded("session")) {
+   echo "skip needs session enabled";
+}
+?>
 --FILE--
 <?php 
 ob_start();
