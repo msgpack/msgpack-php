@@ -23,7 +23,7 @@
 #   define Z_ISREF_P(pz) PZVAL_IS_REF(pz)
 #endif
 
-// from php soap extension
+/* from php soap extension */
 static int is_map(zval *array)
 {
 	int i, count = zend_hash_num_elements(Z_ARRVAL_P(array));
