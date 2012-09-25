@@ -24,7 +24,7 @@
 #endif
 
 /* from php soap extension */
-static int is_map(zval *array)
+static int msgpack_check_ht_is_map(zval *array)
 {
 	int i, count = zend_hash_num_elements(Z_ARRVAL_P(array));
 
@@ -315,7 +315,7 @@ inline static void msgpack_serialize_array(
         msgpack_pack_nil(buf);
         msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_REFERENCE);
     }
-    else if (!is_map(val) && ht->nNumOfElements == ht->nNextFreeElement)
+    else if (!msgpack_check_ht_is_map(val) && ht->nNumOfElements == ht->nNextFreeElement)
     {
         hash = 0;
         msgpack_pack_array(buf, n);
