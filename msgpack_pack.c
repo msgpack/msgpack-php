@@ -315,7 +315,7 @@ inline static void msgpack_serialize_array(
         msgpack_pack_nil(buf);
         msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_REFERENCE);
     }
-    else if (!msgpack_check_ht_is_map(val) && ht->nNumOfElements == ht->nNextFreeElement)
+    else if (!msgpack_check_ht_is_map(val))
     {
         hash = 0;
         msgpack_pack_array(buf, n);
