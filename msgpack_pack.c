@@ -23,6 +23,26 @@
 #   define Z_ISREF_P(pz) PZVAL_IS_REF(pz)
 #endif
 
+inline static int msgpack_check_ht_is_map(zval *array) 
+{
+    int count = zend_hash_num_elements(Z_ARRVAL_P(array));
+
+    if (count != (Z_ARRVAL_P(array))->nNextFreeElement) {
+        return 1;
+    } else {
+        int i;
+        HashPosition pos = {0};
+        zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(array), &pos);
+        for (i = 0; i < count; i++) {
+            if (zend_hash_get_current_key_type_ex(Z_ARRVAL_P(array), &pos) != HASH_KEY_IS_LONG) {
+                return 1;
+            }
+            zend_hash_move_forward_ex(Z_ARRVAL_P(array), &pos);
+        }
+    }
+    return 0;
+}
+
 inline static int msgpack_var_add(
     HashTable *var_hash, zval *var, void *var_old TSRMLS_DC)
 {
@@ -296,7 +316,7 @@ inline static void msgpack_serialize_array(
         msgpack_pack_nil(buf);
         msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_REFERENCE);
     }
-    else if (ht->nNumOfElements == ht->nNextFreeElement)
+    else if (!msgpack_check_ht_is_map(val))
     {
         hash = 0;
         msgpack_pack_array(buf, n);
