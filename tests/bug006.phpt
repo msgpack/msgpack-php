@@ -20,8 +20,9 @@ $var[0] = "dummy";
 
 print_r(msgpack_unpack(msgpack_pack($var)));
 
-foreach ($var as $v) {
+while ($v = current($var)) {
    var_dump($v);
+   next($var);
 }
 ?>
 --EXPECTF--
