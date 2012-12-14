@@ -4,7 +4,7 @@
 Summary: PHP extension for interfacing with MessagePack
 Name: php-msgpack
 Version: 0.5.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 Source: %{name}-%{version}.tar.gz
 License: New BSD License
 Group: Development/Libraries
