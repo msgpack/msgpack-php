@@ -3,9 +3,9 @@
 
 Summary: PHP extension for interfacing with MessagePack
 Name: php-msgpack
-Version: 0.5.0
+Version: 0.5.3
 Release: 1%{?dist}
-Source: php-msgpack-%{version}.tar.gz
+Source: %{name}-%{version}.tar.gz
 License: New BSD License
 Group: Development/Libraries
 Packager: advect <advect@gmail.com>
@@ -23,7 +23,7 @@ Requires: php-api = %{php_apiver}
 PHP extension for interfacing with MessagePack.
 
 %prep
-%setup -q -n php-msgpack
+%setup -q -n %{name}-%{version}
 
 %build
 phpize
@@ -56,3 +56,7 @@ fi
 %{_includedir}/php/ext/msgpack/php_msgpack.h
 %{php_extdir}/msgpack.so
 %config(noreplace) %{_sysconfdir}/php.d/msgpack.ini
+
+%changelog
+* Fri Dec 14 2012 Adrian Siminiceanu <adrian.siminiceanu@gmail.com>
+ - Fixed the version. 
