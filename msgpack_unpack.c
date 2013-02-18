@@ -515,7 +515,7 @@ int msgpack_unserialize_array(
 
     array_init(*obj);
 
-    unpack->stack[unpack->deps++] = count;
+    if (count) unpack->stack[unpack->deps++] = count;
 
     return 0;
 }
@@ -536,7 +536,7 @@ int msgpack_unserialize_map(
     TSRMLS_FETCH();
     MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);
 
-    unpack->stack[unpack->deps++] = count;
+    if (count) unpack->stack[unpack->deps++] = count;
 
     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 
