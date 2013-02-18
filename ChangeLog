@@ -1,5 +1,14 @@
 msgpack extension changelog
 
+Version 0.5.4
+-------------
+	* Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
+	* Fixed Bug #11 (unpacking empty array / segmentation fault).
+
+Version 0.5.3
+-------------
+	* Fixed Bug #6 (bug with incorrect packing of mixed arrays)
+
 Version 0.5.2
 -------------
 	* Support PHP 5.4.x version.
