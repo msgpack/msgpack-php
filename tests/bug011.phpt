@@ -1,5 +1,5 @@
 --TEST--
-Check for segfault with empty array structures
+Bug #011 (Check for segfault with empty array structures)
 --FILE--
 <?php
 	
@@ -13,4 +13,4 @@ Check for segfault with empty array structures
 	
 ?>
 --EXPECT--
-int(1024)
+int(1025)

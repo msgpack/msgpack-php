@@ -29,7 +29,7 @@
  <license filesource="LICENSE">New BSD</license>
  <notes>
   - Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
-  - Fixed Bug #6 (bug with incorrect packing of mixed arrays)
+  - Fixed Bug #11 (unpacking empty array / segmentation fault).
  </notes>
  <contents>
   <dir name="/">
@@ -249,6 +249,7 @@
     <file name="136.phpt" role="test" />
     <file name="136b.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
+    <file name="bug011.phpt" role="test" />
     <file name="bug012.phpt" role="test" />
    </dir>
   </dir>
@@ -278,7 +279,8 @@
    </stability> 
    <license uri="http://www.php.net/license">PHP License</license> 
    <notes>
-    - Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
+    - Fixed Bug #12 (msgpack_seriallize interfere with php serialize).
+    - Fixed Bug #11 (unpacking empty array / segmentation fault).
    </notes> 
   </release> 
 
