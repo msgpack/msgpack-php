@@ -72,6 +72,8 @@ static void msgpack_init_globals(zend_msgpack_globals *msgpack_globals)
     msgpack_globals->php_only = 1;
 
     msgpack_globals->illegal_key_insert = 0;
+    msgpack_globals->serialize.var_hash = NULL;
+    msgpack_globals->serialize.level = 0;
 }
 
 static ZEND_MINIT_FUNCTION(msgpack)
@@ -147,11 +149,7 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
 
     msgpack_serialize_var_init(&var_hash);
 
-#if PHP_API_VERSION < 20100412
-    msgpack_serialize_zval(&buf, PS(http_session_vars), &var_hash TSRMLS_CC);
-#else
     msgpack_serialize_zval(&buf, PS(http_session_vars), var_hash TSRMLS_CC);
-#endif
 
     if (newlen)
     {
@@ -235,11 +233,7 @@ PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val TSRMLS_DC)
 
     msgpack_serialize_var_init(&var_hash);
 
-#if PHP_API_VERSION < 20100412
-    msgpack_serialize_zval(buf, val, &var_hash TSRMLS_CC);
-#else
     msgpack_serialize_zval(buf, val, var_hash TSRMLS_CC);
-#endif
 
     msgpack_serialize_var_destroy(&var_hash);
 }
