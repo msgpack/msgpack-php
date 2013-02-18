@@ -16,11 +16,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-10-12</date>
+ <date>2013-02-18</date>
  <time>15:58:08</time>
  <version>
-  <release>0.5.3</release>
-  <api>0.5.3</api>
+  <release>0.5.4</release>
+  <api>0.5.4</api>
  </version>
  <stability>
   <release>beta</release>
@@ -28,6 +28,7 @@
  </stability>
  <license filesource="LICENSE">New BSD</license>
  <notes>
+  - Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
   - Fixed Bug #6 (bug with incorrect packing of mixed arrays)
  </notes>
  <contents>
@@ -248,6 +249,7 @@
     <file name="136.phpt" role="test" />
     <file name="136b.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
+    <file name="bug012.phpt" role="test" />
    </dir>
   </dir>
  </contents>
@@ -265,6 +267,22 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2013-02-18</date> 
+   <version> 
+    <release>0.5.4</release> 
+    <api>0.5.4</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes>
+    - Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2012-10-12</date> 
    <version> 
     <release>0.5.3</release> 
@@ -279,7 +297,6 @@
     - Fixed Bug #6 (bug with incorrect packing of mixed arrays)
    </notes> 
   </release> 
-
   <release> 
    <date>2012-09-14</date> 
    <version> 

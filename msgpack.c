@@ -145,7 +145,7 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
     smart_str buf = {0};
     msgpack_serialize_data_t var_hash;
 
-    PHP_VAR_SERIALIZE_INIT(var_hash);
+    msgpack_serialize_var_init(&var_hash);
 
 #if PHP_API_VERSION < 20100412
     msgpack_serialize_zval(&buf, PS(http_session_vars), &var_hash TSRMLS_CC);
@@ -161,7 +161,7 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
     smart_str_0(&buf);
     *newstr = buf.c;
 
-    PHP_VAR_SERIALIZE_DESTROY(var_hash);
+    msgpack_serialize_var_destroy(&var_hash);
 
     return SUCCESS;
 }
@@ -233,7 +233,7 @@ PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val TSRMLS_DC)
 {
     msgpack_serialize_data_t var_hash;
 
-    PHP_VAR_SERIALIZE_INIT(var_hash);
+    msgpack_serialize_var_init(&var_hash);
 
 #if PHP_API_VERSION < 20100412
     msgpack_serialize_zval(buf, val, &var_hash TSRMLS_CC);
@@ -241,7 +241,7 @@ PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val TSRMLS_DC)
     msgpack_serialize_zval(buf, val, var_hash TSRMLS_CC);
 #endif
 
-    PHP_VAR_SERIALIZE_DESTROY(var_hash);
+    msgpack_serialize_var_destroy(&var_hash);
 }
 
 PHP_MSGPACK_API void php_msgpack_unserialize(
