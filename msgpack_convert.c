@@ -148,20 +148,20 @@ inline int msgpack_convert_string_to_properties(
 
     /* private */
     zend_mangle_property_name(
-        &priv_name, &prop_name_len, ce->name, ce->name_length, key, key_len, 1);
+        &priv_name, &prop_name_len, ce->name, ce->name_length, key, key_len - 1, 1);
     if (zend_hash_find(
-            ht, priv_name, prop_name_len, (void **)&data) == SUCCESS)
+            ht, priv_name, prop_name_len + 1, (void **)&data) == SUCCESS)
     {
-        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, priv_name, prop_name_len, val, var);
+        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, priv_name, prop_name_len + 1, val, var);
     }
 
     /* protected */
     zend_mangle_property_name(
-        &prot_name, &prop_name_len, "*", 1, key, key_len, 1);
+        &prot_name, &prop_name_len, "*", 1, key, key_len - 1, 1);
     if (zend_hash_find(
-            ht, prot_name, prop_name_len, (void **)&data) == SUCCESS)
+            ht, prot_name, prop_name_len + 1, (void **)&data) == SUCCESS)
     {
-        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, prot_name, prop_name_len, val, var);
+        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, prot_name, prop_name_len + 1, val, var);
     }
 
     /* public */
