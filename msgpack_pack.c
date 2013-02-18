@@ -121,6 +121,7 @@ inline static void msgpack_serialize_class(
         msgpack_pack_nil(buf);
         msgpack_serialize_string(buf, class_name, name_len);
 
+        INIT_ZVAL(nval);
         ZVAL_NULL(&nval);
         nvalp = &nval;
 
