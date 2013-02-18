@@ -290,7 +290,7 @@ void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash)
         zend_hash_init(*var_hash_ptr, 10, NULL, NULL, 0);
         MSGPACK_G(serialize).var_hash = *var_hash_ptr;
     }
-    MSGPACK_G(serialize).level++;
+    ++MSGPACK_G(serialize).level;
 }
 
 void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash)
