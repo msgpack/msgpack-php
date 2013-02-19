@@ -263,10 +263,14 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
     switch (ret)
     {
         case MSGPACK_UNPACK_PARSE_ERROR:
+            zval_dtor(return_value);
+            ZVAL_FALSE(return_value);
             msgpack_unserialize_var_destroy(&var_hash, 1);
             MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
             break;
         case MSGPACK_UNPACK_CONTINUE:
+            zval_dtor(return_value);
+            ZVAL_FALSE(return_value);
             msgpack_unserialize_var_destroy(&var_hash, 1);
             MSGPACK_WARNING(
                 "[msgpack] (%s) Insufficient data for unserializing",

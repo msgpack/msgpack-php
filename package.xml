@@ -16,11 +16,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2013-02-18</date>
- <time>15:58:08</time>
+ <date>2013-02-19</date>
+ <time>10:16:29</time>
  <version>
-  <release>0.5.4</release>
-  <api>0.5.4</api>
+  <release>0.5.5</release>
+  <api>0.5.5</api>
  </version>
  <stability>
   <release>beta</release>
@@ -28,8 +28,9 @@
  </stability>
  <license filesource="LICENSE">New BSD</license>
  <notes>
-  - Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
-  - Fixed Bug #11 (unpacking empty array / segmentation fault).
+  - Fix ZTS build
+  - Fixed Bug #14 ("Invalid read" reported by valgrind)
+  - Fixed FR #8 (Return on unserialization)
  </notes>
  <contents>
   <dir name="/">
@@ -268,6 +269,24 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2013-02-19</date> 
+   <version> 
+    <release>0.5.5</release> 
+    <api>0.5.5</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes>
+    - Fix ZTS build
+    - Fixed Bug #14 ("Invalid read" reported by valgrind)
+    - Fixed FR #8 (Return on unserialization)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2013-02-18</date> 
    <version> 
     <release>0.5.4</release> 
@@ -283,7 +302,6 @@
     - Fixed Bug #11 (unpacking empty array / segmentation fault).
    </notes> 
   </release> 
-
   <release> 
    <date>2012-10-12</date> 
    <version> 

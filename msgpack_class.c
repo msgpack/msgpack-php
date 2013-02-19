@@ -354,7 +354,7 @@ static ZEND_METHOD(msgpack, unpack)
 
     if (!str_len)
     {
-        RETURN_NULL();
+        RETURN_FALSE;
     }
 
     MSGPACK_G(php_only) = base->php_only;
@@ -372,7 +372,7 @@ static ZEND_METHOD(msgpack, unpack)
 
         if (msgpack_convert_template(return_value, object, &zv) != SUCCESS)
         {
-            RETURN_NULL();
+            RETURN_FALSE;
         }
     }
 

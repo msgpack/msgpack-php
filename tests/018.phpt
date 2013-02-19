@@ -7,8 +7,6 @@ if(!extension_loaded('msgpack')) {
     dl('msgpack.' . PHP_SHLIB_SUFFIX);
 }
 
-error_reporting(0);
-
 function test($type, $variable, $test) {
     $serialized = msgpack_serialize($variable);
     $unserialized = msgpack_unserialize($serialized);
@@ -62,6 +60,7 @@ test('nonexisting', $o, true);
 test('wrong', $p, true);
 ?>
 --EXPECTF--
+Notice: [msgpack] (msgpack_serialize_class) "c" returned as member variable from __sleep() but does not exist in %s on line %d
 nonexisting
 82c0a34f626aa163c0
 object(Obj)#%d (3) {
@@ -73,12 +72,11 @@ object(Obj)#%d (3) {
   NULL
 }
 OK
+
+Notice: [msgpack] (msgpack_serialize_class) __sleep should return an array only containing the names of instance-variables to serialize in %s018.php on line %d
+
+Warning: [msgpack] (php_msgpack_unserialize) Insufficient data for unserializing in %s018.php on line %d
 wrong
 82c0a34f706a
-object(Opj)#%d (2) {
-  ["a"]=>
-  NULL
-  ["b"]=>
-  NULL
-}
+bool(false)
 OK

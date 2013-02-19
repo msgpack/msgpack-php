@@ -1,5 +1,12 @@
 msgpack extension changelog
 
+Version 0.5.5
+-------------
+	* Fix ZTS build
+	* Fixed Bug #14 ("Invalid read" reported by valgrind)
+	* Fixed FR #8 (Return on unserialization):
+	Unserializer will return false on error now
+
 Version 0.5.4
 -------------
 	* Fixed Bug #12 (msgpack_seriallize interfere with php serialize)
