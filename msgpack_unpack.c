@@ -283,6 +283,8 @@ inline static zend_class_entry* msgpack_unserialize_class(
 void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash)
 {
     HashTable **var_hash_ptr = (HashTable **)var_hash;
+    TSRMLS_FETCH();
+
     if (MSGPACK_G(serialize).level) {
         *var_hash_ptr = MSGPACK_G(serialize).var_hash;
     } else {
@@ -296,6 +298,8 @@ void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash)
 void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash)
 {
     HashTable **var_hash_ptr = (HashTable **)var_hash;
+    TSRMLS_FETCH();
+
     --MSGPACK_G(serialize).level;
     if (!MSGPACK_G(serialize).level) {
         zend_hash_destroy(*var_hash_ptr);
