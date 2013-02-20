@@ -26,6 +26,8 @@ typedef struct {
     int type;
 } msgpack_unserialize_data;
 
+void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash);
+void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash);
 void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx);
 void msgpack_unserialize_var_destroy(
     msgpack_unserialize_data_t *var_hashx, zend_bool err);
