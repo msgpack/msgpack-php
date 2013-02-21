@@ -198,8 +198,8 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				switch(*p) {
 				case 0xc0:  // nil
 					push_simple_value(_nil);
-				//case 0xc1:  // string
-				//	again_terminal_trail(NEXT_CS(p), p+1);
+				case 0xc1:  // string
+					goto _header_again;
 				case 0xc2:  // false
 					push_simple_value(_false);
 				case 0xc3:  // true
