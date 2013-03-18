@@ -1,4 +1,5 @@
 # Msgpack for PHP
+[![Build Status](https://secure.travis-ci.org/msgpack/msgpack-php.png)](http://travis-ci.org/msgpack/msgpack-php)
 
 This extension provide API for communicating with MessagePack serialization. 
 
