@@ -278,7 +278,25 @@ inline static void msgpack_serialize_array(
     {
         if (n == 0)
         {
-            msgpack_pack_map(buf, n);
+            if (MSGPACK_G(php_only))
+            {
+                if (Z_ISREF_P(val))
+                {
+                    msgpack_pack_map(buf, 2);
+                    msgpack_pack_nil(buf);
+                    msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_REFERENCE);
+                }
+                else
+                {
+                    msgpack_pack_map(buf, 1);
+                }
+                msgpack_pack_nil(buf);
+                msgpack_serialize_string(buf, class_name, name_len);
+            }
+            else
+            {
+                msgpack_pack_map(buf, n);
+            }
         }
         else
         {
