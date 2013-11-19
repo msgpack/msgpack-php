@@ -113,7 +113,7 @@ static ZEND_MINFO_FUNCTION(msgpack)
 #if HAVE_PHP_SESSION
     php_info_print_table_row(2, "Session Support", "enabled" );
 #endif
-    php_info_print_table_row(2, "extension Version", MSGPACK_EXTENSION_VERSION);
+    php_info_print_table_row(2, "extension Version", PHP_MSGPACK_VERSION);
     php_info_print_table_row(2, "header Version", MSGPACK_VERSION);
     php_info_print_table_end();
 
@@ -132,7 +132,7 @@ zend_module_entry msgpack_module_entry = {
     NULL,
     ZEND_MINFO(msgpack),
 #if ZEND_MODULE_API_NO >= 20010901
-    MSGPACK_EXTENSION_VERSION,
+    PHP_MSGPACK_VERSION,
 #endif
     STANDARD_MODULE_PROPERTIES
 };
