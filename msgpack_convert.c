@@ -34,7 +34,7 @@
         return SUCCESS;                                                   \
     }
 
-inline int msgpack_convert_long_to_properties(
+int msgpack_convert_long_to_properties(
     HashTable *ht, HashTable **properties, HashPosition *prop_pos,
     uint key_index, zval *val, HashTable *var)
 {
@@ -133,7 +133,7 @@ inline int msgpack_convert_long_to_properties(
     return zend_hash_index_update(ht, key_index, &val, sizeof(val), NULL);
 }
 
-inline int msgpack_convert_string_to_properties(
+int msgpack_convert_string_to_properties(
     zval *object, char *key, uint key_len, zval *val, HashTable *var)
 {
     zval **data = NULL;
