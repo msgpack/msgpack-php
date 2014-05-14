@@ -328,7 +328,8 @@ void msgpack_unserialize_var_destroy(
             {
                 if (var_hash->data[i])
                 {
-                    zval_ptr_dtor(&var_hash->data[i]);
+                    //zval_ptr_dtor(&var_hash->data[i]);
+					//var_hash->data[i] = NULL;
                 }
             }
         }
@@ -347,6 +348,7 @@ void msgpack_unserialize_var_destroy(
             if (var_hash->data[i])
             {
                 zval_ptr_dtor(&var_hash->data[i]);
+				var_hash->data[i] = NULL;
             }
         }
 

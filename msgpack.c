@@ -263,15 +263,13 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
     switch (ret)
     {
         case MSGPACK_UNPACK_PARSE_ERROR:
-            zval_dtor(return_value);
-            ZVAL_FALSE(return_value);
+			zval_dtor(return_value);
+			ZVAL_FALSE(return_value);
             msgpack_unserialize_var_destroy(&var_hash, 1);
             MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
             break;
         case MSGPACK_UNPACK_CONTINUE:
-            zval_dtor(return_value);
-            ZVAL_FALSE(return_value);
-            msgpack_unserialize_var_destroy(&var_hash, 1);
+            msgpack_unserialize_var_destroy(&var_hash, 0);
             MSGPACK_WARNING(
                 "[msgpack] (%s) Insufficient data for unserializing",
                 __FUNCTION__);
@@ -285,6 +283,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
             }
             break;
         default:
+			zval_ptr_dtor(return_value);
             msgpack_unserialize_var_destroy(&var_hash, 0);
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
             break;
@@ -303,10 +302,9 @@ static ZEND_FUNCTION(msgpack_serialize)
     }
 
     php_msgpack_serialize(&buf, parameter TSRMLS_CC);
+	smart_str_0(&buf);
 
-    ZVAL_STRINGL(return_value, buf.c, buf.len, 1);
-
-    smart_str_free(&buf);
+    ZVAL_STRINGL(return_value, buf.c, buf.len, 0);
 }
 
 static ZEND_FUNCTION(msgpack_unserialize)
