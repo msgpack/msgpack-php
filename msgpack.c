@@ -255,6 +255,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
 
     msgpack_unserialize_var_init(&var_hash);
 
+    RETVAL_NULL();
     mp.user.retval = (zval *)return_value;
     mp.user.var_hash = (msgpack_unserialize_data_t *)&var_hash;
 
