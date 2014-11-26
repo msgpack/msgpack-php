@@ -283,7 +283,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
             }
             break;
         default:
-			zval_ptr_dtor(return_value);
+			zval_dtor(return_value);
             msgpack_unserialize_var_destroy(&var_hash, 0);
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
             break;
