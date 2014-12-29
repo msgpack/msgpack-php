@@ -227,6 +227,12 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				//case 0xd7:  // big integer 32
 				//case 0xd8:  // big float 16
 				//case 0xd9:  // big float 32
+				case 0xd9:
+					trail = *(++p);
+					p++;
+					n = p; p += trail - 1;
+					cs = CS_RAW_8;
+					goto _raw_zero;
 				case 0xda:  // raw 16
 				case 0xdb:  // raw 32
 				case 0xdc:  // array 16
