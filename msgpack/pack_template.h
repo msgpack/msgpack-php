@@ -706,16 +706,20 @@ msgpack_pack_inline_func(_array)(msgpack_pack_user x, unsigned int n)
 
 msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int n)
 {
-	if(n < 16) {
-		unsigned char d = 0x80 | n;
+	if(l < 32) {
+		unsigned char d = 0xa0 | l;
 		msgpack_pack_append_buffer(x, &TAKE8_8(d), 1);
-	} else if(n < 65536) {
+	} else if (l < 256) {
+		unsigned char buf[2];
+		buf[0] = 0xd9; buf[1] = (uint8_t)l;
+		msgpack_pack_append_buffer(x, buf, 2);
+	} else if(l < 65536) {
 		unsigned char buf[3];
-		buf[0] = 0xde; _msgpack_store16(&buf[1], (uint16_t)n);
+		buf[0] = 0xda; _msgpack_store16(&buf[1], (uint16_t)l);
 		msgpack_pack_append_buffer(x, buf, 3);
 	} else {
 		unsigned char buf[5];
-		buf[0] = 0xdf; _msgpack_store32(&buf[1], (uint32_t)n);
+		buf[0] = 0xdb; _msgpack_store32(&buf[1], (uint32_t)l);
 		msgpack_pack_append_buffer(x, buf, 5);
 	}
 }
