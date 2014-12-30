@@ -704,7 +704,7 @@ msgpack_pack_inline_func(_array)(msgpack_pack_user x, unsigned int n)
  * Map
  */
 
-msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int n)
+msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int l)
 {
 	if(l < 32) {
 		unsigned char d = 0xa0 | l;
