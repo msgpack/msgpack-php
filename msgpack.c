@@ -8,7 +8,10 @@
 #include "ext/standard/info.h" /* for php_info */
 #include "ext/standard/php_incomplete_class.h" /* for incomplete_class */
 #include "ext/standard/php_var.h" /* for PHP_VAR_SERIALIZE */
+
+#if HAVE_PHP_SESSION
 #include "ext/session/php_session.h" /* for php_session_register_serializer */
+#endif
 
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
