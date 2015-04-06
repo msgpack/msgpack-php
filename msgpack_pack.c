@@ -91,7 +91,7 @@ inline static void msgpack_serialize_string(
 
 inline static void msgpack_serialize_class(
     smart_string *buf, zval *val, zval *retval_ptr, HashTable *var_hash,
-    char *class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
+    char *class_name, uint32_t name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     int count;
     HashTable *ht = HASH_OF(retval_ptr);
@@ -240,7 +240,7 @@ inline static void msgpack_serialize_class(
 
 inline static void msgpack_serialize_array(
     smart_string *buf, zval *val, HashTable *var_hash, zend_bool object,
-    char* class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
+    char* class_name, uint32_t name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     HashTable *ht;
     size_t n;
@@ -419,7 +419,7 @@ inline static void msgpack_serialize_array(
 
 inline static void msgpack_serialize_object(
     smart_string *buf, zval *val, HashTable *var_hash,
-    char* class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
+    char* class_name, uint32_t name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     zval *retval_ptr = NULL;
     zval fname;
@@ -435,7 +435,7 @@ inline static void msgpack_serialize_object(
     if (ce && ce->serialize != NULL)
     {
         unsigned char *serialized_data = NULL;
-        zend_uint serialized_length;
+        uint32_t serialized_length;
 
         if (ce->serialize(
                 val, &serialized_data, &serialized_length,
