@@ -49,40 +49,35 @@ inline static int msgpack_var_add(
     ulong var_no;
     char id[32], *p;
     int len;
+    zend_string *zstring;
 
-    if ((Z_TYPE_P(var) == IS_OBJECT) && Z_OBJ_HT_P(var)->get_class_entry)
-    {
-        p = smart_string_print_long(
+    if ((Z_TYPE_P(var) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
+        p = zend_print_long_to_buf(
             id + sizeof(id) - 1,
             (((size_t)Z_OBJCE_P(var) << 5)
              | ((size_t)Z_OBJCE_P(var) >> (sizeof(long) * 8 - 5)))
             + (long)Z_OBJ_HANDLE_P(var));
         len = id + sizeof(id) - 1 - p;
     }
-    else if (Z_TYPE_P(var) == IS_ARRAY)
-    {
-        p = smart_string_print_long(id + sizeof(id) - 1, (long)var);
+    else if (Z_TYPE_P(var) == IS_ARRAY) {
+        p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)var);
         len = id + sizeof(id) - 1 - p;
     }
-    else
-    {
+    else {
         return FAILURE;
     }
 
-    if (var_old && zend_hash_find(var_hash, p, len, var_old) == SUCCESS)
-    {
-        if (!Z_ISREF_P(var))
-        {
-            var_no = -1;
-            zend_hash_next_index_insert(
-                var_hash, &var_no, sizeof(var_no), NULL);
+    zstring =  zend_string_init(p, len, 1);
+    if (var_old && (var_old = zend_hash_find(var_hash, zstring)) != NULL) {
+        if (!Z_ISREF_P(var)) {
+            zend_hash_next_index_insert(var_hash, NULL);
         }
         return FAILURE;
     }
 
     var_no = zend_hash_num_elements(var_hash) + 1;
 
-    zend_hash_add(var_hash, p, len, &var_no, sizeof(var_no), NULL);
+    zend_hash_add(var_hash, zstring, NULL);
 
     return SUCCESS;
 }
