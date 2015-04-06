@@ -164,18 +164,13 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
 PS_SERIALIZER_DECODE_FUNC(msgpack)
 {
     int ret;
-    HashTable *tmp_hash;
-    HashPosition tmp_hash_pos;
-    char *key_str;
+    zend_string *key_str;
     ulong key_long;
-    uint key_len;
     zval *tmp;
-    zval **value;
+    zval *value;
     size_t off = 0;
     msgpack_unpack_t mp;
     msgpack_unserialize_data_t var_hash;
-
-    ALLOC_INIT_ZVAL(tmp);
 
     template_init(&mp);
 
@@ -186,39 +181,23 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 
     ret = template_execute(&mp, (char *)val, (size_t)vallen, &off);
 
-    if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS)
-    {
+    if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
         msgpack_unserialize_var_destroy(&var_hash, 0);
 
-        tmp_hash = HASH_OF(tmp);
-
-        zend_hash_internal_pointer_reset_ex(tmp_hash, &tmp_hash_pos);
-
-        while (zend_hash_get_current_data_ex(
-                   tmp_hash, (void *)&value, &tmp_hash_pos) == SUCCESS)
-        {
-            ret = zend_hash_get_current_key_ex(
-                tmp_hash, &key_str, &key_len, &key_long, 0, &tmp_hash_pos);
-            switch (ret)
-            {
-                case HASH_KEY_IS_LONG:
-                    /* ??? */
-                    break;
-                case HASH_KEY_IS_STRING:
-                    php_set_session_var(
-                        key_str, key_len - 1, *value, NULL TSRMLS_CC);
-                    php_add_session_var(key_str, key_len - 1 TSRMLS_CC);
-                    break;
+        ZEND_HASH_FOREACH_KEY_VAL(HASH_OF(tmp), key_long, key_str, value) {
+            if (key_str) {
+                php_set_session_var(key_str, value, NULL);
+                php_add_session_var(key_str);
+            } else {
+                //unhandled non-string key
             }
-            zend_hash_move_forward_ex(tmp_hash, &tmp_hash_pos);
-        }
+        } ZEND_HASH_FOREACH_END();
     }
-    else
-    {
+    else {
         msgpack_unserialize_var_destroy(&var_hash, 1);
     }
 
-    zval_ptr_dtor(&tmp);
+    zval_ptr_dtor(tmp);
 
     return SUCCESS;
 }
@@ -303,7 +282,7 @@ static ZEND_FUNCTION(msgpack_serialize)
     php_msgpack_serialize(&buf, parameter TSRMLS_CC);
 	smart_string_0(&buf);
 
-    ZVAL_STRINGL(return_value, buf.c, buf.len, 0);
+    ZVAL_STRINGL(return_value, buf.c, buf.len);
 }
 
 static ZEND_FUNCTION(msgpack_unserialize)
@@ -332,7 +311,6 @@ static ZEND_FUNCTION(msgpack_unserialize)
     {
         zval *zv;
 
-        ALLOC_INIT_ZVAL(zv);
         php_msgpack_unserialize(zv, str, str_len TSRMLS_CC);
 
         if (msgpack_convert_template(return_value, object, &zv) != SUCCESS)
