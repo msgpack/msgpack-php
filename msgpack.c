@@ -147,7 +147,7 @@ ZEND_GET_MODULE(msgpack)
 #if HAVE_PHP_SESSION
 PS_SERIALIZER_ENCODE_FUNC(msgpack)
 {
-    smart_str buf = {0};
+    smart_string buf = {0};
     msgpack_serialize_data_t var_hash;
 
     msgpack_serialize_var_init(&var_hash);
@@ -159,7 +159,7 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
         *newlen = buf.len;
     }
 
-    smart_str_0(&buf);
+    smart_string_0(&buf);
     *newstr = buf.c;
 
     msgpack_serialize_var_destroy(&var_hash);
@@ -230,7 +230,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 }
 #endif
 
-PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val TSRMLS_DC)
+PHP_MSGPACK_API void php_msgpack_serialize(smart_string *buf, zval *val TSRMLS_DC)
 {
     msgpack_serialize_data_t var_hash;
 
@@ -298,7 +298,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
 static ZEND_FUNCTION(msgpack_serialize)
 {
     zval *parameter;
-    smart_str buf = {0};
+    smart_string buf = {0};
 
     if (zend_parse_parameters(
             ZEND_NUM_ARGS() TSRMLS_CC, "z", &parameter) == FAILURE)
@@ -307,7 +307,7 @@ static ZEND_FUNCTION(msgpack_serialize)
     }
 
     php_msgpack_serialize(&buf, parameter TSRMLS_CC);
-	smart_str_0(&buf);
+	smart_string_0(&buf);
 
     ZVAL_STRINGL(return_value, buf.c, buf.len, 0);
 }

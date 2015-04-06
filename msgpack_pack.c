@@ -1,7 +1,7 @@
 
 #include "php.h"
 #include "php_ini.h"
-#include "ext/standard/php_smart_str.h"
+#include "ext/standard/php_smart_string.h"
 #include "ext/standard/php_incomplete_class.h"
 #include "ext/standard/php_var.h"
 
@@ -10,20 +10,20 @@
 #include "msgpack_errors.h"
 
 #include "msgpack/pack_define.h"
-#define msgpack_pack_user smart_str*
+#define msgpack_pack_user smart_string*
 #define msgpack_pack_inline_func(name) \
     static inline void msgpack_pack ## name
 #define msgpack_pack_inline_func_cint(name) \
     static inline void msgpack_pack ## name
 #define msgpack_pack_append_buffer(user, buf, len) \
-    smart_str_appendl(user, (const void*)buf, len)
+    smart_string_appendl(user, (const void*)buf, len)
 #include "msgpack/pack_template.h"
 
 #if ZEND_MODULE_API_NO < 20090626
 #   define Z_ISREF_P(pz) PZVAL_IS_REF(pz)
 #endif
 
-inline static int msgpack_check_ht_is_map(zval *array) 
+inline static int msgpack_check_ht_is_map(zval *array)
 {
     int count = zend_hash_num_elements(Z_ARRVAL_P(array));
 
@@ -52,7 +52,7 @@ inline static int msgpack_var_add(
 
     if ((Z_TYPE_P(var) == IS_OBJECT) && Z_OBJ_HT_P(var)->get_class_entry)
     {
-        p = smart_str_print_long(
+        p = smart_string_print_long(
             id + sizeof(id) - 1,
             (((size_t)Z_OBJCE_P(var) << 5)
              | ((size_t)Z_OBJCE_P(var) >> (sizeof(long) * 8 - 5)))
@@ -61,7 +61,7 @@ inline static int msgpack_var_add(
     }
     else if (Z_TYPE_P(var) == IS_ARRAY)
     {
-        p = smart_str_print_long(id + sizeof(id) - 1, (long)var);
+        p = smart_string_print_long(id + sizeof(id) - 1, (long)var);
         len = id + sizeof(id) - 1 - p;
     }
     else
@@ -88,14 +88,14 @@ inline static int msgpack_var_add(
 }
 
 inline static void msgpack_serialize_string(
-    smart_str *buf, char *str, size_t len)
+    smart_string *buf, char *str, size_t len)
 {
     msgpack_pack_raw(buf, len);
     msgpack_pack_raw_body(buf, str, len);
 }
 
 inline static void msgpack_serialize_class(
-    smart_str *buf, zval *val, zval *retval_ptr, HashTable *var_hash,
+    smart_string *buf, zval *val, zval *retval_ptr, HashTable *var_hash,
     char *class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     int count;
@@ -244,7 +244,7 @@ inline static void msgpack_serialize_class(
 }
 
 inline static void msgpack_serialize_array(
-    smart_str *buf, zval *val, HashTable *var_hash, zend_bool object,
+    smart_string *buf, zval *val, HashTable *var_hash, zend_bool object,
     char* class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     HashTable *ht;
@@ -423,7 +423,7 @@ inline static void msgpack_serialize_array(
 }
 
 inline static void msgpack_serialize_object(
-    smart_str *buf, zval *val, HashTable *var_hash,
+    smart_string *buf, zval *val, HashTable *var_hash,
     char* class_name, zend_uint name_len, zend_bool incomplete_class TSRMLS_DC)
 {
     zval *retval_ptr = NULL;
@@ -513,7 +513,7 @@ inline static void msgpack_serialize_object(
 }
 
 void msgpack_serialize_zval(
-    smart_str *buf, zval *val, HashTable *var_hash TSRMLS_DC)
+    smart_string *buf, zval *val, HashTable *var_hash TSRMLS_DC)
 {
     ulong *var_already;
 

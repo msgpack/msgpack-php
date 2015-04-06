@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct {
     zend_object object;
-    smart_str buffer;
+    smart_string buffer;
     zval *retval;
     long offset;
     msgpack_unpack_t mp;
@@ -316,7 +316,7 @@ static ZEND_METHOD(msgpack, setOption)
 static ZEND_METHOD(msgpack, pack)
 {
     zval *parameter;
-    smart_str buf = {0};
+    smart_string buf = {0};
     int php_only = MSGPACK_G(php_only);
     MSGPACK_BASE_OBJECT;
 
@@ -334,7 +334,7 @@ static ZEND_METHOD(msgpack, pack)
 
     ZVAL_STRINGL(return_value, buf.c, buf.len, 1);
 
-    smart_str_free(&buf);
+    smart_string_free(&buf);
 }
 
 static ZEND_METHOD(msgpack, unpack)
@@ -428,7 +428,7 @@ static ZEND_METHOD(msgpack_unpacker, __destruct)
 {
     MSGPACK_UNPACKER_OBJECT;
 
-    smart_str_free(&unpacker->buffer);
+    smart_string_free(&unpacker->buffer);
 
     if (unpacker->retval != NULL)
     {
@@ -483,7 +483,7 @@ static ZEND_METHOD(msgpack_unpacker, feed)
         RETURN_FALSE;
     }
 
-    smart_str_appendl(&unpacker->buffer, str, str_len);
+    smart_string_appendl(&unpacker->buffer, str, str_len);
 
     RETURN_TRUE;
 }
@@ -621,16 +621,16 @@ static ZEND_METHOD(msgpack_unpacker, data)
 
 static ZEND_METHOD(msgpack_unpacker, reset)
 {
-    smart_str buffer = {0};
+    smart_string buffer = {0};
     MSGPACK_UNPACKER_OBJECT;
 
     if (unpacker->buffer.len > unpacker->offset)
     {
-        smart_str_appendl(&buffer, unpacker->buffer.c + unpacker->offset,
+        smart_string_appendl(&buffer, unpacker->buffer.c + unpacker->offset,
                           unpacker->buffer.len - unpacker->offset);
     }
 
-    smart_str_free(&unpacker->buffer);
+    smart_string_free(&unpacker->buffer);
 
     unpacker->buffer.c = NULL;
     unpacker->buffer.len = 0;
@@ -640,10 +640,10 @@ static ZEND_METHOD(msgpack_unpacker, reset)
 
     if (buffer.len > 0)
     {
-        smart_str_appendl(&unpacker->buffer, buffer.c, buffer.len);
+        smart_string_appendl(&unpacker->buffer, buffer.c, buffer.len);
     }
 
-    smart_str_free(&buffer);
+    smart_string_free(&buffer);
 
     if (unpacker->retval != NULL)
     {

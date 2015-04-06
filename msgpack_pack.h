@@ -17,6 +17,6 @@ enum msgpack_serialize_type
 };
 
 void msgpack_serialize_zval(
-    smart_str *buf, zval *val, HashTable *var_hash TSRMLS_DC);
+    smart_string *buf, zval *val, HashTable *var_hash TSRMLS_DC);
 
 #endif
