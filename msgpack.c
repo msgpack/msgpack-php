@@ -148,23 +148,17 @@ ZEND_GET_MODULE(msgpack)
 PS_SERIALIZER_ENCODE_FUNC(msgpack)
 {
     smart_string buf = {0};
+    zend_string *z_string;
     msgpack_serialize_data_t var_hash;
 
     msgpack_serialize_var_init(&var_hash);
-
-    msgpack_serialize_zval(&buf, PS(http_session_vars), var_hash TSRMLS_CC);
-
-    if (newlen)
-    {
-        *newlen = buf.len;
-    }
-
-    smart_string_0(&buf);
-    *newstr = buf.c;
-
+    msgpack_serialize_zval(&buf, &PS(http_session_vars), var_hash TSRMLS_CC);
     msgpack_serialize_var_destroy(&var_hash);
 
-    return SUCCESS;
+    z_string = zend_string_init(buf.c, buf.len, 0);
+    smart_string_free(&buf);
+
+    return z_string;
 }
 
 PS_SERIALIZER_DECODE_FUNC(msgpack)
