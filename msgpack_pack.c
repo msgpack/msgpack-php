@@ -425,8 +425,9 @@ inline static void msgpack_serialize_object(
     zval fname;
     int res;
     zend_class_entry *ce = NULL;
+    zend_string *sleep_zstring = zend_string_init("__sleep", sizeof("__sleep")-1, 0);
 
-    if (Z_OBJ_HT_P(val)->get_class_entry)
+    if (Z_OBJ_P(val)->ce)
     {
         ce = Z_OBJCE_P(val);
     }
@@ -467,12 +468,11 @@ inline static void msgpack_serialize_object(
 #endif
 
     if (ce && ce != PHP_IC_ENTRY &&
-        zend_hash_exists(&ce->function_table, "__sleep", sizeof("__sleep")))
+        zend_hash_exists(&ce->function_table, sleep_zstring))
     {
-        INIT_PZVAL(&fname);
-        ZVAL_STRINGL(&fname, "__sleep", sizeof("__sleep") - 1, 0);
-        res = call_user_function_ex(CG(function_table), &val, &fname,
-                                    &retval_ptr, 0, 0, 1, NULL TSRMLS_CC);
+        ZVAL_STR(&fname, sleep_zstring);
+        res = call_user_function_ex(CG(function_table), val, &fname,
+                                    retval_ptr, 0, 0, 1, NULL TSRMLS_CC);
         if (res == SUCCESS && !EG(exception))
         {
             if (retval_ptr)
@@ -491,7 +491,7 @@ inline static void msgpack_serialize_object(
                         "to serialize", __FUNCTION__);
                     msgpack_pack_nil(buf);
                 }
-                zval_ptr_dtor(&retval_ptr);
+                zval_ptr_dtor(retval_ptr);
             }
             return;
         }
@@ -499,7 +499,7 @@ inline static void msgpack_serialize_object(
 
     if (retval_ptr)
     {
-        zval_ptr_dtor(&retval_ptr);
+        zval_ptr_dtor(retval_ptr);
     }
 
     msgpack_serialize_array(
