@@ -563,15 +563,11 @@ void msgpack_serialize_zval(
         case IS_NULL:
             msgpack_pack_nil(buf);
             break;
-        case IS_BOOL:
-            if (Z_BVAL_P(val))
-            {
-                msgpack_pack_true(buf);
-            }
-            else
-            {
-                msgpack_pack_false(buf);
-            }
+        case IS_TRUE:
+            msgpack_pack_true(buf);
+            break;
+        case IS_FALSE:
+            msgpack_pack_false(buf);
             break;
         case IS_LONG:
             msgpack_pack_long(buf, Z_LVAL_P(val));
@@ -596,7 +592,7 @@ void msgpack_serialize_zval(
                 PHP_SET_CLASS_ATTRIBUTES(val);
 
                 msgpack_serialize_object(
-                    buf, val, var_hash, class_name, name_len,
+                    buf, val, var_hash, class_name->val, class_name->len,
                     incomplete_class TSRMLS_CC);
 
                 PHP_CLEANUP_CLASS_ATTRIBUTES();
