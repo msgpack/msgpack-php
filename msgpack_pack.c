@@ -319,97 +319,71 @@ inline static void msgpack_serialize_array(
     {
         if (object || hash)
         {
-            char *key;
-            uint key_len;
-            int key_type;
-            ulong key_index;
-            zval **data;
-            HashPosition pos;
 
-            zend_hash_internal_pointer_reset_ex(ht, &pos);
-            for (;; zend_hash_move_forward_ex(ht, &pos))
-            {
-                key_type = zend_hash_get_current_key_ex(
-                    ht, &key, &key_len, &key_index, 0, &pos);
+            zend_string *key_str;
+            ulong key_long;
+            zval *value;
 
-                if (key_type == HASH_KEY_NON_EXISTANT)
-                {
-                    break;
-                }
-                if (incomplete_class && strcmp(key, MAGIC_MEMBER) == 0)
-                {
+
+            ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
+                if (key_str && incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
                     continue;
                 }
-
-                if (hash)
-                {
-                    switch (key_type)
-                    {
-                        case HASH_KEY_IS_LONG:
-                            msgpack_pack_long(buf, key_index);
-                            break;
-                        case HASH_KEY_IS_STRING:
-                            msgpack_serialize_string(buf, key, key_len - 1);
-                            break;
-                        default:
-                            msgpack_serialize_string(buf, "", sizeof(""));
-                            MSGPACK_WARNING(
-                                "[msgpack] (%s) key is not string nor array",
-                                __FUNCTION__);
-                            break;
-                    }
+                if (key_str) {
+                    msgpack_serialize_string(buf, key_str->val, key_str->len - 1);
+                }  else if (key_long) {
+                    msgpack_pack_long(buf, key_long);
+                } else {
+                    msgpack_serialize_string(buf, "", sizeof(""));
+                    MSGPACK_WARNING(
+                            "[msgpack] (%s) key is not string nor array",
+                            __FUNCTION__);
                 }
 
-                if (zend_hash_get_current_data_ex(
-                        ht, (void *)&data, &pos) != SUCCESS ||
-                    !data || data == &val ||
-                    (Z_TYPE_PP(data) == IS_ARRAY &&
-                     Z_ARRVAL_PP(data)->nApplyCount > 1))
-                {
+
+                if ((Z_TYPE_P(value) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
                     msgpack_pack_nil(buf);
-                }
-                else
-                {
-                    if (Z_TYPE_PP(data) == IS_ARRAY)
+                } else {
+                    if (Z_TYPE_P(value) == IS_ARRAY)
                     {
-                        Z_ARRVAL_PP(data)->nApplyCount++;
+                        Z_ARRVAL_P(value)->u.v.nApplyCount++;
                     }
 
-                    msgpack_serialize_zval(buf, *data, var_hash TSRMLS_CC);
+                    msgpack_serialize_zval(buf, value, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_PP(data) == IS_ARRAY)
+                    if (Z_TYPE_P(value) == IS_ARRAY)
                     {
-                        Z_ARRVAL_PP(data)->nApplyCount--;
+                        Z_ARRVAL_P(value)->u.v.nApplyCount--;
                     }
                 }
-            }
+            } ZEND_HASH_FOREACH_END();
         }
         else
         {
-            zval **data;
+            zval *data;
             uint i;
 
             for (i = 0; i < n; i++)
             {
-                if (zend_hash_index_find(ht, i, (void *)&data) != SUCCESS ||
-                    !data || data == &val ||
-                    (Z_TYPE_PP(data) == IS_ARRAY &&
-                     Z_ARRVAL_PP(data)->nApplyCount > 1))
+                if ((data = zend_hash_index_find(ht, i)) == NULL ||
+                    !data || &data == &val ||
+                    (Z_TYPE_P(data) == IS_ARRAY &&
+                     Z_ARRVAL_P(data)->u.v.nApplyCount > 1))
                 {
                     msgpack_pack_nil(buf);
                 }
                 else
                 {
-                    if (Z_TYPE_PP(data) == IS_ARRAY)
+                    if (Z_TYPE_P(data) == IS_ARRAY)
                     {
-                        Z_ARRVAL_PP(data)->nApplyCount++;
+                        Z_ARRVAL_P(data)->u.v.nApplyCount++;
                     }
 
-                    msgpack_serialize_zval(buf, *data, var_hash TSRMLS_CC);
+                    msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_PP(data) == IS_ARRAY)
+                    if (Z_TYPE_P(data) == IS_ARRAY)
                     {
-                        Z_ARRVAL_PP(data)->nApplyCount--;
+                        Z_ARRVAL_P(data)->u.v.nApplyCount--;
                     }
                 }
             }
