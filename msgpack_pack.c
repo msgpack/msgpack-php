@@ -104,137 +104,80 @@ inline static void msgpack_serialize_class(
 
     if (count > 0)
     {
-        char *key;
-        zval **data, **name;
-        ulong key_index;
-        HashPosition pos;
-        int n;
-        zval nval, *nvalp;
-
         msgpack_pack_map(buf, count + 1);
-
         msgpack_pack_nil(buf);
         msgpack_serialize_string(buf, class_name, name_len);
 
-        INIT_ZVAL(nval);
+        zend_string *key_str;
+        ulong key_long;
+        zval *value, *data, nval, *nvalp;
         ZVAL_NULL(&nval);
         nvalp = &nval;
 
-        zend_hash_internal_pointer_reset_ex(ht, &pos);
-
-        for (;; zend_hash_move_forward_ex(ht, &pos))
-        {
-            n = zend_hash_get_current_key_ex(
-                ht, &key, NULL, &key_index, 0, &pos);
-
-            if (n == HASH_KEY_NON_EXISTANT)
-            {
+        ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
+            if (!key_long && !key_str) {
                 break;
             }
-            if (incomplete_class && strcmp(key, MAGIC_MEMBER) == 0)
-            {
+            if (incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
                 continue;
             }
 
-            zend_hash_get_current_data_ex(ht, (void **)&name, &pos);
-
-            if (Z_TYPE_PP(name) != IS_STRING)
-            {
+            if (Z_TYPE_P(value) != IS_STRING) {
                 MSGPACK_NOTICE(
-                    "[msgpack] (%s) __sleep should return an array only "
-                    "containing the names of instance-variables to serialize",
-                    __FUNCTION__);
+                        "[msgpack] (%s) __sleep should return an array only "
+                        "containing the names of instance-variables to serialize",
+                        __FUNCTION__);
                 continue;
             }
-
-            if (zend_hash_find(
-                    Z_OBJPROP_P(val), Z_STRVAL_PP(name),
-                    Z_STRLEN_PP(name) + 1, (void *)&data) == SUCCESS)
-            {
-                msgpack_serialize_string(
-                    buf, Z_STRVAL_PP(name), Z_STRLEN_PP(name));
-                msgpack_serialize_zval(buf, *data, var_hash TSRMLS_CC);
-            }
-            else
-            {
-                zend_class_entry *ce;
-                ce = zend_get_class_entry(val TSRMLS_CC);
+            if ((data = zend_hash_find(Z_OBJPROP_P(val), key_str)) != NULL)  {
+                msgpack_serialize_string(buf, key_str->val, key_str->len);
+                msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
+            } else {
+                zend_class_entry *ce = Z_OBJ_P(val)->ce;
                 if (ce)
                 {
-                    char *prot_name, *priv_name;
-                    int prop_name_length;
-
+                    zend_string *priv_name, *prot_name;
                     do
                     {
-                        zend_mangle_property_name(
-                            &priv_name, &prop_name_length, ce->name,
-                            ce->name_length, Z_STRVAL_PP(name),
-                            Z_STRLEN_PP(name),
-                            ce->type & ZEND_INTERNAL_CLASS);
-                        if (zend_hash_find(
-                                Z_OBJPROP_P(val), priv_name,
-                                prop_name_length + 1,
-                                (void *)&data) == SUCCESS)
-                        {
-                            msgpack_serialize_string(
-                                buf, priv_name, prop_name_length);
-
-                            pefree(priv_name,
-                                   ce->type & ZEND_INTERNAL_CLASS);
-
-                            msgpack_serialize_zval(
-                                buf, *data, var_hash TSRMLS_CC);
+                        priv_name = zend_mangle_property_name(ce->name->val, ce->name->len,
+                                                              key_str->val, key_str->len,
+                                                              ce->type & ZEND_INTERNAL_CLASS);
+                        if ((data = zend_hash_find(Z_OBJPROP_P(val), priv_name)) != NULL) {
+                            msgpack_serialize_string(buf, priv_name->val, priv_name->len);
+                            pefree(priv_name, ce->type & ZEND_INTERNAL_CLASS);
+                            msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
                             break;
                         }
 
-                        pefree(priv_name,
-                               ce->type & ZEND_INTERNAL_CLASS);
+                        pefree(priv_name, ce->type & ZEND_INTERNAL_CLASS);
 
-                        zend_mangle_property_name(
-                            &prot_name, &prop_name_length, "*", 1,
-                            Z_STRVAL_PP(name), Z_STRLEN_PP(name),
-                            ce->type & ZEND_INTERNAL_CLASS);
+                        prot_name = zend_mangle_property_name("*", 1,
+                                key_str->val, key_str->len,
+                                ce->type & ZEND_INTERNAL_CLASS);
 
-                        if (zend_hash_find(
-                                Z_OBJPROP_P(val), prot_name,
-                                prop_name_length + 1,
-                                (void *)&data) == SUCCESS)
-                        {
-                            msgpack_serialize_string(
-                                buf, prot_name, prop_name_length);
-
-                            pefree(prot_name,
-                                   ce->type & ZEND_INTERNAL_CLASS);
-
-                            msgpack_serialize_zval(
-                                buf, *data, var_hash TSRMLS_CC);
+                        if ((data = zend_hash_find(Z_OBJPROP_P(val), prot_name)) != NULL) {
+                            msgpack_serialize_string(buf, prot_name->val, prot_name->len);
+                            pefree(prot_name, ce->type & ZEND_INTERNAL_CLASS);
+                            msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
                             break;
                         }
-
                         pefree(prot_name, ce->type & ZEND_INTERNAL_CLASS);
 
                         MSGPACK_NOTICE(
                             "[msgpack] (%s) \"%s\" returned as member "
                             "variable from __sleep() but does not exist",
-                            __FUNCTION__, Z_STRVAL_PP(name));
-
-                        msgpack_serialize_string(
-                            buf, Z_STRVAL_PP(name), Z_STRLEN_PP(name));
-
-                        msgpack_serialize_zval(
-                            buf, nvalp, var_hash TSRMLS_CC);
-                    }
-                    while (0);
+                            __FUNCTION__, key_str->val);
+                        msgpack_serialize_string(buf, key_str->val, key_str->len);
+                        msgpack_serialize_zval(buf, nvalp, var_hash TSRMLS_CC);
+                    } while (0);
                 }
                 else
                 {
-                    msgpack_serialize_string(
-                        buf, Z_STRVAL_PP(name), Z_STRLEN_PP(name));
-
+                    msgpack_serialize_string(buf, key_str->val, key_str->len);
                     msgpack_serialize_zval(buf, nvalp, var_hash TSRMLS_CC);
-                }
+              }
             }
-        }
+        } ZEND_HASH_FOREACH_END();
     }
 }
 
