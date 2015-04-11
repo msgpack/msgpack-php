@@ -8,12 +8,6 @@
 #include "msgpack_unpack.h"
 #include "msgpack_errors.h"
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 3)
-#   define Z_ADDREF_PP(ppz)      ZVAL_ADDREF(*(ppz))
-#   define Z_SET_ISREF_PP(ppz)   (*(ppz))->is_ref = 1
-#   define Z_UNSET_ISREF_PP(ppz) (*(ppz))->is_ref = 0
-#endif
-
 #define VAR_ENTRIES_MAX 1024
 
 typedef struct
@@ -49,8 +43,8 @@ typedef struct
     }
 
 #define MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(_unpack, _key, _val) \
-    zval_ptr_dtor(&_key);                                        \
-    zval_ptr_dtor(&_val);                                        \
+    zval_ptr_dtor(_key);                                        \
+    zval_ptr_dtor(_val);                                        \
     MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, 2);
 
 inline static void msgpack_var_push(
@@ -343,7 +337,7 @@ void msgpack_unserialize_var_destroy(
         {
             if (var_hash->data[i])
             {
-                zval_ptr_dtor(&var_hash->data[i]);
+                zval_ptr_dtor(var_hash->data[i]);
 				var_hash->data[i] = NULL;
             }
         }
@@ -495,11 +489,11 @@ int msgpack_unserialize_raw(
 
     if (len == 0)
     {
-        ZVAL_STRINGL(*obj, "", 0, 1);
+        ZVAL_STRINGL(*obj, "", 0);
     }
     else
     {
-        ZVAL_STRINGL(*obj, (char *)data, len, 1);
+        ZVAL_STRINGL(*obj, (char *)data, len);
     }
 
     return 0;
@@ -570,7 +564,7 @@ int msgpack_unserialize_map_item(
                 switch (Z_LVAL_P(val))
                 {
                     case MSGPACK_SERIALIZE_TYPE_REFERENCE:
-                        Z_SET_ISREF_PP(container);
+                        ZVAL_MAKE_REF(*container);
                         break;
                     case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
                         unpack->type = MSGPACK_SERIALIZE_TYPE_RECURSIVE;
