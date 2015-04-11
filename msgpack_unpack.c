@@ -22,7 +22,6 @@ typedef struct
         *obj = _unpack->retval;                        \
         msgpack_stack_push(_unpack->var_hash, obj, 0); \
     } else {                                           \
-        ALLOC_INIT_ZVAL(*obj);                         \
         msgpack_stack_push(_unpack->var_hash, obj, 1); \
     }
 
@@ -31,7 +30,6 @@ typedef struct
         *obj = _unpack->retval;                   \
         msgpack_var_push(_unpack->var_hash, obj); \
     } else {                                      \
-        ALLOC_INIT_ZVAL(*obj);                    \
         msgpack_var_push(_unpack->var_hash, obj); \
     }
 
@@ -660,20 +658,20 @@ int msgpack_unserialize_map_item(
 
                     if (container != NULL)
                     {
-                        zval_ptr_dtor(container);
+                        zval_ptr_dtor(*container);
                     }
 
                     *container = *rval;
 
-                    Z_ADDREF_PP(container);
+                    Z_TRY_ADDREF_P(*container);
 
-                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT)
+                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT && Z_ISREF_P(*container))
                     {
-                        Z_UNSET_ISREF_PP(container);
+                        ZVAL_UNREF(*container);
                     }
-                    else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE)
+                    else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE && Z_ISREF_P(*container))
                     {
-                        Z_SET_ISREF_PP(container);
+                        ZVAL_UNREF(*container);
                     }
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
@@ -684,7 +682,7 @@ int msgpack_unserialize_map_item(
         }
     }
 
-    if (Z_TYPE_PP(container) != IS_ARRAY && Z_TYPE_PP(container) != IS_OBJECT)
+    if (Z_TYPE_P(*container) != IS_ARRAY && Z_TYPE_P(*container) != IS_OBJECT)
     {
         array_init(*container);
     }
@@ -692,56 +690,48 @@ int msgpack_unserialize_map_item(
     switch (Z_TYPE_P(key))
     {
         case IS_LONG:
-            if (zend_hash_index_update(
-                    HASH_OF(*container), Z_LVAL_P(key), &val,
-                    sizeof(val), NULL) == FAILURE)
+            if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) != NULL)
             {
-                zval_ptr_dtor(&val);
+                zval_ptr_dtor(val);
                 MSGPACK_WARNING(
                     "[msgpack] (%s) illegal offset type, skip this decoding",
                     __FUNCTION__);
             }
-            zval_ptr_dtor(&key);
+            zval_ptr_dtor(key);
             break;
         case IS_STRING:
-            if (zend_symtable_update(
-                    HASH_OF(*container), Z_STRVAL_P(key), Z_STRLEN_P(key) + 1,
-                    &val, sizeof(val), NULL) == FAILURE)
+
+            if ((val = zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, 0), val)) != NULL)
             {
-                zval_ptr_dtor(&val);
+                zval_ptr_dtor(val);
                 MSGPACK_WARNING(
                     "[msgpack] (%s) illegal offset type, skip this decoding",
                     __FUNCTION__);
             }
-            zval_ptr_dtor(&key);
+            zval_ptr_dtor(key);
             break;
         default:
             MSGPACK_WARNING("[msgpack] (%s) illegal key type", __FUNCTION__);
 
             if (MSGPACK_G(illegal_key_insert))
             {
-                if (zend_hash_next_index_insert(
-                        HASH_OF(*container), &key, sizeof(key), NULL) == FAILURE)
+                if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) != NULL)
                 {
-                    zval_ptr_dtor(&val);
+                    zval_ptr_dtor(val);
                 }
-                if (zend_hash_next_index_insert(
-                        HASH_OF(*container), &val, sizeof(val), NULL) == FAILURE)
+                if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) != NULL)
                 {
-                    zval_ptr_dtor(&val);
+                    zval_ptr_dtor(val);
                 }
             }
             else
             {
                 convert_to_string(key);
-                if (zend_symtable_update(
-                        HASH_OF(*container),
-                        Z_STRVAL_P(key), Z_STRLEN_P(key) + 1,
-                        &val, sizeof(val), NULL) == FAILURE)
+                if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, 0), val)) != NULL)
                 {
-                    zval_ptr_dtor(&val);
+                    zval_ptr_dtor(val);
                 }
-                zval_ptr_dtor(&key);
+                zval_ptr_dtor(key);
             }
             break;
     }
@@ -756,21 +746,18 @@ int msgpack_unserialize_map_item(
 
         /* wakeup */
         if (MSGPACK_G(php_only) &&
-            Z_TYPE_PP(container) == IS_OBJECT &&
-            Z_OBJCE_PP(container) != PHP_IC_ENTRY &&
-            zend_hash_exists(
-                &Z_OBJCE_PP(container)->function_table,
-                "__wakeup", sizeof("__wakeup")))
-        {
-            zval f, *h = NULL;
+            Z_TYPE_P(*container) == IS_OBJECT &&
+            Z_OBJCE_P(*container) != PHP_IC_ENTRY &&
 
-            INIT_PZVAL(&f);
-            ZVAL_STRINGL(&f, "__wakeup", sizeof("__wakeup") - 1, 0);
-            call_user_function_ex(
-                CG(function_table), container, &f, &h, 0, 0, 1, NULL TSRMLS_CC);
+            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, zend_string_init("__wakeup", sizeof("__wakeup") + 1, 1)))
+        {
+            zval *f, *h = NULL;
+
+            ZVAL_STRINGL(f, "__wakeup", sizeof("__wakeup") - 1);
+            call_user_function_ex( CG(function_table), *container, f, h, 0, 0, 1, NULL TSRMLS_CC);
             if (h)
             {
-                zval_ptr_dtor(&h);
+                zval_ptr_dtor(h);
             }
         }
     }
