@@ -77,6 +77,7 @@ static inline php_msgpack_unpacker_t *msgpack_unpacker_fetch_object(zend_object 
 
 /* MessagePack */
 static zend_class_entry *msgpack_ce = NULL;
+zend_object_handlers msgpack_handlers;
 
 static ZEND_METHOD(msgpack, __construct);
 static ZEND_METHOD(msgpack, setOption);
@@ -117,6 +118,7 @@ static zend_function_entry msgpack_base_methods[] = {
 
 /* MessagePackUnpacker */
 static zend_class_entry *msgpack_unpacker_ce = NULL;
+zend_object_handlers msgpack_unpacker_handlers;
 
 static ZEND_METHOD(msgpack_unpacker, __construct);
 static ZEND_METHOD(msgpack_unpacker, __destruct);
@@ -171,106 +173,40 @@ static zend_function_entry msgpack_unpacker_methods[] = {
             arginfo_msgpack_unpacker_reset, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
+zend_object *php_msgpack_base_new(zend_class_entry *ce TSRMLS_DC) {
+    php_msgpack_base_t *intern = ecalloc(1,
+            sizeof(php_msgpack_base_t) +
+            zend_object_properties_size(ce));
 
+    zend_object_std_init(&intern->object, ce TSRMLS_CC);
+    object_properties_init(&intern->object, ce);
+    intern->object.handlers = &msgpack_handlers;
+    return &intern->object;
+}
 static void php_msgpack_base_free(php_msgpack_base_t *base TSRMLS_DC)
 {
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
     zend_object_std_dtor(&base->object TSRMLS_CC);
-#else
-    if (base->object.properties)
-    {
-        zend_hash_destroy(base->object.properties);
-        FREE_HASHTABLE(base->object.properties);
-    }
-#endif
     efree(base);
 }
 
-static zend_object_value php_msgpack_base_new(zend_class_entry *ce TSRMLS_DC)
-{
-    zend_object_value retval;
-    php_msgpack_base_t *base;
-#if PHP_API_VERSION < 20100412
-    zval *tmp;
-#endif
+zend_object *php_msgpack_unpacker_new(zend_class_entry *ce TSRMLS_DC) {
+    php_msgpack_unpacker_t *intern = ecalloc(1,
+            sizeof(php_msgpack_unpacker_t) +
+            zend_object_properties_size(ce));
 
-    base = emalloc(sizeof(php_msgpack_base_t));
-
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
-    zend_object_std_init(&base->object, ce TSRMLS_CC);
-#else
-    ALLOC_HASHTABLE(base->object.properties);
-    zend_hash_init(base->object.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    base->object.ce = ce;
-#endif
-
-#if PHP_API_VERSION < 20100412
-    zend_hash_copy(
-        base->object.properties, &ce->default_properties,
-        (copy_ctor_func_t)zval_add_ref, (void *)&tmp, sizeof(zval *));
-#else
-    object_properties_init(&base->object, ce);
-#endif
-
-    retval.handle = zend_objects_store_put(
-        base, (zend_objects_store_dtor_t)zend_objects_destroy_object,
-        (zend_objects_free_object_storage_t)php_msgpack_base_free,
-        NULL TSRMLS_CC);
-    retval.handlers = zend_get_std_object_handlers();
-
-    return retval;
+    zend_object_std_init(&intern->object, ce TSRMLS_CC);
+    object_properties_init(&intern->object, ce);
+    intern->object.handlers = &msgpack_unpacker_handlers;
+    return &intern->object;
 }
 
 static void php_msgpack_unpacker_free(
     php_msgpack_unpacker_t *unpacker TSRMLS_DC)
 {
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
     zend_object_std_dtor(&unpacker->object TSRMLS_CC);
-#else
-    if (unpacker->object.properties)
-    {
-        zend_hash_destroy(unpacker->object.properties);
-        FREE_HASHTABLE(unpacker->object.properties);
-    }
-#endif
     efree(unpacker);
 }
 
-static zend_object_value php_msgpack_unpacker_new(
-    zend_class_entry *ce TSRMLS_DC)
-{
-    zend_object_value retval;
-    php_msgpack_unpacker_t *unpacker;
-#if PHP_API_VERSION < 20100412
-    zval *tmp;
-#endif
-
-    unpacker = emalloc(sizeof(php_msgpack_unpacker_t));
-
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
-    zend_object_std_init(&unpacker->object, ce TSRMLS_CC);
-#else
-    ALLOC_HASHTABLE(unpacker->object.properties);
-    zend_hash_init(unpacker->object.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    unpacker->object.ce = ce;
-#endif
-
-#if PHP_API_VERSION < 20100412
-    zend_hash_copy(
-        unpacker->object.properties, &ce->default_properties,
-        (copy_ctor_func_t)zval_add_ref, (void *)&tmp, sizeof(zval *));
-#else
-    object_properties_init(&unpacker->object, ce);
-#endif
-
-    retval.handle = zend_objects_store_put(
-        unpacker, (zend_objects_store_dtor_t)zend_objects_destroy_object,
-        (zend_objects_free_object_storage_t)php_msgpack_unpacker_free,
-        NULL TSRMLS_CC);
-    retval.handlers = zend_get_std_object_handlers();
-
-    return retval;
-}
 
 /* MessagePack */
 static ZEND_METHOD(msgpack, __construct)
@@ -675,15 +611,15 @@ void msgpack_init_class()
     INIT_CLASS_ENTRY(ce, "MessagePack", msgpack_base_methods);
     msgpack_ce = zend_register_internal_class(&ce TSRMLS_CC);
     msgpack_ce->create_object = php_msgpack_base_new;
+    memcpy(&msgpack_handlers, zend_get_std_object_handlers(),sizeof msgpack_handlers);
+    msgpack_handlers.offset = XtOffsetOf(php_msgpack_base_t, object);
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
-    zend_declare_class_constant_long(
-        msgpack_ce, ZEND_STRS("OPT_PHPONLY") - 1,
-        MSGPACK_CLASS_OPT_PHPONLY TSRMLS_CC);
-#endif
+    zend_declare_class_constant_long(msgpack_ce, ZEND_STRS("OPT_PHPONLY") - 1, MSGPACK_CLASS_OPT_PHPONLY TSRMLS_CC);
 
     /* unpacker */
     INIT_CLASS_ENTRY(ce, "MessagePackUnpacker", msgpack_unpacker_methods);
     msgpack_unpacker_ce = zend_register_internal_class(&ce TSRMLS_CC);
     msgpack_unpacker_ce->create_object = php_msgpack_unpacker_new;
+    memcpy(&msgpack_unpacker_handlers, zend_get_std_object_handlers(),sizeof msgpack_unpacker_handlers);
+    msgpack_unpacker_handlers.offset = XtOffsetOf(php_msgpack_unpacker_t, object);
 }
