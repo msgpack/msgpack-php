@@ -239,7 +239,7 @@ static ZEND_METHOD(msgpack, setOption)
     {
         case MSGPACK_CLASS_OPT_PHPONLY:
             convert_to_boolean(value);
-            base->php_only = Z_BVAL_P(value);
+            base->php_only = Z_LVAL_P(value);
             break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePack::setOption) "
@@ -270,7 +270,7 @@ static ZEND_METHOD(msgpack, pack)
 
     MSGPACK_G(php_only) = php_only;
 
-    ZVAL_STRINGL(return_value, buf.c, buf.len, 1);
+    ZVAL_STRINGL(return_value, buf.c, buf.len);
 
     smart_string_free(&buf);
 }
@@ -305,7 +305,6 @@ static ZEND_METHOD(msgpack, unpack)
     {
         zval *zv;
 
-        ALLOC_INIT_ZVAL(zv);
         php_msgpack_unserialize(zv, str, str_len TSRMLS_CC);
 
         if (msgpack_convert_template(return_value, object, &zv) != SUCCESS)
@@ -322,14 +321,13 @@ static ZEND_METHOD(msgpack, unpacker)
     zval temp, *opt;
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
-    ALLOC_INIT_ZVAL(opt);
     ZVAL_BOOL(opt, base->php_only);
 
     object_init_ex(return_value, msgpack_unpacker_ce);
 
     MSGPACK_METHOD1(msgpack_unpacker, __construct, &temp, return_value, opt);
 
-    zval_ptr_dtor(&opt);
+    zval_ptr_dtor(opt);
 }
 
 /* MessagePackUnpacker */
@@ -370,7 +368,7 @@ static ZEND_METHOD(msgpack_unpacker, __destruct)
 
     if (unpacker->retval != NULL)
     {
-        zval_ptr_dtor(&unpacker->retval);
+        zval_ptr_dtor(unpacker->retval);
     }
 
     msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
@@ -393,7 +391,7 @@ static ZEND_METHOD(msgpack_unpacker, setOption)
     {
         case MSGPACK_CLASS_OPT_PHPONLY:
             convert_to_boolean(value);
-            unpacker->php_only = Z_BVAL_P(value);
+            unpacker->php_only = Z_LVAL_P(value);
             break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePackUnpacker::setOption) "
@@ -467,16 +465,18 @@ static ZEND_METHOD(msgpack_unpacker, execute)
 
     if (unpacker->retval == NULL)
     {
-        ALLOC_INIT_ZVAL(unpacker->retval);
+        zval zv;
+        unpacker->retval = &zv;
     }
     else if (unpacker->finished)
     {
-        zval_ptr_dtor(&unpacker->retval);
+        zval_ptr_dtor(unpacker->retval);
 
         msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
         unpacker->error = 0;
 
-        ALLOC_INIT_ZVAL(unpacker->retval);
+        zval zv;
+        unpacker->retval = &zv;
 
         template_init(&unpacker->mp);
 
@@ -541,7 +541,6 @@ static ZEND_METHOD(msgpack_unpacker, data)
         {
             zval *zv;
 
-            ALLOC_INIT_ZVAL(zv);
             ZVAL_ZVAL(zv, unpacker->retval, 1, 0);
 
             if (msgpack_convert_object(return_value, object, &zv) != SUCCESS)
@@ -586,7 +585,7 @@ static ZEND_METHOD(msgpack_unpacker, reset)
 
     if (unpacker->retval != NULL)
     {
-        zval_ptr_dtor(&unpacker->retval);
+        zval_ptr_dtor(unpacker->retval);
         unpacker->retval = NULL;
     }
 
