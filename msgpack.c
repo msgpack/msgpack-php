@@ -287,34 +287,26 @@ static ZEND_FUNCTION(msgpack_serialize)
 
 static ZEND_FUNCTION(msgpack_unserialize)
 {
-    char *str;
-    int str_len;
+    zend_string *str;
     zval *object = NULL;
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "s|z",
-            &str, &str_len, &object) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S|z", &str, &object) == FAILURE) {
         return;
     }
 
-    if (!str_len)
-    {
+    if (!str) {
         RETURN_NULL();
     }
 
-    if (object == NULL)
-    {
-        php_msgpack_unserialize(return_value, str, str_len TSRMLS_CC);
+    if (object == NULL) {
+        php_msgpack_unserialize(return_value, str->val, str->len TSRMLS_CC);
     }
-    else
-    {
+    else {
         zval *zv;
 
-        php_msgpack_unserialize(zv, str, str_len TSRMLS_CC);
+        php_msgpack_unserialize(zv, str->val, str->len TSRMLS_CC);
 
-        if (msgpack_convert_template(return_value, object, &zv) != SUCCESS)
-        {
+        if (msgpack_convert_template(return_value, object, &zv) != SUCCESS) {
             RETURN_NULL();
         }
     }
