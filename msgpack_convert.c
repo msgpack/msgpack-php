@@ -27,11 +27,10 @@
         INIT_PZVAL(_pz);                       \
     }
 
-#define MSGPACK_CONVERT_UPDATE_PROPERTY(_ht, _key, _key_len, _val, _var)  \
-    if (zend_symtable_update(                                             \
-            _ht, _key, _key_len, &_val, sizeof(_val), NULL) == SUCCESS) { \
-        zend_hash_add(_var, _key, _key_len, &_val, sizeof(_val), NULL);   \
-        return SUCCESS;                                                   \
+#define MSGPACK_CONVERT_UPDATE_PROPERTY(_ht, _key, _val, _var)   \
+    if ((val = zend_symtable_update(_ht, _key, _val)) != NULL) { \
+        zend_hash_add(_var, _key, _val);                         \
+        return SUCCESS;                                          \
     }
 
 static inline int  msgpack_convert_long_to_properties(
@@ -89,39 +88,33 @@ static inline int  msgpack_convert_long_to_properties(
     return (zend_hash_index_update(ht, key_index, val) != NULL);
 }
 
-static inline int msgpack_convert_string_to_properties(
+static inline int  msgpack_convert_string_to_properties(
     zval *object, char *key, uint key_len, zval *val, HashTable *var)
 {
-    zval **data = NULL;
+    zval *data = NULL;
     HashTable *ht;
     zend_class_entry *ce;
-    char *prot_name, *priv_name;
-    int prop_name_len;
+    zend_string *priv_name, *prot_name;
+
     TSRMLS_FETCH();
 
     ht = HASH_OF(object);
-    ce = zend_get_class_entry(object TSRMLS_CC);
+    ce = Z_OBJ_P(object)->ce;
 
     /* private */
-    zend_mangle_property_name(
-        &priv_name, &prop_name_len, ce->name, ce->name_length, key, key_len - 1, 1);
-    if (zend_hash_find(
-            ht, priv_name, prop_name_len + 1, (void **)&data) == SUCCESS)
-    {
-        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, priv_name, prop_name_len + 1, val, var);
-    }
+    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key, key_len - 1, 1);
+     if ((data = zend_hash_find(ht, priv_name)) != NULL) {
+         MSGPACK_CONVERT_UPDATE_PROPERTY(ht, priv_name, val, var);
+     }
 
-    /* protected */
-    zend_mangle_property_name(
-        &prot_name, &prop_name_len, "*", 1, key, key_len - 1, 1);
-    if (zend_hash_find(
-            ht, prot_name, prop_name_len + 1, (void **)&data) == SUCCESS)
-    {
-        MSGPACK_CONVERT_UPDATE_PROPERTY(ht, prot_name, prop_name_len + 1, val, var);
-    }
+     /* protected */
+     prot_name = zend_mangle_property_name("*", 1, key, key_len - 1, 1);
+     if ((data = zend_hash_find(ht, prot_name)) != NULL) {
+         MSGPACK_CONVERT_UPDATE_PROPERTY(ht, prot_name, val, var);
+     }
 
     /* public */
-    MSGPACK_CONVERT_UPDATE_PROPERTY(ht, key, key_len, val, var);
+    MSGPACK_CONVERT_UPDATE_PROPERTY(ht, zend_string_init(key, key_len, 1), val, var);
 
     return FAILURE;
 }
