@@ -34,7 +34,7 @@
         return SUCCESS;                                                   \
     }
 
-static inline int msgpack_convert_long_to_properties(
+static inline int  msgpack_convert_long_to_properties(
     HashTable *ht, HashTable **properties, HashPosition *prop_pos,
     uint key_index, zval *val, HashTable *var)
 {
@@ -42,95 +42,51 @@ static inline int msgpack_convert_long_to_properties(
 
     if (*properties != NULL)
     {
-        char *prop_key;
-        uint prop_key_len;
-        ulong prop_key_index;
-        zval **data = NULL;
-        zval *tplval = NULL;
-        zval **dataval = NULL;
+        zend_string *key_str;
+        ulong key_long;
+        zval *data;
 
-        for (;; zend_hash_move_forward_ex(*properties, prop_pos))
-        {
-            if (zend_hash_get_current_key_ex(
-                    *properties, &prop_key, &prop_key_len,
-                    &prop_key_index, 0, prop_pos) == HASH_KEY_IS_STRING)
-            {
-                if (var == NULL ||
-                    !zend_hash_exists(var, prop_key, prop_key_len))
+        //non-iteration
+        zval *dataval = NULL, *tplval = NULL;
+
+        ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, data) {
+            if(key_str) {
+                switch (Z_TYPE_P(data))
                 {
-                    if (zend_hash_find(
-                            ht, prop_key, prop_key_len,
-                            (void **)&data) == SUCCESS)
-                    {
-                        switch (Z_TYPE_PP(data))
+                    case IS_ARRAY:
                         {
-                            case IS_ARRAY:
-                            {
-                                HashTable *dataht;
-                                dataht = HASH_OF(val);
-                                if (zend_hash_index_find(
-                                        dataht, prop_key_index,
-                                        (void **)dataval) != SUCCESS)
-                                {
-                                    MSGPACK_WARNING(
+                            HashTable *dataht;
+                            dataht = HASH_OF(val);
+                            if ((dataval = zend_hash_index_find(dataht, key_long)) != NULL) {
+                                MSGPACK_WARNING(
                                         "[msgpack] (%s) "
                                         "can't get data value by index",
                                         __FUNCTION__);
-                                    return FAILURE;
-                                }
-
-                                ALLOC_INIT_ZVAL(tplval);
-                                if (msgpack_convert_array(
-                                        tplval, *data, dataval) == SUCCESS)
-                                {
-                                    zend_hash_move_forward_ex(
-                                        *properties, prop_pos);
-
-                                    return zend_symtable_update(
-                                        ht, prop_key, prop_key_len,
-                                        &tplval, sizeof(tplval), NULL);
-                                }
-                                // TODO: de we need to call dtor?
                                 return FAILURE;
-                                break;
                             }
-                            case IS_OBJECT:
-                            {
-                                ALLOC_INIT_ZVAL(tplval);
-                                if (msgpack_convert_object(
-                                        tplval, *data, &val) == SUCCESS)
-                                {
-                                    zend_hash_move_forward_ex(
-                                        *properties, prop_pos);
 
-                                    return zend_symtable_update(
-                                        ht, prop_key, prop_key_len,
-                                        &tplval, sizeof(tplval), NULL);
-                                }
-                                // TODO: de we need to call dtor?
-                                return FAILURE;
-                                break;
+                            if (msgpack_convert_array(tplval, data, &dataval) == SUCCESS) {
+                                return (zend_symtable_update(ht, key_str, tplval) != NULL);
                             }
-                            default:
-                                zend_hash_move_forward_ex(*properties, prop_pos);
-                                return zend_symtable_update(
-                                    ht, prop_key, prop_key_len,
-                                    &val, sizeof(val), NULL);
-                                break;
+                            // TODO: de we need to call dtor?
+                            return FAILURE;
                         }
-                    }
+                    case IS_OBJECT:
+                        {
+                            if (msgpack_convert_object(tplval, data, &val) == SUCCESS) {
+                                return (zend_symtable_update(ht, key_str, tplval) != NULL);
+                            }
+                            // TODO: de we need to call dtor?
+                            return FAILURE;
+                        }
+                    default:
+                        return (zend_symtable_update(ht, key_str, tplval) != NULL);
                 }
             }
-            else
-            {
-                break;
-            }
-        }
-
+        } ZEND_HASH_FOREACH_END();
         *properties = NULL;
     }
-
-    return zend_hash_index_update(ht, key_index, &val, sizeof(val), NULL);
+    return (zend_hash_index_update(ht, key_index, val) != NULL);
 }
 
 static inline int msgpack_convert_string_to_properties(
