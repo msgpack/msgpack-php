@@ -273,16 +273,15 @@ static ZEND_FUNCTION(msgpack_serialize)
     zval *parameter;
     smart_string buf = {0};
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "z", &parameter) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &parameter) == FAILURE) {
         return;
     }
 
     php_msgpack_serialize(&buf, parameter TSRMLS_CC);
-	smart_string_0(&buf);
+    smart_string_0(&buf);
 
     ZVAL_STRINGL(return_value, buf.c, buf.len);
+    smart_string_free(&buf);
 }
 
 static ZEND_FUNCTION(msgpack_unserialize)
