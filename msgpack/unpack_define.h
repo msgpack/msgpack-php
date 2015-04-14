@@ -65,6 +65,7 @@ typedef enum {
 	//CS_BIG_INT_32        = 0x17,
 	//CS_BIG_FLOAT_16      = 0x18,
 	//CS_BIG_FLOAT_32      = 0x19,
+	CS_RAW_8			 = 0x19,
 	CS_RAW_16            = 0x1a,
 	CS_RAW_32            = 0x1b,
 	CS_ARRAY_16          = 0x1c,
