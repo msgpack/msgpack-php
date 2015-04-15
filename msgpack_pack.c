@@ -46,10 +46,10 @@ inline static int msgpack_check_ht_is_map(zval *array)
 inline static int msgpack_var_add(
     HashTable *var_hash, zval *var, void *var_old TSRMLS_DC)
 {
-    ulong var_no;
     char id[32], *p;
     int len;
     zend_string *zstring;
+    zval zv;
 
     if ((Z_TYPE_P(var) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
         p = zend_print_long_to_buf(
@@ -75,9 +75,8 @@ inline static int msgpack_var_add(
         return FAILURE;
     }
 
-    var_no = zend_hash_num_elements(var_hash) + 1;
-
-    zend_hash_add(var_hash, zstring, NULL);
+    ZVAL_LONG(&zv, zend_hash_num_elements(var_hash) + 1);
+    zend_hash_add(var_hash, zstring, &zv);
 
     return SUCCESS;
 }
