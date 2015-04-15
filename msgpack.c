@@ -232,13 +232,12 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
     msgpack_unserialize_var_init(&var_hash);
 
     RETVAL_NULL();
-    mp.user.retval = (zval *)return_value;
-    mp.user.var_hash = (msgpack_unserialize_data_t *)&var_hash;
+    mp.user.retval = return_value;
+    mp.user.var_hash = &var_hash;
 
     ret = template_execute(&mp, str, (size_t)str_len, &off);
 
-    switch (ret)
-    {
+    switch (ret) {
         case MSGPACK_UNPACK_PARSE_ERROR:
             zval_dtor(return_value);
             ZVAL_FALSE(return_value);
@@ -254,8 +253,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
         case MSGPACK_UNPACK_EXTRA_BYTES:
         case MSGPACK_UNPACK_SUCCESS:
             msgpack_unserialize_var_destroy(&var_hash, 0);
-            if (off < (size_t)str_len)
-            {
+            if (off < str_len) {
                 MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
             }
             break;
@@ -299,8 +297,7 @@ static ZEND_FUNCTION(msgpack_unserialize)
 
     if (object == NULL) {
         php_msgpack_unserialize(return_value, str->val, str->len TSRMLS_CC);
-    }
-    else {
+    } else {
         zval *zv;
 
         php_msgpack_unserialize(zv, str->val, str->len TSRMLS_CC);
