@@ -690,8 +690,7 @@ int msgpack_unserialize_map_item(
     switch (Z_TYPE_P(key))
     {
         case IS_LONG:
-            if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) != NULL)
-            {
+            if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) == NULL) {
                 zval_ptr_dtor(val);
                 MSGPACK_WARNING(
                     "[msgpack] (%s) illegal offset type, skip this decoding",
@@ -701,8 +700,7 @@ int msgpack_unserialize_map_item(
             break;
         case IS_STRING:
 
-            if ((val = zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, 0), val)) != NULL)
-            {
+            if ((val = zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
                 zval_ptr_dtor(val);
                 MSGPACK_WARNING(
                     "[msgpack] (%s) illegal offset type, skip this decoding",
@@ -715,20 +713,17 @@ int msgpack_unserialize_map_item(
 
             if (MSGPACK_G(illegal_key_insert))
             {
-                if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) != NULL)
-                {
+                if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) == NULL) {
                     zval_ptr_dtor(val);
                 }
-                if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) != NULL)
-                {
+                if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) == NULL) {
                     zval_ptr_dtor(val);
                 }
             }
             else
             {
                 convert_to_string(key);
-                if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key) + 1, 0), val)) != NULL)
-                {
+                if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
                     zval_ptr_dtor(val);
                 }
                 zval_ptr_dtor(key);
