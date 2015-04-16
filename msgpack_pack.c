@@ -18,10 +18,8 @@
 #define msgpack_pack_append_buffer(user, buf, len) \
     smart_string_appendl(user, (const void*)buf, len)
 #include "msgpack/pack_template.h"
-
-#if ZEND_MODULE_API_NO < 20090626
-#   define Z_ISREF_P(pz) PZVAL_IS_REF(pz)
-#endif
+#define Z_TYPE_REF_AWARE_P(_obj) \
+    (Z_ISREF_P(_obj)?Z_TYPE_P(Z_REFVAL_P(_obj)):Z_TYPE_P(_obj))
 
 inline static int msgpack_check_ht_is_map(zval *array)
 {
@@ -51,7 +49,7 @@ inline static int msgpack_var_add(
     zend_string *zstring;
     zval zv;
 
-    if ((Z_TYPE_P(var) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
+    if ((Z_TYPE_REF_AWARE_P(var) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
         p = zend_print_long_to_buf(
             id + sizeof(id) - 1,
             (((size_t)Z_OBJCE_P(var) << 5)
@@ -59,7 +57,7 @@ inline static int msgpack_var_add(
             + (long)Z_OBJ_HANDLE_P(var));
         len = id + sizeof(id) - 1 - p;
     }
-    else if (Z_TYPE_P(var) == IS_ARRAY) {
+    else if (Z_TYPE_REF_AWARE_P(var) == IS_ARRAY) {
         p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)var);
         len = id + sizeof(id) - 1 - p;
     }
@@ -67,7 +65,7 @@ inline static int msgpack_var_add(
         return FAILURE;
     }
 
-    zstring =  zend_string_init(p, len, 1);
+    zstring =  zend_string_init(p, len, 0);
     if (var_old && (var_old = zend_hash_find(var_hash, zstring)) != NULL) {
         if (!Z_ISREF_P(var)) {
             zend_hash_next_index_insert(var_hash, NULL);
@@ -121,7 +119,7 @@ inline static void msgpack_serialize_class(
                 continue;
             }
 
-            if (Z_TYPE_P(value) != IS_STRING) {
+            if (Z_TYPE_REF_AWARE_P(value) != IS_STRING) {
                 MSGPACK_NOTICE(
                         "[msgpack] (%s) __sleep should return an array only "
                         "containing the names of instance-variables to serialize",
@@ -282,18 +280,17 @@ inline static void msgpack_serialize_array(
                             __FUNCTION__);
                 }
 
-
-                if ((Z_TYPE_P(value) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
+                if ((Z_TYPE_REF_AWARE_P(value) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
                     msgpack_pack_nil(buf);
                 } else {
-                    if (Z_TYPE_P(value) == IS_ARRAY)
+                    if (Z_TYPE_REF_AWARE_P(value) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(value)->u.v.nApplyCount++;
                     }
 
                     msgpack_serialize_zval(buf, value, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_P(value) == IS_ARRAY)
+                    if (Z_TYPE_REF_AWARE_P(value) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(value)->u.v.nApplyCount--;
                     }
@@ -309,21 +306,21 @@ inline static void msgpack_serialize_array(
             {
                 if ((data = zend_hash_index_find(ht, i)) == NULL ||
                     !data || &data == &val ||
-                    (Z_TYPE_P(data) == IS_ARRAY &&
+                    (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY &&
                      Z_ARRVAL_P(data)->u.v.nApplyCount > 1))
                 {
                     msgpack_pack_nil(buf);
                 }
                 else
                 {
-                    if (Z_TYPE_P(data) == IS_ARRAY)
+                    if (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(data)->u.v.nApplyCount++;
                     }
 
                     msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_P(data) == IS_ARRAY)
+                    if (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(data)->u.v.nApplyCount--;
                     }
@@ -435,7 +432,7 @@ void msgpack_serialize_zval(
     {
         if (Z_ISREF_P(val))
         {
-            if (Z_TYPE_P(val) == IS_ARRAY)
+            if (Z_TYPE_REF_AWARE_P(val) == IS_ARRAY)
             {
                 msgpack_pack_map(buf, 2);
 
@@ -447,7 +444,7 @@ void msgpack_serialize_zval(
 
                 return;
             }
-            else if (Z_TYPE_P(val) == IS_OBJECT)
+            else if (Z_TYPE_REF_AWARE_P(val) == IS_OBJECT)
             {
                 msgpack_pack_map(buf, 2);
 
@@ -460,7 +457,7 @@ void msgpack_serialize_zval(
                 return;
             }
         }
-        else if (Z_TYPE_P(val) == IS_OBJECT)
+        else if (Z_TYPE_REF_AWARE_P(val) == IS_OBJECT)
         {
             msgpack_pack_map(buf, 2);
 
@@ -474,7 +471,7 @@ void msgpack_serialize_zval(
         }
     }
 
-    switch (Z_TYPE_P(val))
+    switch (Z_TYPE_REF_AWARE_P(val))
     {
         case IS_NULL:
             msgpack_pack_nil(buf);
