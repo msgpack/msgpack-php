@@ -272,7 +272,7 @@ inline static void msgpack_serialize_array(
                     continue;
                 }
                 if (key_str) {
-                    msgpack_serialize_string(buf, key_str->val, key_str->len - 1);
+                    msgpack_serialize_string(buf, key_str->val, key_str->len);
                 }  else if (key_long) {
                     msgpack_pack_long(buf, key_long);
                 } else {
