@@ -483,7 +483,7 @@ void msgpack_serialize_zval(
             msgpack_pack_false(buf);
             break;
         case IS_LONG:
-            msgpack_pack_long(buf, Z_LVAL_P(val));
+            msgpack_pack_long(buf, zval_get_long(val));
             break;
         case IS_DOUBLE:
             {
