@@ -18,24 +18,24 @@
 #define msgpack_pack_append_buffer(user, buf, len) \
     smart_string_appendl(user, (const void*)buf, len)
 #include "msgpack/pack_template.h"
-#define Z_TYPE_REF_AWARE_P(_obj) \
-    (Z_ISREF_P(_obj)?Z_TYPE_P(Z_REFVAL_P(_obj)):Z_TYPE_P(_obj))
+#define Z_REF_AWARE_P(_obj) \
+    (Z_ISREF_P(_obj)?Z_REFVAL_P(_obj):_obj)
 
 inline static int msgpack_check_ht_is_map(zval *array)
 {
-    int count = zend_hash_num_elements(Z_ARRVAL_P(array));
+    int count = zend_hash_num_elements(Z_ARRVAL_P(Z_REF_AWARE_P(array)));
 
-    if (count != (Z_ARRVAL_P(array))->nNextFreeElement) {
+    if (count != (Z_ARRVAL_P(Z_REF_AWARE_P(array)))->nNextFreeElement) {
         return 1;
     } else {
         int i;
         HashPosition pos = {0};
-        zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(array), &pos);
+        zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(Z_REF_AWARE_P(array)), &pos);
         for (i = 0; i < count; i++) {
-            if (zend_hash_get_current_key_type_ex(Z_ARRVAL_P(array), &pos) != HASH_KEY_IS_LONG) {
+            if (zend_hash_get_current_key_type_ex(Z_ARRVAL_P(Z_REF_AWARE_P(array)), &pos) != HASH_KEY_IS_LONG) {
                 return 1;
             }
-            zend_hash_move_forward_ex(Z_ARRVAL_P(array), &pos);
+            zend_hash_move_forward_ex(Z_ARRVAL_P(Z_REF_AWARE_P(array)), &pos);
         }
     }
     return 0;
@@ -49,7 +49,7 @@ inline static int msgpack_var_add(
     zend_string *zstring;
     zval zv;
 
-    if ((Z_TYPE_REF_AWARE_P(var) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
+    if ((Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
         p = zend_print_long_to_buf(
             id + sizeof(id) - 1,
             (((size_t)Z_OBJCE_P(var) << 5)
@@ -57,7 +57,7 @@ inline static int msgpack_var_add(
             + (long)Z_OBJ_HANDLE_P(var));
         len = id + sizeof(id) - 1 - p;
     }
-    else if (Z_TYPE_REF_AWARE_P(var) == IS_ARRAY) {
+    else if (Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_ARRAY) {
         p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)var);
         len = id + sizeof(id) - 1 - p;
     }
@@ -119,7 +119,7 @@ inline static void msgpack_serialize_class(
                 continue;
             }
 
-            if (Z_TYPE_REF_AWARE_P(value) != IS_STRING) {
+            if (Z_TYPE_P(Z_REF_AWARE_P(value)) != IS_STRING) {
                 MSGPACK_NOTICE(
                         "[msgpack] (%s) __sleep should return an array only "
                         "containing the names of instance-variables to serialize",
@@ -192,7 +192,7 @@ inline static void msgpack_serialize_array(
     }
     else
     {
-        ht = HASH_OF(val);
+        ht = HASH_OF(Z_REF_AWARE_P(val));
     }
 
     if (ht)
@@ -271,26 +271,21 @@ inline static void msgpack_serialize_array(
                 }
                 if (key_str) {
                     msgpack_serialize_string(buf, key_str->val, key_str->len);
-                }  else if (key_long) {
-                    msgpack_pack_long(buf, key_long);
                 } else {
-                    msgpack_serialize_string(buf, "", sizeof(""));
-                    MSGPACK_WARNING(
-                            "[msgpack] (%s) key is not string nor array",
-                            __FUNCTION__);
+                    msgpack_pack_long(buf, key_long);
                 }
 
-                if ((Z_TYPE_REF_AWARE_P(value) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
+                if ((Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
                     msgpack_pack_nil(buf);
                 } else {
-                    if (Z_TYPE_REF_AWARE_P(value) == IS_ARRAY)
+                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(value)->u.v.nApplyCount++;
                     }
 
                     msgpack_serialize_zval(buf, value, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_REF_AWARE_P(value) == IS_ARRAY)
+                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY)
                     {
                         Z_ARRVAL_P(value)->u.v.nApplyCount--;
                     }
@@ -306,23 +301,23 @@ inline static void msgpack_serialize_array(
             {
                 if ((data = zend_hash_index_find(ht, i)) == NULL ||
                     !data || &data == &val ||
-                    (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY &&
-                     Z_ARRVAL_P(data)->u.v.nApplyCount > 1))
+                    (Z_TYPE_P(Z_REF_AWARE_P(data)) == IS_ARRAY &&
+                     Z_ARRVAL_P(Z_REF_AWARE_P(data))->u.v.nApplyCount > 1))
                 {
                     msgpack_pack_nil(buf);
                 }
                 else
                 {
-                    if (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY)
+                    if (Z_TYPE_P(Z_REF_AWARE_P(data)) == IS_ARRAY)
                     {
-                        Z_ARRVAL_P(data)->u.v.nApplyCount++;
+                        Z_ARRVAL_P(Z_REF_AWARE_P(data))->u.v.nApplyCount++;
                     }
 
                     msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_REF_AWARE_P(data) == IS_ARRAY)
+                    if (Z_TYPE_P(Z_REF_AWARE_P(data)) == IS_ARRAY)
                     {
-                        Z_ARRVAL_P(data)->u.v.nApplyCount--;
+                        Z_ARRVAL_P(Z_REF_AWARE_P(data))->u.v.nApplyCount--;
                     }
                 }
             }
@@ -432,7 +427,7 @@ void msgpack_serialize_zval(
     {
         if (Z_ISREF_P(val))
         {
-            if (Z_TYPE_REF_AWARE_P(val) == IS_ARRAY)
+            if (Z_TYPE_P(Z_REF_AWARE_P(val)) == IS_ARRAY)
             {
                 msgpack_pack_map(buf, 2);
 
@@ -444,7 +439,7 @@ void msgpack_serialize_zval(
 
                 return;
             }
-            else if (Z_TYPE_REF_AWARE_P(val) == IS_OBJECT)
+            else if (Z_TYPE_P(Z_REF_AWARE_P(val)) == IS_OBJECT)
             {
                 msgpack_pack_map(buf, 2);
 
@@ -457,7 +452,7 @@ void msgpack_serialize_zval(
                 return;
             }
         }
-        else if (Z_TYPE_REF_AWARE_P(val) == IS_OBJECT)
+        else if (Z_TYPE_P(Z_REF_AWARE_P(val)) == IS_OBJECT)
         {
             msgpack_pack_map(buf, 2);
 
@@ -471,7 +466,7 @@ void msgpack_serialize_zval(
         }
     }
 
-    switch (Z_TYPE_REF_AWARE_P(val))
+    switch (Z_TYPE_P(Z_REF_AWARE_P(val)))
     {
         case IS_NULL:
             msgpack_pack_nil(buf);
@@ -486,10 +481,7 @@ void msgpack_serialize_zval(
             msgpack_pack_long(buf, zval_get_long(val));
             break;
         case IS_DOUBLE:
-            {
-                double dbl = Z_DVAL_P(val);
-                msgpack_pack_double(buf, dbl);
-            }
+            msgpack_pack_double(buf, Z_DVAL_P(val));
             break;
         case IS_STRING:
             msgpack_serialize_string(
