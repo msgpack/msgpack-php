@@ -420,6 +420,10 @@ void msgpack_serialize_zval(
 {
     ulong *var_already;
 
+    if (Z_TYPE_P(val) == IS_INDIRECT) {
+        val = Z_INDIRECT_P(val);
+    }
+
     if (MSGPACK_G(php_only) &&
         var_hash &&
         msgpack_var_add(
