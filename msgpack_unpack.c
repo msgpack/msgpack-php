@@ -188,7 +188,7 @@ inline static void msgpack_stack_pop(
 inline static zend_class_entry* msgpack_unserialize_class(
     zval **container, char *class_name, size_t name_len)
 {
-    zend_class_entry *ce, **pce;
+    zend_class_entry *ce;
     zend_bool incomplete_class = 0;
     zval *user_func, *retval_ptr, args[1], *arg_func_name;
     TSRMLS_FETCH();
@@ -196,9 +196,7 @@ inline static zend_class_entry* msgpack_unserialize_class(
     do
     {
         /* Try to find class directly */
-        if ((*pce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) != NULL)
-        {
-            ce = *pce;
+        if ((ce = zend_lookup_class(zend_string_init("Obj", name_len, 0))) != NULL) {
             break;
         }
 
@@ -226,18 +224,12 @@ inline static zend_class_entry* msgpack_unserialize_class(
             zval_ptr_dtor(arg_func_name);
             break;
         }
-        if (retval_ptr)
-        {
+        if (retval_ptr) {
             zval_ptr_dtor(retval_ptr);
         }
 
         /* The callback function may have defined the class */
-        if ((*pce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) != NULL)
-        {
-            ce = *pce;
-        }
-        else
-        {
+        if ((ce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) == NULL) {
             MSGPACK_WARNING("[msgpack] (%s) Function %s() hasn't defined "
                             "the class it was called for",
                             __FUNCTION__, class_name);
