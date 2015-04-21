@@ -17,11 +17,18 @@ typedef struct
     void *next;
 } var_entries;
 
+#define ALLOC_ZVAL(z)   \
+    (z) = (zval *) emalloc(sizeof(zval))
+
+#define ALLOC_INIT_ZVAL(zp) \
+    ALLOC_ZVAL(zp);
+
 #define MSGPACK_UNSERIALIZE_ALLOC_STACK(_unpack)       \
     if (_unpack->deps <= 0) {                          \
         *obj = _unpack->retval;                        \
         msgpack_stack_push(_unpack->var_hash, obj, 0); \
     } else {                                           \
+        ALLOC_INIT_ZVAL(*obj);                         \
         msgpack_stack_push(_unpack->var_hash, obj, 1); \
     }
 
@@ -30,6 +37,7 @@ typedef struct
         *obj = _unpack->retval;                   \
         msgpack_var_push(_unpack->var_hash, obj); \
     } else {                                      \
+        ALLOC_INIT_ZVAL(*obj);                    \
         msgpack_var_push(_unpack->var_hash, obj); \
     }
 
