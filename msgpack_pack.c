@@ -94,13 +94,11 @@ inline static void msgpack_serialize_class(
     HashTable *ht = HASH_OF(retval_ptr);
 
     count = zend_hash_num_elements(ht);
-    if (incomplete_class)
-    {
+    if (incomplete_class) {
         --count;
     }
 
-    if (count > 0)
-    {
+    if (count > 0) {
         msgpack_pack_map(buf, count + 1);
         msgpack_pack_nil(buf);
         msgpack_serialize_string(buf, class_name, name_len);
@@ -112,9 +110,6 @@ inline static void msgpack_serialize_class(
         nvalp = &nval;
 
         ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
-            if (!key_long && !key_str) {
-                break;
-            }
             if (incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
                 continue;
             }
@@ -126,18 +121,19 @@ inline static void msgpack_serialize_class(
                         __FUNCTION__);
                 continue;
             }
-            if ((data = zend_hash_find(Z_OBJPROP_P(val), key_str)) != NULL)  {
-                msgpack_serialize_string(buf, key_str->val, key_str->len);
+            if ((data = zend_hash_find(Z_OBJPROP_P(val),
+                            zend_string_init(Z_STRVAL_P(value), Z_STRLEN_P(value), 0))) != NULL)
+            {
+                msgpack_serialize_string(buf, Z_STRVAL_P(value), Z_STRLEN_P(value));
                 msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
             } else {
                 zend_class_entry *ce = Z_OBJ_P(val)->ce;
-                if (ce)
-                {
+                if (ce) {
                     zend_string *priv_name, *prot_name;
                     do
                     {
                         priv_name = zend_mangle_property_name(ce->name->val, ce->name->len,
-                                                              key_str->val, key_str->len,
+                                                              Z_STRVAL_P(value), Z_STRLEN_P(value),
                                                               ce->type & ZEND_INTERNAL_CLASS);
                         if ((data = zend_hash_find(Z_OBJPROP_P(val), priv_name)) != NULL) {
                             msgpack_serialize_string(buf, priv_name->val, priv_name->len);
@@ -149,7 +145,7 @@ inline static void msgpack_serialize_class(
                         pefree(priv_name, ce->type & ZEND_INTERNAL_CLASS);
 
                         prot_name = zend_mangle_property_name("*", 1,
-                                key_str->val, key_str->len,
+                                Z_STRVAL_P(value), Z_STRLEN_P(value),
                                 ce->type & ZEND_INTERNAL_CLASS);
 
                         if ((data = zend_hash_find(Z_OBJPROP_P(val), prot_name)) != NULL) {
@@ -163,14 +159,12 @@ inline static void msgpack_serialize_class(
                         MSGPACK_NOTICE(
                             "[msgpack] (%s) \"%s\" returned as member "
                             "variable from __sleep() but does not exist",
-                            __FUNCTION__, key_str->val);
-                        msgpack_serialize_string(buf, key_str->val, key_str->len);
+                            __FUNCTION__, Z_STRVAL_P(value));
+                        msgpack_serialize_string(buf, Z_STRVAL_P(value), Z_STRLEN_P(value));
                         msgpack_serialize_zval(buf, nvalp, var_hash TSRMLS_CC);
                     } while (0);
-                }
-                else
-                {
-                    msgpack_serialize_string(buf, key_str->val, key_str->len);
+                } else {
+                    msgpack_serialize_string(buf, Z_STRVAL_P(value), Z_STRLEN_P(value));
                     msgpack_serialize_zval(buf, nvalp, var_hash TSRMLS_CC);
               }
             }
@@ -329,14 +323,15 @@ inline static void msgpack_serialize_object(
     smart_string *buf, zval *val, HashTable *var_hash,
     char* class_name, uint32_t name_len, zend_bool incomplete_class TSRMLS_DC)
 {
-    zval *retval_ptr = NULL;
+    zval retval;
     zval fname;
     int res;
     zend_class_entry *ce = NULL;
-    zend_string *sleep_zstring = zend_string_init("__sleep", sizeof("__sleep")-1, 0);
 
-    if (Z_OBJ_P(val)->ce)
-    {
+    zend_string *sleep_zstring = zend_string_init("__sleep", sizeof("__sleep") - 1, 0);
+    ZVAL_STRING(&fname, "__sleep");
+
+    if (Z_OBJ_P(val)->ce) {
         ce = Z_OBJCE_P(val);
     }
 
@@ -360,14 +355,11 @@ inline static void msgpack_serialize_object(
             msgpack_serialize_string(buf, (char *)ce->name, ce->name_length);
             msgpack_pack_raw(buf, serialized_length);
             msgpack_pack_raw_body(buf, serialized_data, serialized_length);
-        }
-        else
-        {
+        } else {
             msgpack_pack_nil(buf);
         }
 
-        if (serialized_data)
-        {
+        if (serialized_data) {
             efree(serialized_data);
         }
 
@@ -376,39 +368,27 @@ inline static void msgpack_serialize_object(
 #endif
 
     if (ce && ce != PHP_IC_ENTRY &&
-        zend_hash_exists(&ce->function_table, sleep_zstring))
-    {
-        ZVAL_STR(&fname, sleep_zstring);
-        res = call_user_function_ex(CG(function_table), val, &fname,
-                                    retval_ptr, 0, 0, 1, NULL TSRMLS_CC);
-        if (res == SUCCESS && !EG(exception))
-        {
-            if (retval_ptr)
-            {
-                if (HASH_OF(retval_ptr))
-                {
-                    msgpack_serialize_class(
-                        buf, val, retval_ptr, var_hash,
+        zend_hash_exists(&ce->function_table, sleep_zstring)) {
+        res = call_user_function_ex(CG(function_table), val, &fname, &retval, 0, 0, 1, NULL);
+
+        if (res == SUCCESS && !EG(exception)) {
+            if (HASH_OF(&retval)) {
+                msgpack_serialize_class(
+                        buf, val, &retval, var_hash,
                         class_name, name_len, incomplete_class TSRMLS_CC);
-                }
-                else
-                {
-                    MSGPACK_NOTICE(
+            } else {
+                MSGPACK_NOTICE(
                         "[msgpack] (%s) __sleep should return an array only "
                         "containing the names of instance-variables "
                         "to serialize", __FUNCTION__);
-                    msgpack_pack_nil(buf);
-                }
-                zval_ptr_dtor(retval_ptr);
+                msgpack_pack_nil(buf);
             }
+            zval_ptr_dtor(&retval);
             return;
         }
     }
 
-    if (retval_ptr)
-    {
-        zval_ptr_dtor(retval_ptr);
-    }
+    zval_ptr_dtor(&retval);
 
     msgpack_serialize_array(
         buf, val, var_hash, 1,
