@@ -743,17 +743,13 @@ int msgpack_unserialize_map_item(
         if (MSGPACK_G(php_only) &&
             Z_TYPE_P(*container) == IS_OBJECT &&
             Z_OBJCE_P(*container) != PHP_IC_ENTRY &&
-
-            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, zend_string_init("__wakeup", sizeof("__wakeup") + 1, 1)))
+            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, zend_string_init("__wakeup", sizeof("__wakeup") - 1, 0)))
         {
-            zval *f, *h = NULL;
+            zval f, h;
+            ZVAL_STRING(&f, "__wakeup");
 
-            ZVAL_STRINGL(f, "__wakeup", sizeof("__wakeup") - 1);
-            call_user_function_ex( CG(function_table), *container, f, h, 0, 0, 1, NULL TSRMLS_CC);
-            if (h)
-            {
-                zval_ptr_dtor(h);
-            }
+            call_user_function_ex(CG(function_table), *container, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
+            zval_ptr_dtor(&h);
         }
     }
 
