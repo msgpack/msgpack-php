@@ -16,11 +16,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2013-02-19</date>
- <time>10:16:29</time>
+ <date>2015-04-27</date>
+ <time>11:30:29</time>
  <version>
-  <release>0.5.5</release>
-  <api>0.5.5</api>
+  <release>0.5.6</release>
+  <api>0.5.6</api>
  </version>
  <stability>
   <release>beta</release>
@@ -28,9 +28,9 @@
  </stability>
  <license filesource="LICENSE">New BSD</license>
  <notes>
-  - Fix ZTS build
-  - Fixed Bug #14 ("Invalid read" reported by valgrind)
-  - Fixed FR #8 (Return on unserialization)
+  - support str8 type (wudikua)
+  - Fix a warning and a possible crash (Mike)
+  - Fix crash with memcached (Mike)
  </notes>
  <contents>
   <dir name="/">
@@ -249,6 +249,7 @@
     <file name="135b.phpt" role="test" />
     <file name="136.phpt" role="test" />
     <file name="136b.phpt" role="test" />
+    <file name="137.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
     <file name="bug012.phpt" role="test" />
@@ -269,6 +270,24 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2015-04-27</date> 
+   <version> 
+    <release>0.5.6</release> 
+    <api>0.5.6</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes>
+   - support str8 type (wudikua)
+   - Fix a warning and a possible crash (Mike)
+   - Fix crash with memcached (Mike)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2013-02-19</date> 
    <version> 
     <release>0.5.5</release> 
@@ -285,7 +304,6 @@
     - Fixed FR #8 (Return on unserialization)
    </notes> 
   </release> 
-
   <release> 
    <date>2013-02-18</date> 
    <version> 
