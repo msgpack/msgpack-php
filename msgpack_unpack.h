@@ -30,7 +30,7 @@ void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash);
 void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash);
 void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx);
 void msgpack_unserialize_var_destroy(
-    msgpack_unserialize_data_t *var_hashx, zend_bool err);
+    msgpack_unserialize_data_t *var_hashx, zend_bool err, zval *return_value);
 
 void msgpack_unserialize_init(msgpack_unserialize_data *unpack);
 

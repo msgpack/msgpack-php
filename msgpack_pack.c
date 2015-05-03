@@ -65,7 +65,7 @@ inline static int msgpack_var_add(
         return FAILURE;
     }
 
-    zstring =  zend_string_init(p, len, 0);
+    zstring = zend_string_init(p, len, 0);
     if (var_old && (var_old = zend_hash_find(var_hash, zstring)) != NULL) {
         if (!Z_ISREF_P(var)) {
             zend_hash_next_index_insert(var_hash, NULL);
@@ -75,6 +75,7 @@ inline static int msgpack_var_add(
 
     ZVAL_LONG(&zv, zend_hash_num_elements(var_hash) + 1);
     zend_hash_add(var_hash, zstring, &zv);
+    zend_string_release(zstring);
 
     return SUCCESS;
 }

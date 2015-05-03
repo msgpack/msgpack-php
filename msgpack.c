@@ -182,7 +182,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
     ret = template_execute(&mp, (char *)val, (size_t)vallen, &off);
 
     if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
-        msgpack_unserialize_var_destroy(&var_hash, 0);
+        msgpack_unserialize_var_destroy(&var_hash, 0, tmp);
 
         ZEND_HASH_FOREACH_KEY_VAL(HASH_OF(tmp), key_long, key_str, value) {
             if (key_str) {
@@ -194,7 +194,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
         } ZEND_HASH_FOREACH_END();
     }
     else {
-        msgpack_unserialize_var_destroy(&var_hash, 1);
+        msgpack_unserialize_var_destroy(&var_hash, 1, tmp);
     }
 
     zval_ptr_dtor(tmp);
@@ -241,18 +241,18 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
         case MSGPACK_UNPACK_PARSE_ERROR:
             zval_dtor(return_value);
             ZVAL_FALSE(return_value);
-            msgpack_unserialize_var_destroy(&var_hash, 1);
+            msgpack_unserialize_var_destroy(&var_hash, 1, return_value);
             MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
             break;
         case MSGPACK_UNPACK_CONTINUE:
-            msgpack_unserialize_var_destroy(&var_hash, 0);
+            msgpack_unserialize_var_destroy(&var_hash, 0, return_value);
             MSGPACK_WARNING(
                 "[msgpack] (%s) Insufficient data for unserializing",
                 __FUNCTION__);
             break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
         case MSGPACK_UNPACK_SUCCESS:
-            msgpack_unserialize_var_destroy(&var_hash, 0);
+            msgpack_unserialize_var_destroy(&var_hash, 0, return_value);
             if (off < str_len) {
                 MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
             }
@@ -260,7 +260,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
         default:
             zval_dtor(return_value);
             ZVAL_FALSE(return_value);
-            msgpack_unserialize_var_destroy(&var_hash, 0);
+            msgpack_unserialize_var_destroy(&var_hash, 0, return_value);
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
             break;
     }
