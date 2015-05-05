@@ -275,7 +275,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                         continue;
                     } else if (key_long) {
                         zval *aryval, *rv;
-                        MSGPACK_CONVERT_COPY_ZVAL(aryval, data);
+                        //MSGPACK_CONVERT_COPY_ZVAL(aryval, data);
                         if (convert_function)
                         {
                             if (convert_function(rv, data, &aryval) != SUCCESS)

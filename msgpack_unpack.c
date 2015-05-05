@@ -228,26 +228,15 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx)
 void msgpack_unserialize_var_destroy(
     msgpack_unserialize_data_t *var_hashx, zend_bool err, zval *return_value)
 {
-    // TODO
     void *next;
     long i;
     var_entries *var_hash = var_hashx->first;
 
     if (var_hash) {
         ZVAL_COPY(return_value, &var_hash->data[0]);
-
-        next = var_hash->next;
         efree(var_hash);
-        var_hash = next;
     }
 
-    var_hash = var_hashx->first_dtor;
-
-    if (var_hash) {
-        next = var_hash->next;
-        efree(var_hash);
-        var_hash = next;
-    }
 }
 
 void msgpack_unserialize_init(msgpack_unserialize_data *unpack)
@@ -434,7 +423,6 @@ int msgpack_unserialize_map_item(
     msgpack_unserialize_data *unpack, zval **container, zval *key, zval *val)
 {
     long deps;
-    TSRMLS_FETCH();
 
     if (MSGPACK_G(php_only))
     {

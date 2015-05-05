@@ -325,7 +325,7 @@ static ZEND_METHOD(msgpack, unpacker)
 
     object_init_ex(return_value, msgpack_unpacker_ce);
 
-    MSGPACK_METHOD1(msgpack_unpacker, __construct, &temp, return_value, opt);
+    //MSGPACK_METHOD1(msgpack_unpacker, __construct, &temp, return_value, opt);
 
     zval_ptr_dtor(opt);
 }
@@ -371,7 +371,7 @@ static ZEND_METHOD(msgpack_unpacker, __destruct)
         zval_ptr_dtor(unpacker->retval);
     }
 
-    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
+    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
 }
 
 static ZEND_METHOD(msgpack_unpacker, setOption)
@@ -472,7 +472,7 @@ static ZEND_METHOD(msgpack_unpacker, execute)
     {
         zval_ptr_dtor(unpacker->retval);
 
-        msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
+        msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
         unpacker->error = 0;
 
         zval zv;
@@ -549,7 +549,7 @@ static ZEND_METHOD(msgpack_unpacker, data)
             }
         }
 
-        MSGPACK_METHOD(msgpack_unpacker, reset, NULL, getThis());
+        //MSGPACK_METHOD(msgpack_unpacker, reset, NULL, getThis());
 
         return;
     }
@@ -589,7 +589,7 @@ static ZEND_METHOD(msgpack_unpacker, reset)
         unpacker->retval = NULL;
     }
 
-    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
+    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
     unpacker->error = 0;
 
 
