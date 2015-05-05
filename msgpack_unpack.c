@@ -233,8 +233,11 @@ void msgpack_unserialize_var_destroy(
     var_entries *var_hash = var_hashx->first;
 
     if (var_hash) {
-        ZVAL_COPY(return_value, &var_hash->data[0]);
-        efree(var_hash);
+        ZVAL_DUP(return_value, &var_hash->data[0]);
+            for (i = var_hash->used_slots - 1; i >= 0; i--) {
+                //zval_ptr_dtor(&var_hash->data[i]);
+            }
+            //efree(var_hash);
     }
 
 }
