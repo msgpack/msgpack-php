@@ -556,48 +556,50 @@ int msgpack_unserialize_map_item(
         array_init(*container);
     }
 
-    switch (Z_TYPE_P(key))
-    {
-        case IS_LONG:
-            if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) == NULL) {
-                zval_ptr_dtor(val);
-                MSGPACK_WARNING(
-                    "[msgpack] (%s) illegal offset type, skip this decoding",
-                    __FUNCTION__);
-            }
-            zval_ptr_dtor(key);
-            break;
-        case IS_STRING:
-
-            if ((val = zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
-                zval_ptr_dtor(val);
-                MSGPACK_WARNING(
-                    "[msgpack] (%s) illegal offset type, skip this decoding",
-                    __FUNCTION__);
-            }
-            zval_ptr_dtor(key);
-            break;
-        default:
-            MSGPACK_WARNING("[msgpack] (%s) illegal key type", __FUNCTION__);
-
-            if (MSGPACK_G(illegal_key_insert))
-            {
-                if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) == NULL) {
+    if (Z_TYPE_P(*container) == IS_OBJECT) {
+        zend_update_property(Z_OBJ_P(*container)->ce, *container, Z_STRVAL_P(key), Z_STRLEN_P(key), val);
+    } else {
+        switch (Z_TYPE_P(key)) {
+            case IS_LONG:
+                if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) == NULL) {
                     zval_ptr_dtor(val);
-                }
-                if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) == NULL) {
-                    zval_ptr_dtor(val);
-                }
-            }
-            else
-            {
-                convert_to_string(key);
-                if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
-                    zval_ptr_dtor(val);
+                    MSGPACK_WARNING(
+                            "[msgpack] (%s) illegal offset type, skip this decoding",
+                            __FUNCTION__);
                 }
                 zval_ptr_dtor(key);
-            }
-            break;
+                break;
+            case IS_STRING:
+                if ((val = zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
+                    zval_ptr_dtor(val);
+                    MSGPACK_WARNING(
+                            "[msgpack] (%s) illegal offset type, skip this decoding",
+                            __FUNCTION__);
+                }
+                zval_ptr_dtor(key);
+                break;
+            default:
+                MSGPACK_WARNING("[msgpack] (%s) illegal key type", __FUNCTION__);
+
+                if (MSGPACK_G(illegal_key_insert))
+                {
+                    if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) == NULL) {
+                        zval_ptr_dtor(val);
+                    }
+                    if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) == NULL) {
+                        zval_ptr_dtor(val);
+                    }
+                }
+                else
+                {
+                    convert_to_string(key);
+                    if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
+                        zval_ptr_dtor(val);
+                    }
+                    zval_ptr_dtor(key);
+                }
+                break;
+        }
     }
 
     msgpack_stack_pop(unpack->var_hash, 2);
