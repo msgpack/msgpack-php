@@ -123,7 +123,7 @@ inline static zend_class_entry* msgpack_unserialize_class(
 {
     zend_class_entry *ce;
     zend_bool incomplete_class = 0;
-    zval *user_func, *retval_ptr, args[1], *arg_func_name;
+    zval user_func, retval, args[1], arg_func_name;
     TSRMLS_FETCH();
 
     do
@@ -143,22 +143,18 @@ inline static zend_class_entry* msgpack_unserialize_class(
         }
 
         /* Call unserialize callback */
-        ZVAL_STRING(user_func, PG(unserialize_callback_func));
-        args[0] = *arg_func_name;
-        ZVAL_STRING(arg_func_name, class_name);
-        if (call_user_function_ex(CG(function_table), NULL, user_func, retval_ptr, 1, args, 0, NULL TSRMLS_CC) != SUCCESS)
+        ZVAL_STRING(&user_func, PG(unserialize_callback_func));
+        ZVAL_STRING(&arg_func_name, class_name);
+
+        args[0] = arg_func_name;
+        if (call_user_function_ex(CG(function_table), NULL, &user_func, &retval, 1, args, 0, NULL) != SUCCESS)
         {
             MSGPACK_WARNING("[msgpack] (%s) defined (%s) but not found",
                             __FUNCTION__, class_name);
 
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
-            zval_ptr_dtor(user_func);
-            zval_ptr_dtor(arg_func_name);
             break;
-        }
-        if (retval_ptr) {
-            zval_ptr_dtor(retval_ptr);
         }
 
         /* The callback function may have defined the class */
@@ -170,14 +166,10 @@ inline static zend_class_entry* msgpack_unserialize_class(
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
         }
-
-        zval_ptr_dtor(user_func);
-        zval_ptr_dtor(arg_func_name);
     }
     while(0);
 
-    if (EG(exception))
-    {
+    if (EG(exception)) {
         MSGPACK_WARNING("[msgpack] (%s) Exception error", __FUNCTION__);
         return NULL;
     }
