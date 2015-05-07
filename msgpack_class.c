@@ -405,22 +405,18 @@ static ZEND_METHOD(msgpack_unpacker, setOption)
 
 static ZEND_METHOD(msgpack_unpacker, feed)
 {
-    char *str;
-    int str_len;
+    zend_string *str;
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &str) == FAILURE) {
         return;
     }
 
-    if (!str_len)
-    {
+    if (!str) {
         RETURN_FALSE;
     }
 
-    smart_string_appendl(&unpacker->buffer, str, str_len);
+    smart_string_appendl(&unpacker->buffer, str->val, str->len);
 
     RETURN_TRUE;
 }
