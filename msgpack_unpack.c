@@ -551,8 +551,13 @@ int msgpack_unserialize_map_item(
         }
     }
 
-    if (Z_TYPE_P(*container) != IS_ARRAY && Z_TYPE_P(*container) != IS_OBJECT)
-    {
+    int container_is_ref = 0;
+    if (Z_ISREF_P(*container)) {
+        container_is_ref = 1;
+        ZVAL_DEREF(*container);
+    }
+
+    if (Z_TYPE_P(*container) != IS_ARRAY && Z_TYPE_P(*container) != IS_OBJECT) {
         array_init(*container);
     }
 
@@ -600,6 +605,11 @@ int msgpack_unserialize_map_item(
                 }
                 break;
         }
+    }
+
+    if (container_is_ref) {
+        ZVAL_MAKE_REF(*container);
+        Z_TRY_ADDREF_P(*container);
     }
 
     msgpack_stack_pop(unpack->var_hash, 2);
