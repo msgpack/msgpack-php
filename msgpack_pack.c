@@ -42,7 +42,7 @@ inline static int msgpack_check_ht_is_map(zval *array)
 }
 
 inline static int msgpack_var_add(
-    HashTable *var_hash, zval *var, void *var_old TSRMLS_DC)
+    HashTable *var_hash, zval *var, zval **var_old TSRMLS_DC)
 {
     char id[32], *p;
     int len;
@@ -66,9 +66,10 @@ inline static int msgpack_var_add(
     }
 
     zstring = zend_string_init(p, len, 0);
-    if (var_old && (var_old = zend_hash_find(var_hash, zstring)) != NULL) {
+    if (var_old && (*var_old = zend_hash_find(var_hash, zstring)) != NULL) {
         if (!Z_ISREF_P(var)) {
-            zend_hash_next_index_insert(var_hash, NULL);
+            ZVAL_LONG(&zv, -1);
+            zend_hash_next_index_insert(var_hash, &zv);
         }
         return FAILURE;
     }
@@ -270,19 +271,17 @@ inline static void msgpack_serialize_array(
                     msgpack_pack_long(buf, key_long);
                 }
 
-                if ((Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY && Z_ARRVAL_P(value)->u.v.nApplyCount > 1)) {
+                if ((Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY && Z_ARRVAL_P(Z_REF_AWARE_P(value))->u.v.nApplyCount > 1)) {
                     msgpack_pack_nil(buf);
                 } else {
-                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY)
-                    {
-                        Z_ARRVAL_P(value)->u.v.nApplyCount++;
+                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY) {
+                        Z_ARRVAL_P(Z_REF_AWARE_P(value))->u.v.nApplyCount++;
                     }
 
                     msgpack_serialize_zval(buf, value, var_hash TSRMLS_CC);
 
-                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY)
-                    {
-                        Z_ARRVAL_P(value)->u.v.nApplyCount--;
+                    if (Z_TYPE_P(Z_REF_AWARE_P(value)) == IS_ARRAY) {
+                        Z_ARRVAL_P(Z_REF_AWARE_P(value))->u.v.nApplyCount--;
                     }
                 }
             } ZEND_HASH_FOREACH_END();
@@ -399,7 +398,7 @@ inline static void msgpack_serialize_object(
 void msgpack_serialize_zval(
     smart_string *buf, zval *val, HashTable *var_hash TSRMLS_DC)
 {
-    ulong *var_already;
+    zval *var_already;
 
     if (Z_TYPE_P(val) == IS_INDIRECT) {
         val = Z_INDIRECT_P(val);
@@ -408,7 +407,7 @@ void msgpack_serialize_zval(
     if (MSGPACK_G(php_only) &&
         var_hash &&
         msgpack_var_add(
-            var_hash, val, (void *)&var_already TSRMLS_CC) == FAILURE)
+            var_hash, val, &var_already TSRMLS_CC) == FAILURE)
     {
         if (Z_ISREF_P(val))
         {
@@ -420,7 +419,7 @@ void msgpack_serialize_zval(
                 msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_RECURSIVE);
 
                 msgpack_pack_long(buf, 0);
-                msgpack_pack_long(buf, *var_already);
+                msgpack_pack_long(buf, Z_LVAL_P(var_already));
 
                 return;
             }
@@ -432,7 +431,7 @@ void msgpack_serialize_zval(
                 msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE);
 
                 msgpack_pack_long(buf, 0);
-                msgpack_pack_long(buf, *var_already);
+                msgpack_pack_long(buf, Z_LVAL_P(var_already));
 
                 return;
             }
@@ -445,7 +444,7 @@ void msgpack_serialize_zval(
             msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_OBJECT);
 
             msgpack_pack_long(buf, 0);
-            msgpack_pack_long(buf, *var_already);
+            msgpack_pack_long(buf, Z_LVAL_P(var_already));
 
             return;
         }
