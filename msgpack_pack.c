@@ -388,8 +388,6 @@ inline static void msgpack_serialize_object(
         }
     }
 
-    zval_ptr_dtor(&retval);
-
     msgpack_serialize_array(
         buf, val, var_hash, 1,
         class_name, name_len, incomplete_class TSRMLS_CC);

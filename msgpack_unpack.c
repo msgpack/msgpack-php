@@ -124,12 +124,10 @@ inline static zend_class_entry* msgpack_unserialize_class(
     zend_class_entry *ce;
     zend_bool incomplete_class = 0;
     zval user_func, retval, args[1], arg_func_name;
-    TSRMLS_FETCH();
-
     do
     {
         /* Try to find class directly */
-        if ((ce = zend_lookup_class(zend_string_init("Obj", name_len, 0))) != NULL) {
+        if ((ce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) != NULL) {
             break;
         }
 
@@ -561,8 +559,11 @@ int msgpack_unserialize_map_item(
         array_init(*container);
     }
 
-    if (Z_TYPE_P(*container) == IS_OBJECT) {
-        zend_update_property(Z_OBJ_P(*container)->ce, *container, Z_STRVAL_P(key), Z_STRLEN_P(key), val);
+    if (Z_TYPE_P(*container) == IS_OBJECT && false) {
+        const char *class_name, *prop_name;
+        size_t prop_len;
+        zend_unmangle_property_name_ex(zval_get_string(key), &class_name, &prop_name, &prop_len);
+        zend_update_property(Z_OBJ_P(*container)->ce, *container, prop_name, prop_len, val);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
