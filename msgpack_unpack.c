@@ -61,7 +61,7 @@ inline static void msgpack_var_push(
 }
 
 inline static int msgpack_var_access(
-    msgpack_unserialize_data_t *var_hashx, long id, zval ***store)
+    msgpack_unserialize_data_t *var_hashx, long id, zval **store)
 {
     var_entries *var_hash = var_hashx->first;
 
@@ -82,8 +82,7 @@ inline static int msgpack_var_access(
         return !SUCCESS;
     }
 
-    // TODO
-    //*store = &var_hash->data[id];
+    *store = &var_hash->data[id];
 
     return SUCCESS;
 }
@@ -506,39 +505,29 @@ int msgpack_unserialize_map_item(
                 case MSGPACK_SERIALIZE_TYPE_OBJECT:
                 case MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE:
                 {
-                    zval **rval;
+                    zval *rval;
                     int type = unpack->type;
 
                     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
-                    if (msgpack_var_access(
-                            unpack->var_hash,
-                            Z_LVAL_P(val) - 1, &rval) != SUCCESS)
-                    {
-                        MSGPACK_WARNING(
-                            "[msgpack] (%s) Invalid references value: %ld",
+                    if (msgpack_var_access(unpack->var_hash, Z_LVAL_P(val) - 1, &rval) != SUCCESS)  {
+                        MSGPACK_WARNING("[msgpack] (%s) Invalid references value: %ld",
                             __FUNCTION__, Z_LVAL_P(val) - 1);
 
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                         return 0;
                     }
 
-                    if (container != NULL)
-                    {
+                    if (container != NULL) {
                         zval_ptr_dtor(*container);
                     }
 
-                    *container = *rval;
+                    *container = rval;
 
-                    Z_TRY_ADDREF_P(*container);
-
-                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT && Z_ISREF_P(*container))
-                    {
+                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT && Z_ISREF_P(*container)) {
                         ZVAL_UNREF(*container);
                     }
-                    else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE && Z_ISREF_P(*container))
-                    {
-                        ZVAL_UNREF(*container);
+                    else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE && Z_ISREF_P(*container)) {
+                        ZVAL_MAKE_REF(*container);
                     }
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);

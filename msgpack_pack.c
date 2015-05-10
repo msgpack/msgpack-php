@@ -42,7 +42,7 @@ inline static int msgpack_check_ht_is_map(zval *array)
 }
 
 inline static int msgpack_var_add(
-    HashTable *var_hash, zval *var, zval **var_old TSRMLS_DC)
+    HashTable *var_hash, zval *var, zval **var_old)
 {
     char id[32], *p;
     int len;
@@ -52,16 +52,14 @@ inline static int msgpack_var_add(
     if ((Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
         p = zend_print_long_to_buf(
             id + sizeof(id) - 1,
-            (((size_t)Z_OBJCE_P(var) << 5)
-             | ((size_t)Z_OBJCE_P(var) >> (sizeof(long) * 8 - 5)))
-            + (long)Z_OBJ_HANDLE_P(var));
+            (((size_t)Z_OBJCE_P(Z_REF_AWARE_P(var)) << 5)
+             | ((size_t)Z_OBJCE_P(Z_REF_AWARE_P(var)) >> (sizeof(long) * 8 - 5)))
+            + (long)Z_OBJ_HANDLE_P(Z_REF_AWARE_P(var)));
         len = id + sizeof(id) - 1 - p;
-    }
-    else if (Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_ARRAY) {
-        p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)var);
+    } else if (Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_ARRAY) {
+        p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)Z_REF_AWARE_P(var));
         len = id + sizeof(id) - 1 - p;
-    }
-    else {
+    } else {
         return FAILURE;
     }
 
@@ -404,8 +402,7 @@ void msgpack_serialize_zval(
 
     if (MSGPACK_G(php_only) &&
         var_hash &&
-        msgpack_var_add(
-            var_hash, val, &var_already TSRMLS_CC) == FAILURE)
+        msgpack_var_add(var_hash, val, &var_already) == FAILURE)
     {
         if (Z_ISREF_P(val))
         {
