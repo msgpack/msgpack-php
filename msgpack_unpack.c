@@ -548,7 +548,7 @@ int msgpack_unserialize_map_item(
         array_init(*container);
     }
 
-    if (Z_TYPE_P(*container) == IS_OBJECT && false) {
+    if (Z_TYPE_P(*container) == IS_OBJECT) {
         const char *class_name, *prop_name;
         size_t prop_len;
         zend_unmangle_property_name_ex(zval_get_string(key), &class_name, &prop_name, &prop_len);
