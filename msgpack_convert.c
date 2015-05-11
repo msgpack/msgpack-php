@@ -5,27 +5,21 @@
 #include "msgpack_convert.h"
 #include "msgpack_errors.h"
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 3)
-#   define Z_REFCOUNT_P(pz)    ((pz)->refcount)
-#   define Z_SET_ISREF_P(pz)   (pz)->is_ref = 1
-#   define Z_UNSET_ISREF_P(pz) (pz)->is_ref = 0
-#endif
-
 #define MSGPACK_CONVERT_COPY_ZVAL(_pz, _ppz)   \
-    ALLOC_INIT_ZVAL(_pz);                      \
-    *(_pz) = **(_ppz);                         \
-    if (PZVAL_IS_REF(*(_ppz))) {               \
-        if (Z_REFCOUNT_P(*(_ppz)) > 0) {       \
-            zval_copy_ctor(_pz);               \
-        } else {                               \
-            FREE_ZVAL(*(_ppz));                \
-        }                                      \
-        INIT_PZVAL(_pz);                       \
-        Z_SET_ISREF_P(_pz);                    \
-    } else {                                   \
-        zval_copy_ctor(_pz);                   \
-        INIT_PZVAL(_pz);                       \
-    }
+    //ALLOC_INIT_ZVAL(_pz);                      \
+    //*(_pz) = **(_ppz);                         \
+    //if (PZVAL_IS_REF(*(_ppz))) {               \
+    //    if (Z_REFCOUNT_P(*(_ppz)) > 0) {       \
+    //        zval_copy_ctor(_pz);               \
+    //    } else {                               \
+    //        FREE_ZVAL(*(_ppz));                \
+    //    }                                      \
+    //    INIT_PZVAL(_pz);                       \
+    //    Z_SET_ISREF_P(_pz);                    \
+    //} else {                                   \
+    //    zval_copy_ctor(_pz);                   \
+    //    INIT_PZVAL(_pz);                       \
+    //}
 
 #define MSGPACK_CONVERT_UPDATE_PROPERTY(_ht, _key, _val, _var)   \
     if ((val = zend_symtable_update(_ht, _key, _val)) != NULL) { \
@@ -36,10 +30,7 @@
 static inline int msgpack_convert_long_to_properties(HashTable *ht, HashTable **properties,
     uint key_index, zval *val, HashTable *var)
 {
-    TSRMLS_FETCH();
-
-    if (*properties != NULL)
-    {
+    if (*properties != NULL) {
         zend_string *key_str;
         ulong key_long;
         zval *data;
@@ -49,8 +40,7 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, HashTable **
 
         ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, data) {
             if(key_str) {
-                switch (Z_TYPE_P(data))
-                {
+                switch (Z_TYPE_P(data)) {
                     case IS_ARRAY:
                         {
                             HashTable *dataht;
@@ -78,7 +68,7 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, HashTable **
                             return FAILURE;
                         }
                     default:
-                        return (zend_symtable_update(ht, key_str, tplval) != NULL);
+                        return (zend_symtable_update(ht, key_str, val) != NULL);
                 }
             }
         } ZEND_HASH_FOREACH_END();
@@ -275,7 +265,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                         continue;
                     } else if (key_long) {
                         zval *aryval, *rv;
-                        //MSGPACK_CONVERT_COPY_ZVAL(aryval, data);
+                        MSGPACK_CONVERT_COPY_ZVAL(aryval, data);
                         if (convert_function)
                         {
                             if (convert_function(rv, data, &aryval) != SUCCESS)
@@ -332,12 +322,11 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
 }
 int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
     zend_class_entry *ce;
-    TSRMLS_FETCH();
 
-    switch (Z_TYPE_P(tpl))
-    {
+    switch (Z_TYPE_P(tpl)) {
         case IS_STRING:
-            if ((ce = zend_lookup_class(zend_string_init( Z_STRVAL_P(tpl), Z_STRLEN_P(tpl), 0))) != SUCCESS) {
+
+            if ((ce = zend_lookup_class(zval_get_string(tpl))) == NULL) {
                 MSGPACK_ERROR("[msgpack] (%s) Class '%s' not found",
                               __FUNCTION__, Z_STRVAL_P(tpl));
                 return FAILURE;
@@ -352,7 +341,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
             return FAILURE;
     }
 
-    if (Z_TYPE_PP(value) == IS_OBJECT) {
+    if (Z_TYPE_P(*value) == IS_OBJECT) {
         zend_class_entry *vce;
 
         vce = Z_OBJ_P(tpl)->ce;
@@ -368,13 +357,8 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
     object_init_ex(return_value, ce);
 
     /* Run the constructor if there is one */
-    if (ce->constructor
-        && (ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC))
-    {
-        zval *retval_ptr = NULL;
-        zval *params = NULL;
-        zval function_name;
-        int num_args = 0;
+    if (ce->constructor && (ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
+        zval retval, params, function_name;
         zend_fcall_info fci;
         zend_fcall_info_cache fcc;
 
@@ -383,39 +367,27 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
         fci.function_name = function_name;
         fci.symbol_table = NULL;
         fci.object = Z_OBJ_P(return_value);
-        fci.retval = retval_ptr;
-        fci.param_count = num_args;
-        fci.params = params;
+        fci.retval = &retval;
+        fci.param_count = 0;
+        fci.params = &params;
         fci.no_separation = 1;
 
         fcc.initialized = 1;
         fcc.function_handler = ce->constructor;
         fcc.calling_scope = EG(scope);
         fcc.called_scope = Z_OBJCE_P(return_value);
+        fcc.object = Z_OBJ_P(return_value);
 
         if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
-            if (params) {
-                efree(params);
-            }
-            if (retval_ptr) {
-                zval_ptr_dtor(retval_ptr);
-            }
-
             MSGPACK_WARNING(
                 "[msgpack] (%s) Invocation of %s's constructor failed",
                 __FUNCTION__, ce->name);
 
             return FAILURE;
         }
-        if (retval_ptr) {
-            zval_ptr_dtor(retval_ptr);
-        }
-        if (params) {
-            efree(params);
-        }
     }
 
-    switch (Z_TYPE_PP(value))
+    switch (Z_TYPE_P(*value))
     {
         case IS_ARRAY:
         {
@@ -472,10 +444,10 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                         continue;
                     }
                     if (num_key) {
-                        zval *val;
-                        MSGPACK_CONVERT_COPY_ZVAL(val, &data);
-                        if (msgpack_convert_long_to_properties(ret, &properties, num_key, val, var) != SUCCESS) {
-                            zval_ptr_dtor(val);
+                        zval val;
+                        //MSGPACK_CONVERT_COPY_ZVAL(val, &data);
+                        if (msgpack_convert_long_to_properties(ret, &properties, num_key, &val, var) != SUCCESS) {
+                            zval_ptr_dtor(&val);
                             MSGPACK_WARNING(
                                     "[msgpack] (%s) "
                                     "illegal offset type, skip this decoding",
@@ -497,20 +469,18 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
             } else {
                 HashPosition valpos;
                 int (*convert_function)(zval *, zval *, zval **) = NULL;
-                zval **arydata, *aryval;
+                zval **arydata, aryval, *aryval_p;
+                aryval_p = &aryval;
 
                 ZEND_HASH_FOREACH_KEY_VAL(ret, num_key, str_key, data) {
-
-                    if (!num_key && !str_key) {
-                        break;
-                    } if (!data) {
+                    if (!data) {
                         MSGPACK_WARNING(
                                 "[msgpack] (%s) can't get data value by index",
                                 __FUNCTION__);
                         return FAILURE;
                     }
 
-                    switch (Z_TYPE_PP(data))
+                    switch (Z_TYPE_P(data))
                     {
                         case IS_ARRAY:
                             convert_function = msgpack_convert_array;
@@ -527,11 +497,10 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                     MSGPACK_CONVERT_COPY_ZVAL(aryval, &data);
 
                     if (convert_function) {
-                        zval *rv;
-                        ALLOC_INIT_ZVAL(rv);
+                        zval rv;
 
-                        if (convert_function(rv, data, &aryval) != SUCCESS) {
-                            zval_ptr_dtor(aryval);
+                        if (convert_function(&rv, data, &aryval_p) != SUCCESS) {
+                            zval_ptr_dtor(&aryval);
                             MSGPACK_WARNING(
                                 "[msgpack] (%s) "
                                 "convert failure in convert_object",
@@ -539,9 +508,9 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                             return FAILURE;
                         }
 
-                        zend_symtable_update( ret, str_key, rv);
+                        zend_symtable_update(ret, str_key, &rv);
                     } else  {
-                        zend_symtable_update(ret, str_key, aryval);
+                        zend_symtable_update(ret, str_key, &aryval);
                     }
                 } ZEND_HASH_FOREACH_END();
 
@@ -575,8 +544,6 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
 
 int msgpack_convert_template(zval *return_value, zval *tpl, zval **value)
 {
-    TSRMLS_FETCH();
-
     switch (Z_TYPE_P(tpl))
     {
         case IS_ARRAY:

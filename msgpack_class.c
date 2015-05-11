@@ -8,8 +8,8 @@
 #include "msgpack_errors.h"
 
 typedef struct {
-    zend_object object;
     long php_only;
+    zend_object object;
 } php_msgpack_base_t;
 
 typedef struct {
@@ -183,10 +183,12 @@ zend_object *php_msgpack_base_new(zend_class_entry *ce TSRMLS_DC) {
     intern->object.handlers = &msgpack_handlers;
     return &intern->object;
 }
-static void php_msgpack_base_free(php_msgpack_base_t *base TSRMLS_DC)
-{
-    zend_object_std_dtor(&base->object TSRMLS_CC);
-    efree(base);
+static void php_msgpack_base_free(zend_object *object) {
+    php_msgpack_base_t *intern = msgpack_base_fetch_object(object);
+    if (!intern) {
+        return;
+    }
+    zend_object_std_dtor(&intern->object);
 }
 
 zend_object *php_msgpack_unpacker_new(zend_class_entry *ce TSRMLS_DC) {
@@ -277,39 +279,31 @@ static ZEND_METHOD(msgpack, pack)
 
 static ZEND_METHOD(msgpack, unpack)
 {
-    char *str;
-    int str_len;
+    zend_string *str;
     zval *object = NULL;
     int php_only = MSGPACK_G(php_only);
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "s|z",
-            &str, &str_len, &object) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S|z", &str, &object) == FAILURE) {
         return;
     }
 
-    if (!str_len)
-    {
-        RETURN_FALSE;
+    if (!str) {
+        RETURN_NULL();
     }
 
     MSGPACK_G(php_only) = base->php_only;
 
-    if (object == NULL)
-    {
-        php_msgpack_unserialize(return_value, str, str_len TSRMLS_CC);
-    }
-    else
-    {
-        zval *zv;
+    if (object == NULL) {
+        php_msgpack_unserialize(return_value, str->val, str->len TSRMLS_CC);
+    } else {
+        zval zv, *zv_p;
+        zv_p = &zv;
 
-        php_msgpack_unserialize(zv, str, str_len TSRMLS_CC);
+        php_msgpack_unserialize(&zv, str->val, str->len TSRMLS_CC);
 
-        if (msgpack_convert_template(return_value, object, &zv) != SUCCESS)
-        {
-            RETURN_FALSE;
+        if (msgpack_convert_template(return_value, object, &zv_p) != SUCCESS) {
+            RETURN_NULL();
         }
     }
 
@@ -608,6 +602,7 @@ void msgpack_init_class()
     msgpack_ce->create_object = php_msgpack_base_new;
     memcpy(&msgpack_handlers, zend_get_std_object_handlers(),sizeof msgpack_handlers);
     msgpack_handlers.offset = XtOffsetOf(php_msgpack_base_t, object);
+    msgpack_handlers.free_obj = php_msgpack_base_free;
 
     zend_declare_class_constant_long(msgpack_ce, ZEND_STRS("OPT_PHPONLY") - 1, MSGPACK_CLASS_OPT_PHPONLY TSRMLS_CC);
 
