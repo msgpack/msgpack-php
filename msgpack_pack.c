@@ -182,7 +182,7 @@ inline static void msgpack_serialize_array(
 
     if (object)
     {
-        ht = Z_OBJPROP_P(val);
+        ht = Z_OBJPROP_P(Z_REF_AWARE_P(val));
     }
     else
     {
@@ -321,16 +321,15 @@ inline static void msgpack_serialize_object(
     smart_string *buf, zval *val, HashTable *var_hash,
     char* class_name, uint32_t name_len, zend_bool incomplete_class TSRMLS_DC)
 {
-    zval retval;
-    zval fname;
+    zval retval, fname;
     int res;
     zend_class_entry *ce = NULL;
 
     zend_string *sleep_zstring = zend_string_init("__sleep", sizeof("__sleep") - 1, 0);
     ZVAL_STRING(&fname, "__sleep");
 
-    if (Z_OBJ_P(val)->ce) {
-        ce = Z_OBJCE_P(val);
+    if (Z_OBJ_P(Z_REF_AWARE_P(val))->ce) {
+        ce = Z_OBJCE_P(Z_REF_AWARE_P(val));
     }
 
     if (ce && ce->serialize != NULL) {
@@ -466,7 +465,7 @@ void msgpack_serialize_zval(
         case IS_OBJECT:
             {
                 PHP_CLASS_ATTRIBUTES;
-                PHP_SET_CLASS_ATTRIBUTES(val);
+                PHP_SET_CLASS_ATTRIBUTES(Z_REF_AWARE_P(val));
 
                 msgpack_serialize_object(
                     buf, val, var_hash, class_name->val, class_name->len,
