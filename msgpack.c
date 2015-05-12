@@ -246,6 +246,7 @@ PHP_MSGPACK_API void php_msgpack_unserialize(
             break;
         case MSGPACK_UNPACK_CONTINUE:
             msgpack_unserialize_var_destroy(&var_hash, 0, return_value);
+            ZVAL_FALSE(return_value);
             MSGPACK_WARNING(
                 "[msgpack] (%s) Insufficient data for unserializing",
                 __FUNCTION__);
