@@ -333,24 +333,18 @@ inline static void msgpack_serialize_object(
         ce = Z_OBJCE_P(val);
     }
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
-    if (ce && ce->serialize != NULL)
-    {
+    if (ce && ce->serialize != NULL) {
         unsigned char *serialized_data = NULL;
-        uint32_t serialized_length;
+        size_t serialized_length;
 
-        if (ce->serialize(
-                val, &serialized_data, &serialized_length,
-                (zend_serialize_data *)var_hash TSRMLS_CC) == SUCCESS &&
-            !EG(exception))
-        {
+        if (ce->serialize(val, &serialized_data, &serialized_length, (zend_serialize_data *)var_hash) == SUCCESS && !EG(exception)) {
             /* has custom handler */
             msgpack_pack_map(buf, 2);
 
             msgpack_pack_nil(buf);
             msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT);
 
-            msgpack_serialize_string(buf, (char *)ce->name, ce->name_length);
+            msgpack_serialize_string(buf, ce->name->val, ce->name->len);
             msgpack_pack_raw(buf, serialized_length);
             msgpack_pack_raw_body(buf, serialized_data, serialized_length);
         } else {
@@ -363,7 +357,6 @@ inline static void msgpack_serialize_object(
 
         return;
     }
-#endif
 
     if (ce && ce != PHP_IC_ENTRY &&
         zend_hash_exists(&ce->function_table, sleep_zstring)) {

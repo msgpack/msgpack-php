@@ -479,10 +479,8 @@ int msgpack_unserialize_map_item(
                         return 0;
                     }
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
                     /* implementing Serializable */
-                    if (ce->unserialize == NULL)
-                    {
+                    if (ce->unserialize == NULL) {
                         MSGPACK_WARNING(
                             "[msgpack] (%s) Class %s has no unserializer",
                             __FUNCTION__, ce->name);
@@ -492,11 +490,7 @@ int msgpack_unserialize_map_item(
                         return 0;
                     }
 
-                    ce->unserialize(
-                        container, ce,
-                        (const unsigned char *)Z_STRVAL_P(val),
-                        Z_STRLEN_P(val) + 1, NULL TSRMLS_CC);
-#endif
+                    ce->unserialize(*container, ce, Z_STRVAL_P(val), Z_STRLEN_P(val) + 1, NULL);
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 
