@@ -580,7 +580,7 @@ int msgpack_unserialize_map_item(
                 zval_ptr_dtor(key);
                 break;
             case IS_STRING:
-                if ((val = zend_symtable_update(HASH_OF(*container), zval_get_string(key), val)) == NULL) {
+                if ((val = zend_hash_update(HASH_OF(*container), Z_STR(*key), val)) == NULL) {
                     zval_ptr_dtor(val);
                     MSGPACK_WARNING(
                             "[msgpack] (%s) illegal offset type, skip this decoding",
