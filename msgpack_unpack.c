@@ -141,7 +141,10 @@ inline static zend_class_entry* msgpack_unserialize_class(
     do
     {
         /* Try to find class directly */
-        if ((ce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) != NULL) {
+        zend_string *class_zstring = zend_string_init(class_name, name_len, 0);
+        ce = zend_lookup_class(class_zstring);
+        zend_string_release(class_zstring);
+        if (ce != NULL) {
             break;
         }
 
@@ -559,8 +562,13 @@ int msgpack_unserialize_map_item(
     if (Z_TYPE_P(*container) == IS_OBJECT) {
         const char *class_name, *prop_name;
         size_t prop_len;
-        zend_unmangle_property_name_ex(zval_get_string(key), &class_name, &prop_name, &prop_len);
+        zend_string *key_zstring = zval_get_string(key);
+
+        zend_unmangle_property_name_ex(key_zstring, &class_name, &prop_name, &prop_len);
         zend_update_property(Z_OBJ_P(*container)->ce, *container, prop_name, prop_len, val);
+
+        zval_ptr_dtor(key);
+        zend_string_release(key_zstring);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
@@ -616,10 +624,12 @@ int msgpack_unserialize_map_item(
         unpack->deps--;
 
         /* wakeup */
+        zend_string *wakeup_zstring = zend_string_init("__wakeup", sizeof("__wakeup") - 1, 0);
+
         if (MSGPACK_G(php_only) &&
             Z_TYPE_P(*container) == IS_OBJECT &&
             Z_OBJCE_P(*container) != PHP_IC_ENTRY &&
-            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, zend_string_init("__wakeup", sizeof("__wakeup") - 1, 0)))
+            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, wakeup_zstring))
         {
             zval f, h;
             ZVAL_STRING(&f, "__wakeup");
@@ -627,6 +637,7 @@ int msgpack_unserialize_map_item(
             call_user_function_ex(CG(function_table), *container, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
             zval_ptr_dtor(&h);
         }
+        zend_string_release(wakeup_zstring);
     }
 
     return 0;

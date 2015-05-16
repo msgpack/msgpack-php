@@ -358,10 +358,13 @@ inline static void msgpack_serialize_object(
     }
 
     if (ce && ce != PHP_IC_ENTRY &&
-        zend_hash_exists(&ce->function_table, sleep_zstring)) {
-        res = call_user_function_ex(CG(function_table), val, &fname, &retval, 0, 0, 1, NULL);
+        zend_hash_exists(&ce->function_table, sleep_zstring))
+    {
+        zend_string_release(sleep_zstring);
+        zval_ptr_dtor(&fname);
 
-        if (res == SUCCESS && !EG(exception)) {
+        if ((res = call_user_function_ex(CG(function_table), val, &fname, &retval, 0, 0, 1, NULL)) == SUCCESS && !EG(exception))
+        {
             if (HASH_OF(&retval)) {
                 msgpack_serialize_class(
                         buf, val, &retval, var_hash,
@@ -376,6 +379,9 @@ inline static void msgpack_serialize_object(
             zval_ptr_dtor(&retval);
             return;
         }
+    } else {
+        zval_ptr_dtor(&fname);
+        zend_string_release(sleep_zstring);
     }
 
     msgpack_serialize_array(
