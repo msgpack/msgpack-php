@@ -16,12 +16,6 @@ typedef struct {
     void *next;
 } var_entries;
 
-typedef struct {
-    zval data[VAR_ENTRIES_MAX];
-    long used_slots;
-    void *next;
-} var_entries_dtor;
-
 #define MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _count) \
     msgpack_stack_pop(_unpack->var_hash, _count);        \
     _unpack->stack[_unpack->deps-1]--;                   \
@@ -49,7 +43,7 @@ inline static void msgpack_var_push(msgpack_unserialize_data_t *var_hashx, zval 
     }
 
     if (!var_hash) {
-        var_hash = emalloc(sizeof(var_entries));
+        var_hash = ecalloc(1, sizeof(var_entries));
         var_hash->used_slots = 0;
         var_hash->next = 0;
 
@@ -87,7 +81,7 @@ inline static int msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long
 
 inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zval **rval)
 {
-    var_entries_dtor *var_hash, *prev = NULL;
+    var_entries *var_hash, *prev = NULL;
 
     if (!var_hashx) {
         return;
@@ -101,7 +95,7 @@ inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zva
     }
 
     if (!var_hash) {
-        var_hash = emalloc(sizeof(var_entries_dtor));
+        var_hash = ecalloc(1, sizeof(var_entries));
         var_hash->used_slots = 0;
         var_hash->next = 0;
 
@@ -119,7 +113,7 @@ inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zva
 inline static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, long count)
 {
     long i;
-    var_entries_dtor *var_hash = var_hashx->first_dtor;
+    var_entries *var_hash = var_hashx->first_dtor;
 
     while (var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
         var_hash = var_hash->next;
@@ -245,26 +239,25 @@ void msgpack_unserialize_var_destroy(
     if (var_hash) {
         var_empty = 0;
         ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
-        //zval_ptr_dtor(&var_hash->data[0]);
     }
     while (var_hash) {
         next = var_hash->next;
-        //efree(var_hash);
+        efree(var_hash);
         var_hash = next;
     }
 
 
-    var_entries_dtor *var_hash_dtor = var_hashx->first_dtor;
+    var_hash = var_hashx->first_dtor;
     if (var_empty) {
-        ZVAL_DUP(return_value, &var_hash_dtor->data[0]);
+        ZVAL_DUP(return_value, &var_hash->data[0]);
     }
-    while (var_hash_dtor) {
-        for (i = var_hash_dtor->used_slots - 1; i >= 0; i--) {
-            zval_ptr_dtor(&var_hash_dtor->data[i]);
+    while (var_hash) {
+        for (i = var_hash->used_slots - 1; i >= 0; i--) {
+            zval_ptr_dtor(&var_hash->data[i]);
         }
-        next = var_hash_dtor->next;
-        efree(var_hash_dtor);
-        var_hash_dtor = next;
+        next = var_hash->next;
+        efree(var_hash);
+        var_hash = next;
     }
 
 }
