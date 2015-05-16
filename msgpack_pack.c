@@ -325,9 +325,7 @@ inline static void msgpack_serialize_object(
     zval retval, fname;
     int res;
     zend_class_entry *ce = NULL;
-
-    zend_string *sleep_zstring = zend_string_init("__sleep", sizeof("__sleep") - 1, 0);
-    ZVAL_STRING(&fname, "__sleep");
+    zend_string *sleep_zstring;
 
     if (Z_OBJ_P(Z_REF_AWARE_P(val))->ce) {
         ce = Z_OBJCE_P(Z_REF_AWARE_P(val));
@@ -357,6 +355,9 @@ inline static void msgpack_serialize_object(
 
         return;
     }
+
+    sleep_zstring = zend_string_init("__sleep", sizeof("__sleep") - 1, 0);
+    ZVAL_STRING(&fname, "__sleep");
 
     if (ce && ce != PHP_IC_ENTRY &&
         zend_hash_exists(&ce->function_table, sleep_zstring))
