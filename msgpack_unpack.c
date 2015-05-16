@@ -635,7 +635,9 @@ int msgpack_unserialize_map_item(
             ZVAL_STRING(&f, "__wakeup");
 
             call_user_function_ex(CG(function_table), *container, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
+
             zval_ptr_dtor(&h);
+            zval_ptr_dtor(&f);
         }
         zend_string_release(wakeup_zstring);
     }
