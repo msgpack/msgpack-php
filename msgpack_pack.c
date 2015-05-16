@@ -366,7 +366,6 @@ inline static void msgpack_serialize_object(
 
         if ((res = call_user_function_ex(CG(function_table), val, &fname, &retval, 0, 0, 1, NULL)) == SUCCESS && !EG(exception))
         {
-            zval_ptr_dtor(&fname);
             if (HASH_OF(&retval)) {
                 msgpack_serialize_class(
                         buf, val, &retval, var_hash,

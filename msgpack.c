@@ -152,7 +152,7 @@ PS_SERIALIZER_ENCODE_FUNC(msgpack)
     msgpack_serialize_data_t var_hash;
 
     msgpack_serialize_var_init(&var_hash);
-    msgpack_serialize_zval(&buf, &PS(http_session_vars), var_hash TSRMLS_CC);
+    msgpack_serialize_zval(&buf, &PS(http_session_vars), var_hash);
     msgpack_serialize_var_destroy(&var_hash);
 
     z_string = zend_string_init(buf.c, buf.len, 0);
@@ -166,8 +166,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
     int ret;
     zend_string *key_str;
     ulong key_long;
-    zval *tmp;
-    zval *value;
+    zval tmp, *value;
     size_t off = 0;
     msgpack_unpack_t mp;
     msgpack_unserialize_data_t var_hash;
@@ -176,15 +175,15 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 
     msgpack_unserialize_var_init(&var_hash);
 
-    mp.user.retval = (zval *)tmp;
-    mp.user.var_hash = (msgpack_unserialize_data_t *)&var_hash;
+    mp.user.retval = &tmp;
+    mp.user.var_hash = &var_hash;
 
-    ret = template_execute(&mp, (char *)val, (size_t)vallen, &off);
+    ret = template_execute(&mp, val, vallen, &off);
 
     if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
-        msgpack_unserialize_var_destroy(&var_hash, 0, tmp);
+        msgpack_unserialize_var_destroy(&var_hash, 0, &tmp);
 
-        ZEND_HASH_FOREACH_KEY_VAL(HASH_OF(tmp), key_long, key_str, value) {
+        ZEND_HASH_FOREACH_KEY_VAL(HASH_OF(&tmp), key_long, key_str, value) {
             if (key_str) {
                 php_set_session_var(key_str, value, NULL);
                 php_add_session_var(key_str);
@@ -194,10 +193,10 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
         } ZEND_HASH_FOREACH_END();
     }
     else {
-        msgpack_unserialize_var_destroy(&var_hash, 1, tmp);
+        msgpack_unserialize_var_destroy(&var_hash, 1, &tmp);
     }
 
-    zval_ptr_dtor(tmp);
+    zval_ptr_dtor(&tmp);
 
     return SUCCESS;
 }

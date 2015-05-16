@@ -141,8 +141,7 @@ inline static zend_class_entry* msgpack_unserialize_class(
     int func_call_status;
     zend_string *class_zstring;
 
-    do
-    {
+    do {
         /* Try to find class directly */
         class_zstring = zend_string_init(class_name, name_len, 0);
         ce = zend_lookup_class(class_zstring);
