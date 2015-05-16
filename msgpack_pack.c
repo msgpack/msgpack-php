@@ -69,6 +69,7 @@ inline static int msgpack_var_add(
             ZVAL_LONG(&zv, -1);
             zend_hash_next_index_insert(var_hash, &zv);
         }
+        zend_string_release(zstring);
         return FAILURE;
     }
 
@@ -121,9 +122,8 @@ inline static void msgpack_serialize_class(
                         __FUNCTION__);
                 continue;
             }
-            if ((data = zend_hash_find(Z_OBJPROP_P(val),
-                            zend_string_init(Z_STRVAL_P(value), Z_STRLEN_P(value), 0))) != NULL)
-            {
+            zend_string *val_zstring = zval_get_string(value);
+            if ((data = zend_hash_find(Z_OBJPROP_P(val), val_zstring)) != NULL) {
                 msgpack_serialize_string(buf, Z_STRVAL_P(value), Z_STRLEN_P(value));
                 msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
             } else {
@@ -168,6 +168,7 @@ inline static void msgpack_serialize_class(
                     msgpack_serialize_zval(buf, nvalp, var_hash TSRMLS_CC);
               }
             }
+            zend_string_release(val_zstring);
         } ZEND_HASH_FOREACH_END();
     }
 }
