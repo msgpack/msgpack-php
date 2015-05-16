@@ -138,10 +138,13 @@ inline static zend_class_entry* msgpack_unserialize_class(
     zend_class_entry *ce;
     zend_bool incomplete_class = 0;
     zval user_func, retval, args[1], arg_func_name;
+    int func_call_status;
+    zend_string *class_zstring;
+
     do
     {
         /* Try to find class directly */
-        zend_string *class_zstring = zend_string_init(class_name, name_len, 0);
+        class_zstring = zend_string_init(class_name, name_len, 0);
         ce = zend_lookup_class(class_zstring);
         zend_string_release(class_zstring);
         if (ce != NULL) {
@@ -162,8 +165,11 @@ inline static zend_class_entry* msgpack_unserialize_class(
         ZVAL_STRING(&arg_func_name, class_name);
 
         args[0] = arg_func_name;
-        if (call_user_function_ex(CG(function_table), NULL, &user_func, &retval, 1, args, 0, NULL) != SUCCESS)
-        {
+
+        func_call_status = call_user_function_ex(CG(function_table), NULL, &user_func, &retval, 1, args, 0, NULL);
+        zval_ptr_dtor(&arg_func_name);
+        zval_ptr_dtor(&user_func);
+        if (func_call_status != SUCCESS) {
             MSGPACK_WARNING("[msgpack] (%s) defined (%s) but not found",
                             __FUNCTION__, class_name);
 
@@ -173,7 +179,8 @@ inline static zend_class_entry* msgpack_unserialize_class(
         }
 
         /* The callback function may have defined the class */
-        if ((ce = zend_lookup_class(zend_string_init(class_name, name_len, 0))) == NULL) {
+        class_zstring = zend_string_init(class_name, name_len, 0);
+        if ((ce = zend_lookup_class(class_zstring)) == NULL) {
             MSGPACK_WARNING("[msgpack] (%s) Function %s() hasn't defined "
                             "the class it was called for",
                             __FUNCTION__, class_name);
@@ -181,6 +188,7 @@ inline static zend_class_entry* msgpack_unserialize_class(
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
         }
+        zend_string_release(class_zstring);
     }
     while(0);
 

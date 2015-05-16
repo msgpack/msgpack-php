@@ -363,10 +363,10 @@ inline static void msgpack_serialize_object(
         zend_hash_exists(&ce->function_table, sleep_zstring))
     {
         zend_string_release(sleep_zstring);
-        zval_ptr_dtor(&fname);
 
         if ((res = call_user_function_ex(CG(function_table), val, &fname, &retval, 0, 0, 1, NULL)) == SUCCESS && !EG(exception))
         {
+            zval_ptr_dtor(&fname);
             if (HASH_OF(&retval)) {
                 msgpack_serialize_class(
                         buf, val, &retval, var_hash,
@@ -379,6 +379,7 @@ inline static void msgpack_serialize_object(
                 msgpack_pack_nil(buf);
             }
             zval_ptr_dtor(&retval);
+            zval_ptr_dtor(&fname);
             return;
         }
     } else {
