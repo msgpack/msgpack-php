@@ -566,13 +566,13 @@ int msgpack_unserialize_map_item(
         array_init(*container);
     }
 
-    if (Z_TYPE_P(*container) == IS_OBJECT) {
+    if (Z_TYPE_P(*container) == IS_OBJECT && Z_OBJCE_P(*container) != PHP_IC_ENTRY) {
         const char *class_name, *prop_name;
         size_t prop_len;
         zend_string *key_zstring = zval_get_string(key);
 
         zend_unmangle_property_name_ex(key_zstring, &class_name, &prop_name, &prop_len);
-        zend_update_property(Z_OBJ_P(*container)->ce, *container, prop_name, prop_len, val);
+        zend_update_property(Z_OBJCE_P(*container), *container, prop_name, prop_len, val);
 
         zval_ptr_dtor(key);
         zend_string_release(key_zstring);
@@ -636,7 +636,7 @@ int msgpack_unserialize_map_item(
         if (MSGPACK_G(php_only) &&
             Z_TYPE_P(*container) == IS_OBJECT &&
             Z_OBJCE_P(*container) != PHP_IC_ENTRY &&
-            zend_hash_exists(&Z_OBJ_P(*container)->ce->function_table, wakeup_zstring))
+            zend_hash_exists(&Z_OBJCE_P(*container)->function_table, wakeup_zstring))
         {
             zval f, h;
             ZVAL_STRING(&f, "__wakeup");

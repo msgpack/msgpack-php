@@ -88,7 +88,7 @@ static inline int  msgpack_convert_string_to_properties(
     TSRMLS_FETCH();
 
     ht = HASH_OF(object);
-    ce = Z_OBJ_P(object)->ce;
+    ce = Z_OBJCE_P(object);
 
     /* private */
     priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key, key_len - 1, 1);
@@ -333,7 +333,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
             }
             break;
         case IS_OBJECT:
-            ce = Z_OBJ_P(tpl)->ce;
+            ce = Z_OBJCE_P(tpl);
             break;
         default:
             MSGPACK_ERROR("[msgpack] (%s) object type is unsupported",
@@ -344,7 +344,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
     if (Z_TYPE_P(*value) == IS_OBJECT) {
         zend_class_entry *vce;
 
-        vce = Z_OBJ_P(tpl)->ce;
+        vce = Z_OBJCE_P(tpl);
         if (strcmp(ce->name->val, vce->name->val) == 0)
         {
             *return_value = **value;

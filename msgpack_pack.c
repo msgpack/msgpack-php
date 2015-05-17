@@ -49,7 +49,7 @@ inline static int msgpack_var_add(
     zend_string *zstring;
     zval zv;
 
-    if ((Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_OBJECT) && Z_OBJ_P(var)->ce) {
+    if ((Z_TYPE_P(Z_REF_AWARE_P(var)) == IS_OBJECT) && Z_OBJCE_P(var)) {
         p = zend_print_long_to_buf(
             id + sizeof(id) - 1,
             (((size_t)Z_OBJCE_P(Z_REF_AWARE_P(var)) << 5)
@@ -127,7 +127,7 @@ inline static void msgpack_serialize_class(
                 msgpack_serialize_string(buf, Z_STRVAL_P(value), Z_STRLEN_P(value));
                 msgpack_serialize_zval(buf, data, var_hash TSRMLS_CC);
             } else {
-                zend_class_entry *ce = Z_OBJ_P(val)->ce;
+                zend_class_entry *ce = Z_OBJCE_P(val);
                 if (ce) {
                     zend_string *priv_name, *prot_name;
                     do
@@ -327,7 +327,7 @@ inline static void msgpack_serialize_object(
     zend_class_entry *ce = NULL;
     zend_string *sleep_zstring;
 
-    if (Z_OBJ_P(Z_REF_AWARE_P(val))->ce) {
+    if (Z_OBJCE_P(Z_REF_AWARE_P(val))) {
         ce = Z_OBJCE_P(Z_REF_AWARE_P(val));
     }
 
