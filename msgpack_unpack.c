@@ -461,6 +461,7 @@ int msgpack_unserialize_map_item(
                 switch (Z_LVAL_P(val)) {
                     case MSGPACK_SERIALIZE_TYPE_REFERENCE:
                         ZVAL_MAKE_REF(*container);
+                        Z_ADDREF_P(*container);
                         break;
                     case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
                         unpack->type = MSGPACK_SERIALIZE_TYPE_RECURSIVE;
@@ -556,30 +557,26 @@ int msgpack_unserialize_map_item(
         }
     }
 
-    zend_bool container_is_ref = 0;
-    if (container != NULL && Z_ISREF_P(*container)) {
-        container_is_ref = 1;
-        ZVAL_DEREF(*container);
+    zval *container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
+
+    if (Z_TYPE_P(container_val) != IS_ARRAY && Z_TYPE_P(container_val) != IS_OBJECT) {
+        array_init(container_val);
     }
 
-    if (Z_TYPE_P(*container) != IS_ARRAY && Z_TYPE_P(*container) != IS_OBJECT) {
-        array_init(*container);
-    }
-
-    if (Z_TYPE_P(*container) == IS_OBJECT && Z_OBJCE_P(*container) != PHP_IC_ENTRY) {
+    if (Z_TYPE_P(container_val) == IS_OBJECT && Z_OBJCE_P(container_val) != PHP_IC_ENTRY) {
         const char *class_name, *prop_name;
         size_t prop_len;
         zend_string *key_zstring = zval_get_string(key);
 
         zend_unmangle_property_name_ex(key_zstring, &class_name, &prop_name, &prop_len);
-        zend_update_property(Z_OBJCE_P(*container), *container, prop_name, prop_len, val);
+        zend_update_property(Z_OBJCE_P(container_val), container_val, prop_name, prop_len, val);
 
         zval_ptr_dtor(key);
         zend_string_release(key_zstring);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
-                if ((val = zend_hash_index_update(HASH_OF(*container), Z_LVAL_P(key), val)) == NULL) {
+                if ((val = zend_hash_index_update(HASH_OF(container_val), Z_LVAL_P(key), val)) == NULL) {
                     zval_ptr_dtor(val);
                     MSGPACK_WARNING(
                             "[msgpack] (%s) illegal offset type, skip this decoding",
@@ -588,7 +585,7 @@ int msgpack_unserialize_map_item(
                 zval_ptr_dtor(key);
                 break;
             case IS_STRING:
-                if ((val = zend_hash_update(HASH_OF(*container), Z_STR(*key), val)) == NULL) {
+                if ((val = zend_hash_update(HASH_OF(container_val), Z_STR(*key), val)) == NULL) {
                     zval_ptr_dtor(val);
                     MSGPACK_WARNING(
                             "[msgpack] (%s) illegal offset type, skip this decoding",
@@ -600,26 +597,21 @@ int msgpack_unserialize_map_item(
                 MSGPACK_WARNING("[msgpack] (%s) illegal key type", __FUNCTION__);
 
                 if (MSGPACK_G(illegal_key_insert)) {
-                    if ((key = zend_hash_next_index_insert(HASH_OF(*container), key)) == NULL) {
+                    if ((key = zend_hash_next_index_insert(HASH_OF(container_val), key)) == NULL) {
                         zval_ptr_dtor(val);
                     }
-                    if ((val = zend_hash_next_index_insert(HASH_OF(*container), val)) == NULL) {
+                    if ((val = zend_hash_next_index_insert(HASH_OF(container_val), val)) == NULL) {
                         zval_ptr_dtor(val);
                     }
                 } else {
                     convert_to_string(key);
-                    if ((zend_symtable_update(HASH_OF(*container), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
+                    if ((zend_symtable_update(HASH_OF(container_val), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
                         zval_ptr_dtor(val);
                     }
                     zval_ptr_dtor(key);
                 }
                 break;
         }
-    }
-
-    if (container_is_ref) {
-        ZVAL_MAKE_REF(*container);
-        Z_TRY_ADDREF_P(*container);
     }
 
     msgpack_stack_pop(unpack->var_hash, 2);
@@ -634,14 +626,14 @@ int msgpack_unserialize_map_item(
         zend_string *wakeup_zstring = zend_string_init("__wakeup", sizeof("__wakeup") - 1, 0);
 
         if (MSGPACK_G(php_only) &&
-            Z_TYPE_P(*container) == IS_OBJECT &&
-            Z_OBJCE_P(*container) != PHP_IC_ENTRY &&
-            zend_hash_exists(&Z_OBJCE_P(*container)->function_table, wakeup_zstring))
+            Z_TYPE_P(container_val) == IS_OBJECT &&
+            Z_OBJCE_P(container_val) != PHP_IC_ENTRY &&
+            zend_hash_exists(&Z_OBJCE_P(container_val)->function_table, wakeup_zstring))
         {
             zval f, h;
             ZVAL_STRING(&f, "__wakeup");
 
-            call_user_function_ex(CG(function_table), *container, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
+            call_user_function_ex(CG(function_table), container_val, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
 
             zval_ptr_dtor(&h);
             zval_ptr_dtor(&f);
