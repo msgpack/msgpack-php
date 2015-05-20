@@ -24,47 +24,6 @@ typedef struct {
     int error;
 } php_msgpack_unpacker_t;
 
-#if ZEND_MODULE_API_NO >= 20060613
-#   define MSGPACK_METHOD_BASE(classname, name) zim_##classname##_##name
-#else
-#   define MSGPACK_METHOD_BASE(classname, name) zif_##classname##_##name
-#endif
-
-#if ZEND_MODULE_API_NO >= 20090115
-#   define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
-#   define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
-#   define PUSH_EO_PARAM()
-#   define POP_EO_PARAM()
-#else
-#   define PUSH_PARAM(arg) zend_ptr_stack_push(&EG(argument_stack), arg)
-#   define POP_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
-#   define PUSH_EO_PARAM() zend_ptr_stack_push(&EG(argument_stack), NULL)
-#   define POP_EO_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
-#endif
-
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION > 0)
-#define MSGPACK_METHOD_HELPER(classname, name, retval, thisptr, num, param) \
-    PUSH_PARAM(param); PUSH_PARAM((void*)num);                              \
-    PUSH_EO_PARAM();                                                        \
-    MSGPACK_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
-    POP_EO_PARAM();                                                         \
-    POP_PARAM(); POP_PARAM();
-#define MSGPACK_METHOD(classname, name, retval, thisptr) \
-    MSGPACK_METHOD_BASE(classname, name)(0, retval, NULL, thisptr, 0 TSRMLS_CC)
-#else
-#define MSGPACK_METHOD_HELPER(classname, name, retval, thisptr, num, param) \
-    PUSH_PARAM(param); PUSH_PARAM((void*)num);                              \
-    PUSH_EO_PARAM();                                                        \
-    MSGPACK_METHOD_BASE(classname, name)(num, retval, thisptr, 0 TSRMLS_CC); \
-    POP_EO_PARAM();                                                         \
-    POP_PARAM(); POP_PARAM();
-#define MSGPACK_METHOD(classname, name, retval, thisptr) \
-    MSGPACK_METHOD_BASE(classname, name)(0, retval, thisptr, 0 TSRMLS_CC)
-#endif
-
-#define MSGPACK_METHOD1(classname, name, retval, thisptr, param1) \
-    MSGPACK_METHOD_HELPER(classname, name, retval, thisptr, 1, param1);
-
 static inline php_msgpack_base_t *msgpack_base_fetch_object(zend_object *obj) {
     return (php_msgpack_base_t *)((char*)(obj) - XtOffsetOf(php_msgpack_base_t, object));
 }
@@ -312,16 +271,16 @@ static ZEND_METHOD(msgpack, unpack)
 
 static ZEND_METHOD(msgpack, unpacker)
 {
-    zval temp, *opt;
+    zval temp, args[1], func_name, construct_return;
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
-    ZVAL_BOOL(opt, base->php_only);
+    ZVAL_BOOL(&args[0], base->php_only);
+    ZVAL_STRING(&func_name, "__construct");
 
     object_init_ex(return_value, msgpack_unpacker_ce);
+    call_user_function_ex(CG(function_table), return_value, &func_name, &construct_return, 1, args, 0, NULL);
 
-    //MSGPACK_METHOD1(msgpack_unpacker, __construct, &temp, return_value, opt);
-
-    zval_ptr_dtor(opt);
+    zval_ptr_dtor(&func_name);
 }
 
 /* MessagePackUnpacker */
@@ -330,9 +289,7 @@ static ZEND_METHOD(msgpack_unpacker, __construct)
     zend_bool php_only = MSGPACK_G(php_only);
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "|b", &php_only) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &php_only) == FAILURE) {
         return;
     }
 
@@ -350,8 +307,7 @@ static ZEND_METHOD(msgpack_unpacker, __construct)
 
     msgpack_unserialize_var_init(&unpacker->var_hash);
 
-    (&unpacker->mp)->user.var_hash =
-        (msgpack_unserialize_data_t *)&unpacker->var_hash;
+    (&unpacker->mp)->user.var_hash = (msgpack_unserialize_data_t *)&unpacker->var_hash;
 }
 
 static ZEND_METHOD(msgpack_unpacker, __destruct)
@@ -359,9 +315,7 @@ static ZEND_METHOD(msgpack_unpacker, __destruct)
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
     smart_string_free(&unpacker->buffer);
-
-    if (unpacker->retval != NULL)
-    {
+    if (unpacker->retval != NULL) {
         zval_ptr_dtor(unpacker->retval);
     }
 

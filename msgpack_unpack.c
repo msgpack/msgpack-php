@@ -251,7 +251,9 @@ void msgpack_unserialize_var_destroy(
     var_entries *var_hash = var_hashx->first;
     if (var_hash) {
         var_empty = 0;
-        ZVAL_COPY(return_value, &var_hash->data[0]);
+        if (return_value != NULL) {
+            ZVAL_COPY(return_value, &var_hash->data[0]);
+        }
         zval_ptr_dtor(&var_hash->data[0]);
     }
     while (var_hash) {
@@ -262,7 +264,7 @@ void msgpack_unserialize_var_destroy(
 
 
     var_hash = var_hashx->first_dtor;
-    if (var_empty) {
+    if (var_empty && return_value != NULL) {
         ZVAL_DUP(return_value, &var_hash->data[0]);
     }
     while (var_hash) {

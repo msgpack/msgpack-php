@@ -204,6 +204,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 
 PHP_MSGPACK_API void php_msgpack_serialize(smart_string *buf, zval *val TSRMLS_DC)
 {
+
     msgpack_serialize_data_t var_hash;
 
     msgpack_serialize_var_init(&var_hash);
