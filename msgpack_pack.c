@@ -264,9 +264,9 @@ inline static void msgpack_serialize_array(
                 if (key_str && incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
                     continue;
                 }
-                if (key_str) {
+                if (key_str && hash) {
                     msgpack_serialize_string(buf, key_str->val, key_str->len);
-                } else {
+                } else if (hash) {
                     msgpack_pack_long(buf, key_long);
                 }
 
