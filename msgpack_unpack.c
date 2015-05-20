@@ -248,7 +248,8 @@ void msgpack_unserialize_var_destroy(
     var_entries *var_hash = var_hashx->first;
     if (var_hash) {
         var_empty = 0;
-        ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
+        ZVAL_COPY(return_value, &var_hash->data[0]);
+        zval_ptr_dtor(&var_hash->data[0]);
     }
     while (var_hash) {
         next = var_hash->next;
@@ -461,7 +462,6 @@ int msgpack_unserialize_map_item(
                 switch (Z_LVAL_P(val)) {
                     case MSGPACK_SERIALIZE_TYPE_REFERENCE:
                         ZVAL_MAKE_REF(*container);
-                        Z_ADDREF_P(*container);
                         break;
                     case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
                         unpack->type = MSGPACK_SERIALIZE_TYPE_RECURSIVE;
@@ -542,12 +542,15 @@ int msgpack_unserialize_map_item(
 
                     *container = rval;
 
-                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT && Z_ISREF_P(*container)) {
+
+                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT) {
                         ZVAL_UNREF(*container);
-                    }
-                    else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE && Z_ISREF_P(*container)) {
+                    } else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
                         ZVAL_MAKE_REF(*container);
                     }
+
+                    if (Z_REFCOUNTED_P(*container)) Z_TRY_ADDREF_P(*container);
+
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 
