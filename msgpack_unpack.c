@@ -137,9 +137,12 @@ inline static zend_class_entry* msgpack_unserialize_class(
 {
     zend_class_entry *ce;
     zend_bool incomplete_class = 0;
-    zval user_func, retval, args[1], arg_func_name;
+    zval user_func, retval, args[1], arg_func_name, *container_val;
     int func_call_status;
     zend_string *class_zstring;
+
+    container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
+
 
     do {
         /* Try to find class directly */
@@ -196,12 +199,12 @@ inline static zend_class_entry* msgpack_unserialize_class(
         return NULL;
     }
 
-    object_init_ex(*container, ce);
+    object_init_ex(container_val, ce);
 
     /* store incomplete class name */
     if (incomplete_class)
     {
-        php_store_class_name(*container, class_name, name_len);
+        php_store_class_name(container_val, class_name, name_len);
     }
 
     return ce;
