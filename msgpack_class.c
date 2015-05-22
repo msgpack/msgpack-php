@@ -13,15 +13,15 @@ typedef struct {
 } php_msgpack_base_t;
 
 typedef struct {
-    zend_object object;
     smart_string buffer;
-    zval *retval;
+    zval retval;
     long offset;
     msgpack_unpack_t mp;
     msgpack_unserialize_data_t var_hash;
     long php_only;
     zend_bool finished;
     int error;
+    zend_object object;
 } php_msgpack_unpacker_t;
 
 static inline php_msgpack_base_t *msgpack_base_fetch_object(zend_object *obj) {
@@ -161,11 +161,13 @@ zend_object *php_msgpack_unpacker_new(zend_class_entry *ce TSRMLS_DC) {
     return &intern->object;
 }
 
-static void php_msgpack_unpacker_free(
-    php_msgpack_unpacker_t *unpacker TSRMLS_DC)
+static void php_msgpack_unpacker_free(zend_object *object)
 {
-    zend_object_std_dtor(&unpacker->object TSRMLS_CC);
-    efree(unpacker);
+    php_msgpack_unpacker_t *intern = msgpack_unpacker_fetch_object(object);
+    if (!intern) {
+        return;
+    }
+    zend_object_std_dtor(&intern->object);
 }
 
 
@@ -298,7 +300,6 @@ static ZEND_METHOD(msgpack_unpacker, __construct)
     unpacker->buffer.c = NULL;
     unpacker->buffer.len = 0;
     unpacker->buffer.a = 0;
-    unpacker->retval = NULL;
     unpacker->offset = 0;
     unpacker->finished = 0;
     unpacker->error = 0;
@@ -307,7 +308,7 @@ static ZEND_METHOD(msgpack_unpacker, __construct)
 
     msgpack_unserialize_var_init(&unpacker->var_hash);
 
-    (&unpacker->mp)->user.var_hash = (msgpack_unserialize_data_t *)&unpacker->var_hash;
+    (&unpacker->mp)->user.var_hash = &unpacker->var_hash;
 }
 
 static ZEND_METHOD(msgpack_unpacker, __destruct)
@@ -315,11 +316,9 @@ static ZEND_METHOD(msgpack_unpacker, __destruct)
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
     smart_string_free(&unpacker->buffer);
-    if (unpacker->retval != NULL) {
-        zval_ptr_dtor(unpacker->retval);
-    }
+    zval_ptr_dtor(&unpacker->retval);
 
-    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
+    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
 }
 
 static ZEND_METHOD(msgpack_unpacker, setOption)
@@ -373,63 +372,43 @@ static ZEND_METHOD(msgpack_unpacker, execute)
 {
     char *str = NULL, *data;
     long str_len = 0;
-    zval *offset = NULL;
-    int ret;
+    int ret, error_display = MSGPACK_G(error_display), php_only = MSGPACK_G(php_only);
     size_t len, off;
-    int error_display = MSGPACK_G(error_display);
-    int php_only = MSGPACK_G(php_only);
+    zval *offset = NULL;
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "|sz/",
-            &str, &str_len, &offset) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sz/", &str, &str_len, &offset) == FAILURE) {
         return;
     }
 
-    if (str != NULL)
-    {
-        data = (char *)str;
-        len = (size_t)str_len;
-        if (offset != NULL)
-        {
+    if (str) {
+        data = str;
+        len = str_len;
+        if (offset != NULL) {
             off = Z_LVAL_P(offset);
-        }
-        else
-        {
+        } else {
             off = 0;
         }
-    }
-    else
-    {
-        data = (char *)unpacker->buffer.c;
+    } else {
+        data = unpacker->buffer.c;
         len = unpacker->buffer.len;
         off = unpacker->offset;
     }
 
-    if (unpacker->retval == NULL)
-    {
-        zval zv;
-        unpacker->retval = &zv;
-    }
-    else if (unpacker->finished)
-    {
-        zval_ptr_dtor(unpacker->retval);
+    if (unpacker->finished) {
+        zval_ptr_dtor(&unpacker->retval);
 
-        msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
+        msgpack_unserialize_set_return_value(&unpacker->var_hash, &unpacker->retval);
+        msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
         unpacker->error = 0;
-
-        zval zv;
-        unpacker->retval = &zv;
 
         template_init(&unpacker->mp);
 
         msgpack_unserialize_var_init(&unpacker->var_hash);
 
-        (&unpacker->mp)->user.var_hash =
-            (msgpack_unserialize_data_t *)&unpacker->var_hash;
+        (&unpacker->mp)->user.var_hash = &unpacker->var_hash;
     }
-    (&unpacker->mp)->user.retval = (zval *)unpacker->retval;
+    (&unpacker->mp)->user.retval = &unpacker->retval;
 
     MSGPACK_G(error_display) = 0;
     MSGPACK_G(php_only) = unpacker->php_only;
@@ -439,20 +418,15 @@ static ZEND_METHOD(msgpack_unpacker, execute)
     MSGPACK_G(error_display) = error_display;
     MSGPACK_G(php_only) = php_only;
 
-    if (str != NULL)
-    {
-        if (offset != NULL)
-        {
+    if (str != NULL) {
+        if (offset != NULL) {
             ZVAL_LONG(offset, off);
         }
-    }
-    else
-    {
+    } else {
         unpacker->offset = off;
     }
 
-    switch (ret)
-    {
+    switch (ret) {
         case MSGPACK_UNPACK_EXTRA_BYTES:
         case MSGPACK_UNPACK_SUCCESS:
             unpacker->finished = 1;
@@ -466,38 +440,35 @@ static ZEND_METHOD(msgpack_unpacker, execute)
 
 static ZEND_METHOD(msgpack_unpacker, data)
 {
-    zval *object = NULL;
+    zval *object = NULL, func_name, reset_return;
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "|z", &object) == FAILURE)
-    {
+    if (zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "|z", &object) == FAILURE) {
         return;
     }
 
-    if (unpacker->retval != NULL)
-    {
-        if (object == NULL)
-        {
-            ZVAL_ZVAL(return_value, unpacker->retval, 1, 0);
-        }
-        else
-        {
-            zval *zv;
-
-            ZVAL_ZVAL(zv, unpacker->retval, 1, 0);
-
-            if (msgpack_convert_object(return_value, object, &zv) != SUCCESS)
-            {
-                RETURN_NULL();
-            }
-        }
-
-        //MSGPACK_METHOD(msgpack_unpacker, reset, NULL, getThis());
-
-        return;
+    if (unpacker->finished) {
+        msgpack_unserialize_set_return_value(&unpacker->var_hash, &unpacker->retval);
     }
 
+    if (object == NULL) {
+        ZVAL_ZVAL(return_value, &unpacker->retval, 1, 0);
+    } else {
+        zval zv, *zv_p;
+        zv_p = &zv;
+
+        ZVAL_ZVAL(&zv, &unpacker->retval, 1, 0);
+
+        if (msgpack_convert_object(return_value, object, &zv_p) != SUCCESS) {
+            RETURN_NULL();
+        }
+    }
+
+    ZVAL_STRING(&func_name, "reset");
+    call_user_function_ex(CG(function_table), getThis(), &func_name, &reset_return, 0, NULL, 0, NULL);
+    zval_ptr_dtor(&func_name);
+
+    return;
     RETURN_FALSE;
 }
 
@@ -506,8 +477,7 @@ static ZEND_METHOD(msgpack_unpacker, reset)
     smart_string buffer = {0};
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (unpacker->buffer.len > unpacker->offset)
-    {
+    if (unpacker->buffer.len > unpacker->offset) {
         smart_string_appendl(&buffer, unpacker->buffer.c + unpacker->offset,
                           unpacker->buffer.len - unpacker->offset);
     }
@@ -520,20 +490,13 @@ static ZEND_METHOD(msgpack_unpacker, reset)
     unpacker->offset = 0;
     unpacker->finished = 0;
 
-    if (buffer.len > 0)
-    {
+    if (buffer.len > 0) {
         smart_string_appendl(&unpacker->buffer, buffer.c, buffer.len);
     }
 
     smart_string_free(&buffer);
 
-    if (unpacker->retval != NULL)
-    {
-        zval_ptr_dtor(unpacker->retval);
-        unpacker->retval = NULL;
-    }
-
-    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error, unpacker->retval);
+    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
     unpacker->error = 0;
 
 
@@ -541,8 +504,7 @@ static ZEND_METHOD(msgpack_unpacker, reset)
 
     msgpack_unserialize_var_init(&unpacker->var_hash);
 
-    (&unpacker->mp)->user.var_hash =
-        (msgpack_unserialize_data_t *)&unpacker->var_hash;
+    (&unpacker->mp)->user.var_hash = &unpacker->var_hash;
 }
 
 void msgpack_init_class()
@@ -566,4 +528,6 @@ void msgpack_init_class()
     msgpack_unpacker_ce->create_object = php_msgpack_unpacker_new;
     memcpy(&msgpack_unpacker_handlers, zend_get_std_object_handlers(),sizeof msgpack_unpacker_handlers);
     msgpack_unpacker_handlers.offset = XtOffsetOf(php_msgpack_unpacker_t, object);
+    msgpack_handlers.free_obj = php_msgpack_base_free;
+
 }

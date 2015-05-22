@@ -241,32 +241,20 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx)
     var_hashx->first_dtor = 0;
 }
 
-void msgpack_unserialize_var_destroy(
-    msgpack_unserialize_data_t *var_hashx, zend_bool err, zval *return_value)
+void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err)
 {
     void *next;
     long i;
     zend_bool var_empty = 1;
 
     var_entries *var_hash = var_hashx->first;
-    if (var_hash) {
-        var_empty = 0;
-        if (return_value != NULL) {
-            ZVAL_COPY(return_value, &var_hash->data[0]);
-        }
-        zval_ptr_dtor(&var_hash->data[0]);
-    }
     while (var_hash) {
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
     }
 
-
     var_hash = var_hashx->first_dtor;
-    if (var_empty && return_value != NULL) {
-        ZVAL_DUP(return_value, &var_hash->data[0]);
-    }
     while (var_hash) {
         for (i = var_hash->used_slots - 1; i >= 0; i--) {
             zval_ptr_dtor(&var_hash->data[i]);
@@ -274,6 +262,15 @@ void msgpack_unserialize_var_destroy(
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
+    }
+}
+
+void msgpack_unserialize_set_return_value(msgpack_unserialize_data_t *var_hashx, zval *return_value) {
+    var_entries *var_hash;
+    if ((var_hash = var_hashx->first) != NULL) {
+        ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
+    } else if ((var_hash = var_hashx->first_dtor) != NULL) {
+        ZVAL_COPY(return_value, &var_hash->data[0]);
     }
 
 }
