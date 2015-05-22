@@ -192,17 +192,14 @@ static ZEND_METHOD(msgpack, setOption)
     zval *value;
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "lz", &option, &value) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz", &option, &value) == FAILURE) {
         return;
     }
 
-    switch (option)
-    {
+    switch (option) {
         case MSGPACK_CLASS_OPT_PHPONLY:
             convert_to_boolean(value);
-            base->php_only = Z_LVAL_P(value);
+            base->php_only = (Z_TYPE_P(value) == IS_TRUE) ? 1 : 0;
             break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePack::setOption) "
@@ -221,9 +218,7 @@ static ZEND_METHOD(msgpack, pack)
     int php_only = MSGPACK_G(php_only);
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS() TSRMLS_CC, "z", &parameter) == FAILURE)
-    {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &parameter) == FAILURE) {
         return;
     }
 
