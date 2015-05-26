@@ -133,7 +133,7 @@ inline static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, long
 }
 
 inline static zend_class_entry* msgpack_unserialize_class(
-    zval **container, char *class_name, size_t name_len)
+    zval **container, char *class_name, size_t name_len, zend_bool init_class)
 {
     zend_class_entry *ce;
     zend_bool incomplete_class = 0;
@@ -199,7 +199,9 @@ inline static zend_class_entry* msgpack_unserialize_class(
         return NULL;
     }
 
-    object_init_ex(container_val, ce);
+    if (init_class || incomplete_class) {
+        object_init_ex(container_val, ce);
+    }
 
     /* store incomplete class name */
     if (incomplete_class)
@@ -481,8 +483,7 @@ int msgpack_unserialize_map_item(
                         break;
                 }
             } else if (Z_TYPE_P(val) == IS_STRING) {
-                ce = msgpack_unserialize_class(
-                    container, Z_STRVAL_P(val), Z_STRLEN_P(val));
+                ce = msgpack_unserialize_class(container, Z_STRVAL_P(val), Z_STRLEN_P(val), 1);
 
                 if (ce == NULL) {
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
@@ -499,7 +500,7 @@ int msgpack_unserialize_map_item(
                 case MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT:
                     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 
-                    ce = msgpack_unserialize_class(container, Z_STRVAL_P(key), Z_STRLEN_P(key));
+                    ce = msgpack_unserialize_class(container, Z_STRVAL_P(key), Z_STRLEN_P(key), 0);
                     if (ce == NULL) {
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 
