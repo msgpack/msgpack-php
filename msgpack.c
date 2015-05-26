@@ -309,5 +309,6 @@ static ZEND_FUNCTION(msgpack_unserialize)
         if (msgpack_convert_template(return_value, object, &zv_p) != SUCCESS) {
             RETURN_NULL();
         }
+        zval_ptr_dtor(object);
     }
 }

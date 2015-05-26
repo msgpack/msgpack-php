@@ -5,113 +5,118 @@
 #include "msgpack_convert.h"
 #include "msgpack_errors.h"
 
-#define MSGPACK_CONVERT_COPY_ZVAL(_pz, _ppz)   \
-    //ALLOC_INIT_ZVAL(_pz);                      \
-    //*(_pz) = **(_ppz);                         \
-    //if (PZVAL_IS_REF(*(_ppz))) {               \
-    //    if (Z_REFCOUNT_P(*(_ppz)) > 0) {       \
-    //        zval_copy_ctor(_pz);               \
-    //    } else {                               \
-    //        FREE_ZVAL(*(_ppz));                \
-    //    }                                      \
-    //    INIT_PZVAL(_pz);                       \
-    //    Z_SET_ISREF_P(_pz);                    \
-    //} else {                                   \
-    //    zval_copy_ctor(_pz);                   \
-    //    INIT_PZVAL(_pz);                       \
-    //}
-
-#define MSGPACK_CONVERT_UPDATE_PROPERTY(_ht, _key, _val, _var)   \
-    if ((val = zend_symtable_update(_ht, _key, _val)) != NULL) { \
-        zend_hash_add(_var, _key, _val);                         \
-        return SUCCESS;                                          \
-    }
-
-static inline int msgpack_convert_long_to_properties(HashTable *ht, HashTable **properties,
+inline int msgpack_convert_long_to_properties(
+    HashTable *ht, zval *object, HashTable **properties, HashPosition *prop_pos,
     uint key_index, zval *val, HashTable *var)
 {
     if (*properties != NULL) {
-        zend_string *key_str;
-        ulong key_long;
-        zval *data;
+        zval *data, tplval, *dataval, prop_key_zv;
+        zend_string *prop_key;
+        ulong prop_key_index;
+        const char *class_name, *prop_name;
+        size_t prop_len;
 
-        //non-iteration
-        zval *dataval = NULL, *tplval = NULL;
+        for (;; zend_hash_move_forward_ex(*properties, prop_pos)) {
+            if (zend_hash_get_current_key_ex(*properties, &prop_key, &prop_key_index, prop_pos) == HASH_KEY_IS_STRING) {
+                zend_unmangle_property_name_ex(prop_key, &class_name, &prop_name, &prop_len);
 
-        ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, data) {
-            if(key_str) {
-                switch (Z_TYPE_P(data)) {
-                    case IS_ARRAY:
-                        {
-                            HashTable *dataht;
-                            dataht = HASH_OF(val);
-                            if ((dataval = zend_hash_index_find(dataht, key_long)) != NULL) {
-                                MSGPACK_WARNING(
-                                        "[msgpack] (%s) "
-                                        "can't get data value by index",
-                                        __FUNCTION__);
-                                return FAILURE;
-                            }
+                if (var == NULL || !zend_hash_exists(var, prop_key)) {
+                    if ((data = zend_hash_find(ht, prop_key)) != NULL) {
+                        prop_key = zend_string_init(prop_name, prop_len, 0);
+                        ZVAL_NEW_STR(&prop_key_zv, prop_key);
 
-                            if (msgpack_convert_array(tplval, data, &dataval) == SUCCESS) {
-                                return (zend_symtable_update(ht, key_str, tplval) != NULL);
-                            }
-                            // TODO: de we need to call dtor?
-                            return FAILURE;
+                        switch (Z_TYPE_P(data)) {
+                            case IS_ARRAY:
+                                {
+                                    HashTable *dataht;
+                                    dataht = HASH_OF(val);
+
+                                    if ((dataval = zend_hash_index_find(dataht, prop_key_index)) == NULL) {
+                                        MSGPACK_WARNING("[msgpack] (%s) "
+                                                "can't get data value by index",
+                                                __FUNCTION__);
+                                        zend_string_release(prop_key);
+                                        return FAILURE;
+                                    }
+
+                                    if (msgpack_convert_array(&tplval, data, &dataval) == SUCCESS) {
+                                        zend_hash_move_forward_ex(*properties, prop_pos);
+
+                                        zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
+                                        zend_string_release(prop_key);
+                                        return SUCCESS;
+                                    }
+                                    zend_string_release(prop_key);
+                                    return FAILURE;
+                                }
+                            case IS_OBJECT:
+                                {
+                                    if (msgpack_convert_object(&tplval, data, &val) == SUCCESS) {
+                                        zend_hash_move_forward_ex(*properties, prop_pos);
+                                        zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
+                                        zend_string_release(prop_key);
+                                        return SUCCESS;
+                                    }
+                                    zend_string_release(prop_key);
+                                    return FAILURE;
+                                }
+                            default:
+                                zend_hash_move_forward_ex(*properties, prop_pos);
+                                zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, val);
+                                zend_string_release(prop_key);
+                                return SUCCESS;
                         }
-                    case IS_OBJECT:
-                        {
-                            if (msgpack_convert_object(tplval, data, &val) == SUCCESS) {
-                                return (zend_symtable_update(ht, key_str, tplval) != NULL);
-                            }
-                            // TODO: de we need to call dtor?
-                            return FAILURE;
-                        }
-                    default:
-                        return (zend_symtable_update(ht, key_str, val) != NULL);
+                    }
                 }
+                zend_string_release(prop_key);
+            } else {
+                break;
             }
-        } ZEND_HASH_FOREACH_END();
+        }
         *properties = NULL;
     }
-    return (zend_hash_index_update(ht, key_index, val) != NULL);
+    zval key_zv;
+    ZVAL_LONG(&key_zv, key_index);
+    zend_std_write_property(object, &key_zv, val, NULL);
+    return SUCCESS;
 }
 
 static inline int  msgpack_convert_string_to_properties(
     zval *object, char *key, uint key_len, zval *val, HashTable *var)
 {
-    zval *data = NULL;
-    HashTable *ht;
-    zend_class_entry *ce;
-    zend_string *priv_name, *prot_name;
+    zend_class_entry *ce = Z_OBJCE_P(object);
+    HashTable *propers = Z_OBJPROP_P(object);
+    zend_string *prot_name, *priv_name, *pub_name;
+    zval pub_name_z;
+    int return_code;
 
-    TSRMLS_FETCH();
+    ZVAL_STRINGL(&pub_name_z, key, key_len);
+    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key, key_len, 1);
+    prot_name = zend_mangle_property_name("*", 1, key, key_len, 1);
+    pub_name = zval_get_string(&pub_name_z);
 
-    ht = HASH_OF(object);
-    ce = Z_OBJCE_P(object);
+    if (zend_hash_find(propers, priv_name) != NULL) {
+        zend_update_property(ce, object, key, key_len, val);
+        return_code = SUCCESS;
+    } else if (zend_hash_find(propers, prot_name) != NULL) {
+        zend_update_property(ce, object, key, key_len, val);
+        return_code = SUCCESS;
+    } else {
+        zend_std_write_property(object, &pub_name_z, val, NULL);
+        return_code = FAILURE;
+    }
+    zend_hash_add(var, pub_name, val);
 
-    /* private */
-    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key, key_len - 1, 1);
-     if ((data = zend_hash_find(ht, priv_name)) != NULL) {
-         MSGPACK_CONVERT_UPDATE_PROPERTY(ht, priv_name, val, var);
-     }
+    zend_string_release(priv_name);
+    zend_string_release(prot_name);
+    zend_string_release(pub_name);
+    zval_ptr_dtor(&pub_name_z);
 
-     /* protected */
-     prot_name = zend_mangle_property_name("*", 1, key, key_len - 1, 1);
-     if ((data = zend_hash_find(ht, prot_name)) != NULL) {
-         MSGPACK_CONVERT_UPDATE_PROPERTY(ht, prot_name, val, var);
-     }
-
-    /* public */
-    MSGPACK_CONVERT_UPDATE_PROPERTY(ht, zend_string_init(key, key_len, 1), val, var);
-
-    return FAILURE;
+    return return_code;
 }
 
 int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
 {
-    TSRMLS_FETCH();
-
     if (Z_TYPE_P(tpl) == IS_ARRAY)
     {
         HashTable *ht, *htval;
@@ -172,8 +177,6 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                         zval_ptr_dtor(*value);
                         return FAILURE;
                     }
-
-                    MSGPACK_CONVERT_COPY_ZVAL(val, dataval);
 
                     if (convert_function)
                     {
@@ -265,7 +268,6 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                         continue;
                     } else if (key_long) {
                         zval *aryval, *rv;
-                        MSGPACK_CONVERT_COPY_ZVAL(aryval, data);
                         if (convert_function)
                         {
                             if (convert_function(rv, data, &aryval) != SUCCESS)
@@ -325,7 +327,6 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
 
     switch (Z_TYPE_P(tpl)) {
         case IS_STRING:
-
             if ((ce = zend_lookup_class(zval_get_string(tpl))) == NULL) {
                 MSGPACK_ERROR("[msgpack] (%s) Class '%s' not found",
                               __FUNCTION__, Z_STRVAL_P(tpl));
@@ -387,17 +388,14 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
         }
     }
 
-    switch (Z_TYPE_P(*value))
-    {
+    switch (Z_TYPE_P(*value)) {
         case IS_ARRAY:
         {
-            HashTable *ht, *ret;
-            HashTable *var = NULL;
+            HashTable *ht, *ret, *var = NULL;
             int num;
             zend_string *str_key;
             zval *data;
             ulong num_key;
-
 
             ht = HASH_OF(*value);
             ret = HASH_OF(return_value);
@@ -409,23 +407,17 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
             }
 
             /* string - php_only mode? */
-            if (ht->nNumOfElements != ht->nNextFreeElement
-                || ht->nNumOfElements != ret->nNumOfElements) {
+            if (ht->nNumOfElements != ht->nNextFreeElement || ht->nNumOfElements != ret->nNumOfElements) {
                 HashTable *properties = NULL;
+                HashPosition prop_pos;
 
                 ALLOC_HASHTABLE(var);
                 zend_hash_init(var, num, NULL, NULL, 0);
 
-                ZEND_HASH_FOREACH_KEY_VAL(ht, num_key, str_key, data) {
-                    if (str_key && data) {
-                        zval *val;
-                        MSGPACK_CONVERT_COPY_ZVAL(val, &data);
-                        if (msgpack_convert_string_to_properties(
-                                    return_value, str_key->val, str_key->len, val, var) != SUCCESS)
-                        {
-                            zval_ptr_dtor(val);
-                            MSGPACK_WARNING(
-                                    "[msgpack] (%s) "
+                ZEND_HASH_FOREACH_STR_KEY_VAL(ht, str_key, data) {
+                    if (str_key) {
+                        if (msgpack_convert_string_to_properties(return_value, str_key->val, str_key->len, data, var) != SUCCESS) {
+                            MSGPACK_WARNING("[msgpack] (%s) "
                                     "illegal offset type, skip this decoding",
                                     __FUNCTION__);
                         }
@@ -434,54 +426,40 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
 
                 /* index */
                 properties = Z_OBJ_HT_P(return_value)->get_properties(return_value TSRMLS_CC);
-
                 if (HASH_OF(tpl)) {
                     properties = HASH_OF(tpl);
                 }
+                zend_hash_internal_pointer_reset_ex(properties, &prop_pos);
+
 
                 ZEND_HASH_FOREACH_KEY_VAL(ht, num_key, str_key, data) {
-                    if (!data) {
-                        continue;
-                    }
-                    if (num_key) {
-                        zval val;
-                        //MSGPACK_CONVERT_COPY_ZVAL(val, &data);
-                        if (msgpack_convert_long_to_properties(ret, &properties, num_key, &val, var) != SUCCESS) {
-                            zval_ptr_dtor(&val);
-                            MSGPACK_WARNING(
-                                    "[msgpack] (%s) "
+                    if (str_key == NULL) {
+                        if (msgpack_convert_long_to_properties(ret, return_value, &properties, &prop_pos, num_key, data, var) != SUCCESS) {
+                            MSGPACK_WARNING("[msgpack] (%s) "
                                     "illegal offset type, skip this decoding",
                                     __FUNCTION__);
                         }
-                        break;
-                    } else if (str_key) {
-                        break;
-                    } else {
-                        MSGPACK_WARNING(
-                                "[msgpack] (%s) key is not string nor array",
-                                __FUNCTION__);
-                        break;
                     }
                 } ZEND_HASH_FOREACH_END();
 
                 zend_hash_destroy(var);
                 FREE_HASHTABLE(var);
             } else {
-                HashPosition valpos;
                 int (*convert_function)(zval *, zval *, zval **) = NULL;
-                zval **arydata, aryval, *aryval_p;
-                aryval_p = &aryval;
+                const char *class_name, *prop_name;
+                size_t prop_len;
+                zval *aryval;
 
-                ZEND_HASH_FOREACH_KEY_VAL(ret, num_key, str_key, data) {
-                    if (!data) {
-                        MSGPACK_WARNING(
-                                "[msgpack] (%s) can't get data value by index",
-                                __FUNCTION__);
+                num_key = 0;
+                ZEND_HASH_FOREACH_STR_KEY_VAL(ret, str_key, data) {
+                    aryval = zend_hash_index_find(ht, num_key);
+
+                    if (data == NULL) {
+                        MSGPACK_WARNING("[msgpack] (%s) can't get data value by index", __FUNCTION__);
                         return FAILURE;
                     }
 
-                    switch (Z_TYPE_P(data))
-                    {
+                    switch (Z_TYPE_P(data)) {
                         case IS_ARRAY:
                             convert_function = msgpack_convert_array;
                             break;
@@ -490,30 +468,26 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                         // class members, so it's not wise to allow
                             convert_function = msgpack_convert_object;
                             break;
-                        default:
-                            break;
                     }
 
-                    MSGPACK_CONVERT_COPY_ZVAL(aryval, &data);
+                    zend_unmangle_property_name_ex(str_key, &class_name, &prop_name, &prop_len);
 
                     if (convert_function) {
-                        zval rv;
+                        zval nv;
+                        //if (convert_function(&nv, str_key, &data) != SUCCESS) {
+                        //    //zval_ptr_dtor(&aryval);
+                        //    MSGPACK_WARNING("[msgpack] (%s) "
+                        //        "convert failure in convert_object",
+                        //        __FUNCTION__);
+                        //    return FAILURE;
+                        //}
 
-                        if (convert_function(&rv, data, &aryval_p) != SUCCESS) {
-                            zval_ptr_dtor(&aryval);
-                            MSGPACK_WARNING(
-                                "[msgpack] (%s) "
-                                "convert failure in convert_object",
-                                __FUNCTION__);
-                            return FAILURE;
-                        }
-
-                        zend_symtable_update(ret, str_key, &rv);
+                        //zend_update_property(ce, return_value, str_key->val, str_key->len, &nv);
                     } else  {
-                        zend_symtable_update(ret, str_key, &aryval);
+                        zend_update_property(ce, return_value, prop_name, prop_len, aryval);
                     }
+                    num_key++;
                 } ZEND_HASH_FOREACH_END();
-
           }
             zval_ptr_dtor(*value);
             break;
@@ -523,16 +497,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
             HashTable *properties = NULL;
             HashPosition prop_pos;
 
-            properties = Z_OBJ_HT_P(return_value)->get_properties(
-                return_value TSRMLS_CC);
+            properties = Z_OBJ_HT_P(return_value)->get_properties(return_value TSRMLS_CC);
             zend_hash_internal_pointer_reset_ex(properties, &prop_pos);
 
-            if (msgpack_convert_long_to_properties(
-                    HASH_OF(return_value), &properties,
-                    0, *value, NULL) != SUCCESS)
-            {
-                MSGPACK_WARNING(
-                    "[msgpack] (%s) illegal offset type, skip this decoding",
+            if (msgpack_convert_long_to_properties(HASH_OF(return_value), return_value, &properties, &prop_pos, 0, *value, NULL) != SUCCESS) {
+                MSGPACK_WARNING("[msgpack] (%s) illegal offset type, skip this decoding",
                     __FUNCTION__);
             }
             break;
