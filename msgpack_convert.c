@@ -11,7 +11,7 @@ inline int msgpack_convert_long_to_properties(
 {
     if (*properties != NULL) {
         zval *data, tplval, *dataval, prop_key_zv;
-        zend_string *prop_key;
+        zend_string *prop_key, *unmangled_prop_key;
         ulong prop_key_index;
         const char *class_name, *prop_name;
         size_t prop_len;
@@ -19,12 +19,11 @@ inline int msgpack_convert_long_to_properties(
         for (;; zend_hash_move_forward_ex(*properties, prop_pos)) {
             if (zend_hash_get_current_key_ex(*properties, &prop_key, &prop_key_index, prop_pos) == HASH_KEY_IS_STRING) {
                 zend_unmangle_property_name_ex(prop_key, &class_name, &prop_name, &prop_len);
+                ZVAL_NEW_STR(&prop_key_zv, prop_key);
+                unmangled_prop_key = zend_string_init(prop_name, prop_len, 0);
 
-                if (var == NULL || !zend_hash_exists(var, prop_key)) {
+                if (var == NULL || !zend_hash_exists(var, unmangled_prop_key)) {
                     if ((data = zend_hash_find(ht, prop_key)) != NULL) {
-                        prop_key = zend_string_init(prop_name, prop_len, 0);
-                        ZVAL_NEW_STR(&prop_key_zv, prop_key);
-
                         switch (Z_TYPE_P(data)) {
                             case IS_ARRAY:
                                 {
@@ -35,7 +34,7 @@ inline int msgpack_convert_long_to_properties(
                                         MSGPACK_WARNING("[msgpack] (%s) "
                                                 "can't get data value by index",
                                                 __FUNCTION__);
-                                        zend_string_release(prop_key);
+                                        zend_string_release(unmangled_prop_key);
                                         return FAILURE;
                                     }
 
@@ -43,10 +42,10 @@ inline int msgpack_convert_long_to_properties(
                                         zend_hash_move_forward_ex(*properties, prop_pos);
 
                                         zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
-                                        zend_string_release(prop_key);
+                                        zend_string_release(unmangled_prop_key);
                                         return SUCCESS;
                                     }
-                                    zend_string_release(prop_key);
+                                    zend_string_release(unmangled_prop_key);
                                     return FAILURE;
                                 }
                             case IS_OBJECT:
@@ -54,21 +53,21 @@ inline int msgpack_convert_long_to_properties(
                                     if (msgpack_convert_object(&tplval, data, &val) == SUCCESS) {
                                         zend_hash_move_forward_ex(*properties, prop_pos);
                                         zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
-                                        zend_string_release(prop_key);
+                                        zend_string_release(unmangled_prop_key);
                                         return SUCCESS;
                                     }
-                                    zend_string_release(prop_key);
+                                    zend_string_release(unmangled_prop_key);
                                     return FAILURE;
                                 }
                             default:
                                 zend_hash_move_forward_ex(*properties, prop_pos);
                                 zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, val);
-                                zend_string_release(prop_key);
+                                zend_string_release(unmangled_prop_key);
                                 return SUCCESS;
                         }
                     }
                 }
-                zend_string_release(prop_key);
+                zend_string_release(unmangled_prop_key);
             } else {
                 break;
             }
@@ -345,9 +344,8 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
     if (Z_TYPE_P(*value) == IS_OBJECT) {
         zend_class_entry *vce;
 
-        vce = Z_OBJCE_P(tpl);
-        if (strcmp(ce->name->val, vce->name->val) == 0)
-        {
+        vce = Z_OBJCE_P(*value);
+        if (zend_string_equals(ce->name, vce->name)) {
             *return_value = **value;
             zval_copy_ctor(return_value);
             zval_ptr_dtor(*value);

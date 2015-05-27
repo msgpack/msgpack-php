@@ -544,15 +544,12 @@ int msgpack_unserialize_map_item(
                     }
 
                     *container = rval;
-
-
-                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT) {
-                        ZVAL_UNREF(*container);
-                    } else if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
+                    if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
                         ZVAL_MAKE_REF(*container);
                     }
-
-                    if (Z_REFCOUNTED_P(*container)) Z_TRY_ADDREF_P(*container);
+                    if (Z_REFCOUNTED_P(*container)) {
+                     Z_TRY_ADDREF_P(*container);
+                    }
 
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);

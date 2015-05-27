@@ -124,9 +124,7 @@ static ZEND_MINFO_FUNCTION(msgpack)
 }
 
 zend_module_entry msgpack_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
     STANDARD_MODULE_HEADER,
-#endif
     "msgpack",
     msgpack_functions,
     ZEND_MINIT(msgpack),
@@ -134,9 +132,7 @@ zend_module_entry msgpack_module_entry = {
     NULL,
     NULL,
     ZEND_MINFO(msgpack),
-#if ZEND_MODULE_API_NO >= 20010901
     PHP_MSGPACK_VERSION,
-#endif
     STANDARD_MODULE_PROPERTIES
 };
 
@@ -192,12 +188,11 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
                 //unhandled non-string key
             }
         } ZEND_HASH_FOREACH_END();
+        zval_ptr_dtor(&tmp);
     }
     else {
         msgpack_unserialize_var_destroy(&var_hash, 1);
     }
-
-    zval_ptr_dtor(&tmp);
 
     return SUCCESS;
 }
@@ -309,6 +304,6 @@ static ZEND_FUNCTION(msgpack_unserialize)
         if (msgpack_convert_template(return_value, object, &zv_p) != SUCCESS) {
             RETURN_NULL();
         }
-        zval_ptr_dtor(object);
+
     }
 }
