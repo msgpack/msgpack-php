@@ -93,11 +93,8 @@ static ZEND_MINIT_FUNCTION(msgpack)
 
     msgpack_init_class();
 
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 1)
-    REGISTER_LONG_CONSTANT(
-        "MESSAGEPACK_OPT_PHPONLY", MSGPACK_CLASS_OPT_PHPONLY,
-        CONST_CS | CONST_PERSISTENT);
-#endif
+    REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_PHPONLY",
+            MSGPACK_CLASS_OPT_PHPONLY, CONST_CS | CONST_PERSISTENT);
 
     return SUCCESS;
 }
@@ -161,7 +158,6 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
 {
     int ret;
     zend_string *key_str;
-    ulong key_long;
     zval tmp, *value;
     size_t off = 0;
     msgpack_unpack_t mp;
@@ -180,7 +176,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
         msgpack_unserialize_set_return_value(&var_hash, &tmp);
         msgpack_unserialize_var_destroy(&var_hash, 0);
 
-        ZEND_HASH_FOREACH_KEY_VAL(HASH_OF(&tmp), key_long, key_str, value) {
+        ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&tmp), key_str, value) {
             if (key_str) {
                 php_set_session_var(key_str, value, NULL);
                 php_add_session_var(key_str);
@@ -189,8 +185,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
             }
         } ZEND_HASH_FOREACH_END();
         zval_ptr_dtor(&tmp);
-    }
-    else {
+    } else {
         msgpack_unserialize_var_destroy(&var_hash, 1);
     }
 
