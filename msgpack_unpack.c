@@ -17,7 +17,6 @@ typedef struct {
 } var_entries;
 
 #define MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _count) \
-    msgpack_stack_pop(_unpack->var_hash, _count);        \
     _unpack->stack[_unpack->deps-1]--;                   \
     if (_unpack->stack[_unpack->deps-1] == 0) {          \
         _unpack->deps--;                                 \
@@ -107,29 +106,6 @@ inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zva
     }
 
     *rval = &var_hash->data[var_hash->used_slots++];
-}
-
-
-inline static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, long count)
-{
-    long i;
-    var_entries *var_hash = var_hashx->first_dtor;
-
-    while (var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
-        var_hash = var_hash->next;
-    }
-
-    if (!var_hash || count <= 0) {
-        return;
-    }
-
-    for (i = count; i > 0; i--) {
-        var_hash->used_slots--;
-        if (var_hash->used_slots < 0) {
-            var_hash->used_slots = 0;
-            break;
-        }
-    }
 }
 
 inline static zend_class_entry* msgpack_unserialize_class(
@@ -258,9 +234,6 @@ void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend
 
     var_hash = var_hashx->first_dtor;
     while (var_hash) {
-        for (i = var_hash->used_slots - 1; i >= 0; i--) {
-            zval_ptr_dtor(&var_hash->data[i]);
-        }
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
@@ -272,7 +245,7 @@ void msgpack_unserialize_set_return_value(msgpack_unserialize_data_t *var_hashx,
     if ((var_hash = var_hashx->first) != NULL) {
         ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
     } else if ((var_hash = var_hashx->first_dtor) != NULL) {
-        ZVAL_COPY(return_value, &var_hash->data[0]);
+        ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
     }
 
 }
@@ -406,7 +379,7 @@ int msgpack_unserialize_raw(
     if (len == 0) {
         ZVAL_STRINGL(*obj, "", 0);
     } else {
-        ZVAL_STRINGL(*obj, (char *)data, len);
+        ZVAL_STRINGL(*obj, data, len);
     }
 
     return 0;
@@ -574,8 +547,8 @@ int msgpack_unserialize_map_item(
         zend_unmangle_property_name_ex(key_zstring, &class_name, &prop_name, &prop_len);
         zend_update_property(Z_OBJCE_P(container_val), container_val, prop_name, prop_len, val);
 
-        zval_ptr_dtor(key);
         zend_string_release(key_zstring);
+        zval_ptr_dtor(key);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
@@ -616,8 +589,6 @@ int msgpack_unserialize_map_item(
                 break;
         }
     }
-
-    msgpack_stack_pop(unpack->var_hash, 2);
 
     deps = unpack->deps - 1;
     unpack->stack[deps]--;

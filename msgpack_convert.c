@@ -186,11 +186,9 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                     return FAILURE;
                 }
 
-                MSGPACK_CONVERT_COPY_ZVAL(val, dataval);
-
                 if (convert_function) {
                     zval rv;
-                    if (convert_function(&rv, data, &val) != SUCCESS) {
+                    if (convert_function(&rv, data, &dataval) != SUCCESS) {
                         zval_ptr_dtor(val);
                         return FAILURE;
                     }
