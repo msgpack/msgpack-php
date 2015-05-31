@@ -222,9 +222,6 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx)
 void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err)
 {
     void *next;
-    long i;
-    zend_bool var_empty = 1;
-
     var_entries *var_hash = var_hashx->first;
     while (var_hash) {
         next = var_hash->next;

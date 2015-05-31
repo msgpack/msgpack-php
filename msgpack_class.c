@@ -309,10 +309,7 @@ static ZEND_METHOD(msgpack_unpacker, __construct)
 static ZEND_METHOD(msgpack_unpacker, __destruct)
 {
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
-
     smart_string_free(&unpacker->buffer);
-    zval_ptr_dtor(&unpacker->retval);
-
     msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
 }
 
@@ -391,8 +388,6 @@ static ZEND_METHOD(msgpack_unpacker, execute)
     }
 
     if (unpacker->finished) {
-        zval_ptr_dtor(&unpacker->retval);
-
         msgpack_unserialize_set_return_value(&unpacker->var_hash, &unpacker->retval);
         msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
         unpacker->error = 0;
@@ -447,12 +442,12 @@ static ZEND_METHOD(msgpack_unpacker, data)
     }
 
     if (object == NULL) {
-        ZVAL_ZVAL(return_value, &unpacker->retval, 1, 0);
+        ZVAL_COPY_VALUE(return_value, &unpacker->retval);
     } else {
         zval zv, *zv_p;
         zv_p = &zv;
 
-        ZVAL_ZVAL(&zv, &unpacker->retval, 1, 0);
+        ZVAL_COPY_VALUE(return_value, &unpacker->retval);
 
         if (msgpack_convert_object(return_value, object, &zv_p) != SUCCESS) {
             RETURN_NULL();

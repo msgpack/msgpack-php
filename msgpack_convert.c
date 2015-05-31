@@ -121,6 +121,9 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
         zval_ptr_dtor(*value);
         return FAILURE;
     }
+    if (Z_TYPE_P(*value) == IS_INDIRECT) {
+        *value = Z_INDIRECT_P(*value);
+    }
 
     zend_string *key;
     int key_type;
@@ -166,7 +169,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
 
             if (key_type == HASH_KEY_IS_STRING) {
                 int (*convert_function)(zval *, zval *, zval **) = NULL;
-                zval *dataval, *val;
+                zval *dataval;
 
                 switch (Z_TYPE_P(data)) {
                     case IS_ARRAY:
@@ -189,17 +192,17 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                 if (convert_function) {
                     zval rv;
                     if (convert_function(&rv, data, &dataval) != SUCCESS) {
-                        zval_ptr_dtor(val);
+                        //zval_ptr_dtor(&val);
                         return FAILURE;
                     }
                     add_assoc_zval_ex(return_value, key->val, key->len, &rv);
                 } else {
-                    add_assoc_zval_ex(return_value, key->val, key->len, val);
+                    add_assoc_zval_ex(return_value, key->val, key->len, dataval);
                 }
             }
         }
 
-        zval_ptr_dtor(*value);
+        //zval_ptr_dtor(*value);
 
         return SUCCESS;
     } else {
@@ -437,6 +440,10 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                         MSGPACK_WARNING("[msgpack] (%s) can't get data value by index", __FUNCTION__);
                         return FAILURE;
                     }
+                    if (Z_TYPE_P(data) == IS_INDIRECT) {
+                        data = Z_INDIRECT_P(data);
+                    }
+
 
                     switch (Z_TYPE_P(data)) {
                         case IS_ARRAY:
@@ -454,21 +461,21 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                     if (convert_function) {
                         zval nv;
                         if (convert_function(&nv, data, &aryval) != SUCCESS) {
-                            zval_ptr_dtor(aryval);
+                            //zval_ptr_dtor(aryval);
                             MSGPACK_WARNING("[msgpack] (%s) "
                                 "convert failure in convert_object",
                                 __FUNCTION__);
                             return FAILURE;
                         }
 
-                        //zend_update_property(ce, return_value, str_key->val, str_key->len, &nv);
+                        zend_update_property(ce, return_value, str_key->val, str_key->len, &nv);
                     } else  {
                         zend_update_property(ce, return_value, prop_name, prop_len, aryval);
                     }
                     num_key++;
                 } ZEND_HASH_FOREACH_END();
           }
-            zval_ptr_dtor(*value);
+            //zval_ptr_dtor(*value);
             break;
         }
         default:
