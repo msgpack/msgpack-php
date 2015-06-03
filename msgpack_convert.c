@@ -80,7 +80,7 @@ inline int msgpack_convert_long_to_properties(
     return SUCCESS;
 }
 
-static inline int  msgpack_convert_string_to_properties(
+static inline int msgpack_convert_string_to_properties(
     zval *object, char *key, uint key_len, zval *val, HashTable *var)
 {
     zend_class_entry *ce = Z_OBJCE_P(object);

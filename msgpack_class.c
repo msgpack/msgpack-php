@@ -363,9 +363,8 @@ static ZEND_METHOD(msgpack_unpacker, feed)
 static ZEND_METHOD(msgpack_unpacker, execute)
 {
     char *str = NULL, *data;
-    long str_len = 0;
+    size_t len, off, str_len = 0;
     int ret, error_display = MSGPACK_G(error_display), php_only = MSGPACK_G(php_only);
-    size_t len, off;
     zval *offset = NULL;
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
@@ -376,7 +375,7 @@ static ZEND_METHOD(msgpack_unpacker, execute)
     if (str) {
         data = str;
         len = str_len;
-        if (offset != NULL) {
+        if (offset != NULL && (Z_TYPE_P(offset) == IS_LONG || Z_TYPE_P(offset) == IS_DOUBLE)) {
             off = Z_LVAL_P(offset);
         } else {
             off = 0;
@@ -457,9 +456,6 @@ static ZEND_METHOD(msgpack_unpacker, data)
     ZVAL_STRING(&func_name, "reset");
     call_user_function_ex(CG(function_table), getThis(), &func_name, &reset_return, 0, NULL, 0, NULL);
     zval_ptr_dtor(&func_name);
-
-    return;
-    RETURN_FALSE;
 }
 
 static ZEND_METHOD(msgpack_unpacker, reset)
