@@ -446,7 +446,7 @@ static ZEND_METHOD(msgpack_unpacker, data)
         zval zv, *zv_p;
         zv_p = &zv;
 
-        ZVAL_COPY_VALUE(return_value, &unpacker->retval);
+        ZVAL_COPY_VALUE(zv_p, &unpacker->retval);
 
         if (msgpack_convert_object(return_value, object, &zv_p) != SUCCESS) {
             RETURN_NULL();

@@ -81,7 +81,6 @@ test('array(1, 2, 3, 4)', array(1, 2, 3, 4), new Obj());
 test('array("foo", "foobar", "foohoge")', array("foo", "foobar", "hoge"), new Obj(), new Obj("foo", "foobar", "hoge"));
 test('array("a" => 1, "b" => 2))', array("a" => 1, "b" => 2), new Obj(), new Obj(1, 2, null));
 test('array("one" => 1, "two" => 2))', array("one" => 1, "two" => 2), new Obj(), new Obj(null, null, null, array("one" => 1, "two" => 2)));
-test('array("" => "empty")', array("" => "empty"), new Obj());
 
 test('array("a" => 1, "b" => 2, 3))', array("a" => 1, "b" => 2, 3), new Obj(), new Obj(1, 2, 3));
 test('array(3, "a" => 1, "b" => 2))', array(3, "a" => 1, "b" => 2), new Obj(), new Obj(1, 2, 3));
@@ -89,10 +88,6 @@ test('array("a" => 1, 3, "b" => 2))', array("a" => 1, 3, "b" => 2), new Obj(), n
 
 $a = array('foo');
 test('array($a, $a)', array($a, $a), new Obj(), new Obj($a, $a, null));
-test('array(&$a, &$a)', array(&$a, &$a), new Obj(), new Obj($a, $a, null));
-
-test('array(&$a, $a)', array($a, &$a), new Obj(), new Obj($a, $a, null));
-test('array(&$a, $a)', array(&$a, $a), new Obj(), new Obj($a, $a, null));
 
 $a = array(
     'a' => array(
@@ -126,15 +121,6 @@ test('object', $o, new Obj(), new Obj($o));
 $o1 = new Obj2(1, 2, 3);
 $o2 = new Obj2(4, 5, 6);
 test('object', array($o1, $o2), new Obj(), new Obj($o1, $o2));
-
-$o = new Obj2(1, 2, 3);
-test('object', array(&$o, &$o), new Obj(), new Obj($o, $o));
-
-$o = new Obj2(1, 2, 3);
-test('object', array(&$o, $o), new Obj(), new Obj($o, $o));
-
-$o = new Obj2(1, 2, 3);
-test('object', array($o, &$o), new Obj(), new Obj($o, $o));
 
 --EXPECTF--
 object(Obj)#%d (3) {
@@ -309,7 +295,7 @@ object(Obj)#%d (4) {
   int(2)
   [%r"?c"?:("Obj":)?private"?%r]=>
   int(3)
-  [3]=>
+  ["3"]=>
   int(4)
 }
 SKIP
@@ -344,17 +330,6 @@ object(Obj)#%d (5) {
   int(2)
 }
 OK
-object(Obj)#%d (4) {
-  ["a"]=>
-  NULL
-  [%r"?b"?:protected"?%r]=>
-  NULL
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-  [""]=>
-  string(5) "empty"
-}
-SKIP
 object(Obj)#%d (3) {
   ["a"]=>
   int(1)
@@ -385,51 +360,6 @@ OK
 object(Obj)#%d (3) {
   ["a"]=>
   array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?b"?:protected"?%r]=>
-  array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  &array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?b"?:protected"?%r]=>
-  &array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?b"?:protected"?%r]=>
-  &array(1) {
-    [0]=>
-    string(3) "foo"
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  &array(1) {
     [0]=>
     string(3) "foo"
   }
@@ -504,75 +434,6 @@ object(Obj)#%d (3) {
     int(5)
     [%r"?C"?:("Obj2":)?private"?%r]=>
     int(6)
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  &object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
-  }
-  [%r"?b"?:protected"?%r]=>
-  &object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
-  }
-  [%r"?b"?:protected"?%r]=>
-  object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
-  }
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-}
-OK
-object(Obj)#%d (3) {
-  ["a"]=>
-  &object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
-  }
-  [%r"?b"?:protected"?%r]=>
-  &object(Obj2)#%d (3) {
-    ["A"]=>
-    int(1)
-    [%r"?B"?:protected"?%r]=>
-    int(2)
-    [%r"?C"?:("Obj2":)?private"?%r]=>
-    int(3)
   }
   [%r"?c"?:("Obj":)?private"?%r]=>
   NULL
