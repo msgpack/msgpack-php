@@ -180,8 +180,6 @@ PS_SERIALIZER_DECODE_FUNC(msgpack)
             if (key_str) {
                 php_set_session_var(key_str, value, NULL);
                 php_add_session_var(key_str);
-            } else {
-                //unhandled non-string key
             }
         } ZEND_HASH_FOREACH_END();
         zval_ptr_dtor(&tmp);

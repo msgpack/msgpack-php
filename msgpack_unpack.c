@@ -546,6 +546,7 @@ int msgpack_unserialize_map_item(
 
         zend_string_release(key_zstring);
         zval_ptr_dtor(key);
+        zval_ptr_dtor(val);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:

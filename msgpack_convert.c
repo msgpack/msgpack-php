@@ -128,7 +128,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
     zend_string *key;
     int key_type;
     ulong key_index;
-    zval *data, *arydata;
+    zval *data, *arydata, nv, *nv_p;
     HashPosition pos, valpos;
     HashTable *ht, *htval;
 
@@ -188,22 +188,24 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                     zval_ptr_dtor(*value);
                     return FAILURE;
                 }
+                nv = *dataval;
+                nv_p = &nv;
+                zval_copy_ctor(&nv);
 
                 if (convert_function) {
                     zval rv;
-                    if (convert_function(&rv, data, &dataval) != SUCCESS) {
-                        //zval_ptr_dtor(&val);
+                    if (convert_function(&rv, data, &nv_p) != SUCCESS) {
+                        zval_ptr_dtor(*value);
                         return FAILURE;
                     }
                     add_assoc_zval_ex(return_value, key->val, key->len, &rv);
                 } else {
-                    add_assoc_zval_ex(return_value, key->val, key->len, dataval);
+                    add_assoc_zval_ex(return_value, key->val, key->len, &nv);
                 }
             }
         }
 
-        //zval_ptr_dtor(*value);
-
+        zval_ptr_dtor(*value);
         return SUCCESS;
     } else {
         /* index */
@@ -264,12 +266,15 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                 MSGPACK_WARNING( "[msgpack] (%s) can't get next data in indexed array", __FUNCTION__);
                 continue;
             }
+            nv = *arydata;
+            nv_p = &nv;
+            zval_copy_ctor(&nv);
 
             switch (key_type) {
                 case HASH_KEY_IS_LONG: {
                         zval rv;
                         if (convert_function) {
-                            if (convert_function(&rv, data, &arydata) != SUCCESS) {
+                            if (convert_function(&rv, data, &nv_p) != SUCCESS) {
                                 MSGPACK_WARNING(
                                         "[msgpack] (%s) "
                                         "convert failure in HASH_KEY_IS_LONG "
@@ -280,7 +285,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
                             }
                             add_next_index_zval(return_value, &rv);
                         } else {
-                            add_next_index_zval(return_value, arydata);
+                            add_next_index_zval(return_value, &nv);
                         }
                         break;
                     }
@@ -295,7 +300,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
             }
         }
 
-        //zval_ptr_dtor(*value);
+        zval_ptr_dtor(*value);
         return SUCCESS;
     }
 
@@ -307,10 +312,14 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval **value)
 
 int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
     zend_class_entry *ce;
+    zend_string *tpl_zstring;
 
     switch (Z_TYPE_P(tpl)) {
         case IS_STRING:
-            if ((ce = zend_lookup_class(zval_get_string(tpl))) == NULL) {
+            tpl_zstring = zval_get_string(tpl);
+            ce = zend_lookup_class(tpl_zstring);
+            zend_string_release(tpl_zstring);
+            if (ce == NULL) {
                 MSGPACK_ERROR("[msgpack] (%s) Class '%s' not found",
                               __FUNCTION__, Z_STRVAL_P(tpl));
                 return FAILURE;
@@ -475,7 +484,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                     num_key++;
                 } ZEND_HASH_FOREACH_END();
           }
-            //zval_ptr_dtor(*value);
+            zval_ptr_dtor(*value);
             break;
         }
         default:
@@ -490,7 +499,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval **value) {
                 MSGPACK_WARNING("[msgpack] (%s) illegal offset type, skip this decoding",
                     __FUNCTION__);
             }
-            break;
+            zval_ptr_dtor(*value);
         }
     }
 

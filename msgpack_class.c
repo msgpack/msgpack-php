@@ -251,7 +251,7 @@ static ZEND_METHOD(msgpack, unpack)
     MSGPACK_G(php_only) = base->php_only;
 
     if (object == NULL) {
-        php_msgpack_unserialize(return_value, str->val, str->len TSRMLS_CC);
+        php_msgpack_unserialize(return_value, str->val, str->len);
     } else {
         zval zv, *zv_p;
         zv_p = &zv;
