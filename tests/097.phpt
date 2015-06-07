@@ -82,7 +82,6 @@ test('array(1, 2, 3, 4)', array(1, 2, 3, 4), new Obj());
 test('array("foo", "foobar", "foohoge")', array("foo", "foobar", "hoge"), new Obj(), new Obj("foo", "foobar", "hoge"));
 test('array("a" => 1, "b" => 2))', array("a" => 1, "b" => 2), new Obj(), new Obj(1, 2, null));
 test('array("one" => 1, "two" => 2))', array("one" => 1, "two" => 2), new Obj(), new Obj(null, null, null, array("one" => 1, "two" => 2)));
-test('array("" => "empty")', array("" => "empty"), new Obj());
 
 test('array("a" => 1, "b" => 2, 3))', array("a" => 1, "b" => 2, 3), new Obj(), new Obj(1, 2, 3));
 test('array(3, "a" => 1, "b" => 2))', array(3, "a" => 1, "b" => 2), new Obj(), new Obj(1, 2, 3));
@@ -297,7 +296,7 @@ object(Obj)#%d (4) {
   int(2)
   [%r"?c"?:("Obj":)?private"?%r]=>
   int(3)
-  [3]=>
+  ["3"]=>
   int(4)
 }
 SKIP
@@ -332,17 +331,6 @@ object(Obj)#%d (5) {
   int(2)
 }
 OK
-object(Obj)#%d (4) {
-  ["a"]=>
-  NULL
-  [%r"?b"?:protected"?%r]=>
-  NULL
-  [%r"?c"?:("Obj":)?private"?%r]=>
-  NULL
-  [""]=>
-  string(5) "empty"
-}
-SKIP
 object(Obj)#%d (3) {
   ["a"]=>
   int(1)

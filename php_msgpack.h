@@ -1,7 +1,7 @@
 #ifndef PHP_MSGPACK_H
 #define PHP_MSGPACK_H
 
-#include "ext/standard/php_smart_str.h" /* for smart_str */
+#include "ext/standard/php_smart_string.h" /* for smart_string */
 
 #define PHP_MSGPACK_VERSION "0.5.7-dev"
 
@@ -39,7 +39,7 @@ ZEND_EXTERN_MODULE_GLOBALS(msgpack)
 #endif
 
 PHP_MSGPACK_API void php_msgpack_serialize(
-    smart_str *buf, zval *val TSRMLS_DC);
+    smart_string *buf, zval *val TSRMLS_DC);
 PHP_MSGPACK_API void php_msgpack_unserialize(
     zval *return_value, char *str, size_t str_len TSRMLS_DC);
 
