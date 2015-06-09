@@ -16,6 +16,7 @@ typedef struct {
 } var_entries;
 
 #define MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _count) \
+	/* msgpack_stack_pop(_unpack->var_hash, _count);  */ \
     _unpack->stack[_unpack->deps-1]--;                   \
     if (_unpack->stack[_unpack->deps-1] == 0) {          \
         _unpack->deps--;                                 \
@@ -103,6 +104,31 @@ static zval *msgpack_stack_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */
     }
 
     return &var_hash->data[var_hash->used_slots++];
+}
+/* }}} */
+
+static inline void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, uint32_t count) /* {{{ */ {
+	uint32_t i;
+	var_entries *var_hash = var_hashx->first_dtor;
+
+	while (var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
+		var_hash = var_hash->next;
+	}
+
+	if (!var_hash || count <= 0) {
+		return;
+	}
+
+	for (i = count; i > 0; i--) {
+		var_hash->used_slots--;
+		if (var_hash->used_slots < 0) {
+			var_hash->used_slots = 0;
+			ZVAL_UNDEF(&var_hash->data[var_hash->used_slots]);
+			break;
+		} else {
+			ZVAL_UNDEF(&var_hash->data[var_hash->used_slots]);
+		}
+	}
 }
 /* }}} */
 
@@ -455,7 +481,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         return 0;
                     }
 
-                    ce->unserialize(*container, ce, Z_STRVAL_P(val), Z_STRLEN_P(val) + 1, NULL);
+                    ce->unserialize(*container, ce, (const unsigned char *)Z_STRVAL_P(val), Z_STRLEN_P(val) + 1, NULL);
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 
@@ -555,6 +581,8 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 break;
         }
     }
+
+	/* msgpack_stack_pop(unpack->var_hash, 2); */
 
     deps = unpack->deps - 1;
     unpack->stack[deps]--;

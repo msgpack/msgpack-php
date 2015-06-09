@@ -198,14 +198,13 @@ PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val) /* {{{ */ 
 }
 /* }}} */
 
-PHP_MSGPACK_API void php_msgpack_unserialize( zval *return_value, char *str, size_t str_len) /* {{{ */ {
+PHP_MSGPACK_API void php_msgpack_unserialize(zval *return_value, char *str, size_t str_len) /* {{{ */ {
     int ret;
     size_t off = 0;
     msgpack_unpack_t mp;
     msgpack_unserialize_data_t var_hash;
 
-    if (str_len <= 0)
-    {
+    if (str_len <= 0) {
         RETURN_NULL();
     }
 

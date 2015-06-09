@@ -126,61 +126,53 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
     }
 
     /* string */
-    if (ht->nNumOfElements != ht->nNextFreeElement) {
-        htval = HASH_OF(value);
-        if (!htval) {
-            MSGPACK_WARNING("[msgpack] (%s) input data is not array", __FUNCTION__);
-            return FAILURE;
-        }
+	if (ht->nNumOfElements != ht->nNextFreeElement) {
+		htval = HASH_OF(value);
 
-        zend_hash_internal_pointer_reset_ex(ht, &pos);
-        zend_hash_internal_pointer_reset_ex(htval, &valpos);
-        for (;; zend_hash_move_forward_ex(ht, &pos), zend_hash_move_forward_ex(htval, &valpos))
-        {
-            key_type = zend_hash_get_current_key_ex(ht, &key, &key_index, &pos);
+		if (!htval) {
+			MSGPACK_WARNING("[msgpack] (%s) input data is not array", __FUNCTION__);
+			return FAILURE;
+		}
 
-            if (key_type == HASH_KEY_NON_EXISTENT) {
-                break;
-            }
+		zend_hash_internal_pointer_reset_ex(htval, &valpos);
+		ZEND_HASH_FOREACH_KEY_VAL(ht, key_index, key, data) { 
+			if (key) {
+				int (*convert_function)(zval *, zval *, zval *) = NULL;
+				zval *dataval;
 
-            if ((data = zend_hash_get_current_data_ex(ht, &pos)) == NULL) {
-                continue;
-            }
+				switch (Z_TYPE_P(data)) {
+					case IS_ARRAY:
+						convert_function = msgpack_convert_array;
+						break;
+					case IS_OBJECT:
+						// case IS_STRING:
+						convert_function = msgpack_convert_object;
+						break;
+					default:
+						break;
+				}
 
-            if (key_type == HASH_KEY_IS_STRING) {
-                int (*convert_function)(zval *, zval *, zval *) = NULL;
-                zval *dataval;
+				if ((dataval = zend_hash_get_current_data_ex(htval, &valpos)) == NULL) {
+					MSGPACK_WARNING("[msgpack] (%s) can't get data", __FUNCTION__);
+					return FAILURE;
+				}
 
-                switch (Z_TYPE_P(data)) {
-                    case IS_ARRAY:
-                        convert_function = msgpack_convert_array;
-                        break;
-                    case IS_OBJECT:
-                        // case IS_STRING:
-                        convert_function = msgpack_convert_object;
-                        break;
-                    default:
-                        break;
-                }
+				if (convert_function) {
+					zval rv;
+					if (convert_function(&rv, data, dataval) != SUCCESS) {
+						return FAILURE;
+					}
+					Z_TRY_ADDREF_P(dataval);
+					zend_symtable_update(Z_ARRVAL_P(return_value), key, dataval);
+				} else {
+					Z_TRY_ADDREF_P(dataval);
+					zend_symtable_update(Z_ARRVAL_P(return_value), key, dataval);
+				}
+			}
+			zend_hash_move_forward_ex(htval, &valpos);
+		} ZEND_HASH_FOREACH_END();
 
-                if ((dataval = zend_hash_get_current_data_ex(htval, &valpos)) == NULL) {
-                    MSGPACK_WARNING("[msgpack] (%s) can't get data", __FUNCTION__);
-                    return FAILURE;
-                }
-
-                if (convert_function) {
-                    zval rv;
-                    if (convert_function(&rv, data, dataval) != SUCCESS) {
-                        return FAILURE;
-                    }
-                    add_assoc_zval_ex(return_value, key->val, key->len, dataval);
-                } else {
-                    add_assoc_zval_ex(return_value, key->val, key->len, dataval);
-                }
-            }
-        }
-
-        return SUCCESS;
+		return SUCCESS;
     } else {
         /* index */
         int (*convert_function)(zval *, zval *, zval *) = NULL;
@@ -218,7 +210,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
         }
 
         htval = HASH_OF(value);
-        if (zend_hash_num_elements(htval) <= 0) {
+        if (zend_hash_num_elements(htval) == 0) {
             MSGPACK_WARNING("[msgpack] (%s) array length is 0 in unserialized data", __FUNCTION__);
             return FAILURE;
         }
@@ -237,8 +229,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
             }
 
             switch (key_type) {
-                case HASH_KEY_IS_LONG:
-				{
+                case HASH_KEY_IS_LONG: {
 					zval rv;
 					if (convert_function) {
 						if (convert_function(&rv, data, arydata) != SUCCESS) {
@@ -249,8 +240,9 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 									__FUNCTION__);
 							return FAILURE;
 						}
-						add_next_index_zval(return_value, arydata);
+						add_next_index_zval(return_value, &rv);
 					} else {
+						Z_TRY_ADDREF_P(arydata);
 						add_next_index_zval(return_value, arydata);
 					}
 					break;
@@ -263,7 +255,6 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
                     return FAILURE;
             }
         }
-
         return SUCCESS;
     }
 
@@ -423,14 +414,14 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
                     if (convert_function) {
                         zval nv;
                         if (convert_function(&nv, data, aryval) != SUCCESS) {
-                            //zval_ptr_dtor(aryval);
                             MSGPACK_WARNING("[msgpack] (%s) "
                                 "convert failure in convert_object",
                                 __FUNCTION__);
                             return FAILURE;
                         }
 
-                        zend_update_property(ce, return_value, str_key->val, str_key->len, &nv);
+                        zend_update_property_ex(ce, return_value, str_key, &nv);
+						zval_ptr_dtor(&nv);
                     } else  {
                         zend_update_property(ce, return_value, prop_name, prop_len, aryval);
                     }
@@ -462,19 +453,14 @@ int msgpack_convert_template(zval *return_value, zval *tpl, zval *value) /* {{{ 
     switch (Z_TYPE_P(tpl)) {
         case IS_ARRAY:
             return msgpack_convert_array(return_value, tpl, value);
-            break;
         case IS_STRING:
         case IS_OBJECT:
             return msgpack_convert_object(return_value, tpl, value);
-            break;
         default:
             MSGPACK_ERROR("[msgpack] (%s) Template type is unsupported",
                           __FUNCTION__);
             return FAILURE;
     }
-
-    // shouldn't reach
-    return FAILURE;
 }
 /* }}} */
 
