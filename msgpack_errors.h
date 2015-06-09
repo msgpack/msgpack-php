@@ -1,4 +1,3 @@
-
 #ifndef MSGPACK_ERRORS_H
 #define MSGPACK_ERRORS_H
 

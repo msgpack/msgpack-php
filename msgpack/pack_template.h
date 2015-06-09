@@ -685,7 +685,7 @@ msgpack_pack_inline_func(_false)(msgpack_pack_user x)
 
 msgpack_pack_inline_func(_array)(msgpack_pack_user x, unsigned int n)
 {
-	if(n < 16) {
+	if (n < 16) {
 		unsigned char d = 0x90 | n;
 		msgpack_pack_append_buffer(x, &d, 1);
 	} else if(n < 65536) {

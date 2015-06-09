@@ -1,4 +1,3 @@
-
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/php_incomplete_class.h"
@@ -12,7 +11,7 @@
 
 typedef struct {
     zval data[VAR_ENTRIES_MAX];
-    long used_slots;
+    size_t used_slots;
     void *next;
 } var_entries;
 
@@ -27,11 +26,11 @@ typedef struct {
     zval_ptr_dtor(_val);                                        \
     MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, 2);
 
-inline static void msgpack_var_push(msgpack_unserialize_data_t *var_hashx, zval **rval) {
+static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_entries *var_hash, *prev = NULL;
 
     if (!var_hashx) {
-        return;
+        return NULL;
     }
 
     var_hash = var_hashx->first;
@@ -53,11 +52,11 @@ inline static void msgpack_var_push(msgpack_unserialize_data_t *var_hashx, zval 
         }
     }
 
-    *rval = &var_hash->data[var_hash->used_slots++];
+    return &var_hash->data[var_hash->used_slots++];
 }
+/* }}} */
 
-inline static int msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long id, zval **store)
-{
+static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long id) /* {{{ */ {
     var_entries *var_hash = var_hashx->first;
 
     while (id >= VAR_ENTRIES_MAX && var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
@@ -66,24 +65,22 @@ inline static int msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long
     }
 
     if (!var_hash) {
-        return !SUCCESS;
+		return NULL;
     }
 
     if (id < 0 || id >= var_hash->used_slots) {
-        return !SUCCESS;
+		return NULL;
     }
 
-    *store = &var_hash->data[id];
-
-    return SUCCESS;
+	return &var_hash->data[id];
 }
+/* }}} */
 
-inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zval **rval)
-{
+static zval *msgpack_stack_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_entries *var_hash, *prev = NULL;
 
     if (!var_hashx) {
-        return;
+        return NULL;
     }
 
     var_hash = var_hashx->first_dtor;
@@ -105,34 +102,28 @@ inline static void msgpack_stack_push(msgpack_unserialize_data_t *var_hashx, zva
         }
     }
 
-    *rval = &var_hash->data[var_hash->used_slots++];
+    return &var_hash->data[var_hash->used_slots++];
 }
+/* }}} */
 
-inline static zend_class_entry* msgpack_unserialize_class(
-    zval **container, char *class_name, size_t name_len, zend_bool init_class)
-{
+static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string *class_name, zend_bool init_class) /* {{{ */ {
     zend_class_entry *ce;
-    zend_bool incomplete_class = 0;
-    zval user_func, retval, args[1], arg_func_name, *container_val;
     int func_call_status;
-    zend_string *class_zstring;
+    zend_bool incomplete_class = 0;
+    zval user_func, retval, args[1], *container_val;
 
     container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
 
-
     do {
         /* Try to find class directly */
-        class_zstring = zend_string_init(class_name, name_len, 0);
-        ce = zend_lookup_class(class_zstring);
-        zend_string_release(class_zstring);
+        ce = zend_lookup_class(class_name);
         if (ce != NULL) {
             break;
         }
 
         /* Check for unserialize callback */
         if ((PG(unserialize_callback_func) == NULL) ||
-            (PG(unserialize_callback_func)[0] == '\0'))
-        {
+            (PG(unserialize_callback_func)[0] == '\0')) {
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
             break;
@@ -140,33 +131,27 @@ inline static zend_class_entry* msgpack_unserialize_class(
 
         /* Call unserialize callback */
         ZVAL_STRING(&user_func, PG(unserialize_callback_func));
-        ZVAL_STRING(&arg_func_name, class_name);
-
-        args[0] = arg_func_name;
+        ZVAL_STR(&args[0], class_name);
 
         func_call_status = call_user_function_ex(CG(function_table), NULL, &user_func, &retval, 1, args, 0, NULL);
-        zval_ptr_dtor(&arg_func_name);
         zval_ptr_dtor(&user_func);
         if (func_call_status != SUCCESS) {
             MSGPACK_WARNING("[msgpack] (%s) defined (%s) but not found",
-                            __FUNCTION__, class_name);
+                            __FUNCTION__, class_name->val);
 
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
             break;
         }
 
-        /* The callback function may have defined the class */
-        class_zstring = zend_string_init(class_name, name_len, 0);
-        if ((ce = zend_lookup_class(class_zstring)) == NULL) {
+        if ((ce = zend_lookup_class(class_name)) == NULL) {
             MSGPACK_WARNING("[msgpack] (%s) Function %s() hasn't defined "
                             "the class it was called for",
-                            __FUNCTION__, class_name);
+                            __FUNCTION__, class_name->val);
 
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
         }
-        zend_string_release(class_zstring);
     }
     while(0);
 
@@ -180,50 +165,33 @@ inline static zend_class_entry* msgpack_unserialize_class(
     }
 
     /* store incomplete class name */
-    if (incomplete_class)
-    {
-        php_store_class_name(container_val, class_name, name_len);
+    if (incomplete_class) {
+        php_store_class_name(container_val, class_name->val, class_name->len);
     }
 
     return ce;
 }
+/* }}} */
 
-void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash)
-{
-    HashTable **var_hash_ptr = (HashTable **)var_hash;
-
-    if (MSGPACK_G(serialize).level) {
-        *var_hash_ptr = MSGPACK_G(serialize).var_hash;
-    } else {
-        ALLOC_HASHTABLE(*var_hash_ptr);
-        zend_hash_init(*var_hash_ptr, 10, NULL, NULL, 0);
-        MSGPACK_G(serialize).var_hash = *var_hash_ptr;
-    }
-    ++MSGPACK_G(serialize).level;
-}
-
-void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash)
-{
-    HashTable **var_hash_ptr = (HashTable **)var_hash;
-
-    --MSGPACK_G(serialize).level;
-    if (!MSGPACK_G(serialize).level) {
-        zend_hash_destroy(*var_hash_ptr);
-        FREE_HASHTABLE(*var_hash_ptr);
-    }
-}
-
-void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx)
-{
+void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_hashx->first = 0;
     var_hashx->first_dtor = 0;
 }
+/* }}} */
 
-void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err)
-{
+void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err) /* {{{ */ {
     void *next;
     var_entries *var_hash = var_hashx->first;
+
     while (var_hash) {
+		/*
+		if (err) {
+			for (i = var_hash->used_slots - 1; i > 0; i--) {
+				zval_ptr_dtor(&var_hash->data[i]);
+				ZVAL_UNDEF(&var_hash->data[i]);
+			}
+		}
+		*/
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
@@ -231,183 +199,181 @@ void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend
 
     var_hash = var_hashx->first_dtor;
     while (var_hash) {
+		/*
+		for (i = var_hash->used_slots - 1; i >= 0; i--) {
+			zval_ptr_dtor(&var_hash->data[i]);
+			ZVAL_UNDEF(&var_hash->data[i]);
+		}
+		*/
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
     }
 }
+/* }}} */
 
-void msgpack_unserialize_set_return_value(msgpack_unserialize_data_t *var_hashx, zval *return_value) {
+void msgpack_unserialize_set_return_value(msgpack_unserialize_data_t *var_hashx, zval *return_value) /* {{{ */ {
     var_entries *var_hash;
     if ((var_hash = var_hashx->first) != NULL) {
         ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
     } else if ((var_hash = var_hashx->first_dtor) != NULL) {
         ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
     }
-
 }
+/* }}} */
 
-void msgpack_unserialize_init(msgpack_unserialize_data *unpack)
-{
+void msgpack_unserialize_init(msgpack_unserialize_data *unpack) /* {{{ */ {
     unpack->deps = 0;
     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 }
+/* }}} */
 
-int msgpack_unserialize_uint8(
-    msgpack_unserialize_data *unpack, uint8_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_uint8(msgpack_unserialize_data *unpack, uint8_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_uint16(
-    msgpack_unserialize_data *unpack, uint16_t data, zval **obj)
-{
+int msgpack_unserialize_uint16(msgpack_unserialize_data *unpack, uint16_t data, zval **obj) /* {{{ */ {
 
-    msgpack_stack_push(unpack->var_hash, obj);
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_uint32(
-    msgpack_unserialize_data *unpack, uint32_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_uint32(msgpack_unserialize_data *unpack, uint32_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_uint64(
-    msgpack_unserialize_data *unpack, uint64_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_uint64(msgpack_unserialize_data *unpack, uint64_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_int8(
-    msgpack_unserialize_data *unpack, int8_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_int8(msgpack_unserialize_data *unpack, int8_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_int16(
-    msgpack_unserialize_data *unpack, int16_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_int16(msgpack_unserialize_data *unpack, int16_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_int32(
-    msgpack_unserialize_data *unpack, int32_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_int32(msgpack_unserialize_data *unpack, int32_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_int64(
-    msgpack_unserialize_data *unpack, int64_t data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_int64(msgpack_unserialize_data *unpack, int64_t data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_LONG(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_float(
-    msgpack_unserialize_data *unpack, float data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_float(msgpack_unserialize_data *unpack, float data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_DOUBLE(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_double(
-    msgpack_unserialize_data *unpack, double data, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_double(msgpack_unserialize_data *unpack, double data, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_DOUBLE(*obj, data);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_nil(msgpack_unserialize_data *unpack, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_nil(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_NULL(*obj);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_true(msgpack_unserialize_data *unpack, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_true(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_BOOL(*obj, 1);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
+int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
     ZVAL_BOOL(*obj, 0);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_raw(
-    msgpack_unserialize_data *unpack, const char* base,
-    const char* data, unsigned int len, zval **obj)
-{
-    msgpack_stack_push(unpack->var_hash, obj);
-    if (len == 0) {
-        ZVAL_STRINGL(*obj, "", 0);
-    } else {
-        ZVAL_STRINGL(*obj, data, len);
-    }
+int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+    *obj = msgpack_stack_push(unpack->var_hash);
+
+	if (len == 0) {
+		ZVAL_EMPTY_STRING(*obj);
+	} else {
+		ZVAL_STRINGL(*obj, data, len);
+	}
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_array(
-    msgpack_unserialize_data *unpack, unsigned int count, zval **obj)
-{
-    msgpack_var_push(unpack->var_hash, obj);
+int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
+    *obj = msgpack_var_push(unpack->var_hash);
+
     array_init(*obj);
 
-    if (count) unpack->stack[unpack->deps++] = count;
+    if (count) {
+		unpack->stack[unpack->deps++] = count;
+	}
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_array_item(
-    msgpack_unserialize_data *unpack, zval **container, zval *obj)
-{
+int msgpack_unserialize_array_item(msgpack_unserialize_data *unpack, zval **container, zval *obj) /* {{{ */ {
     add_next_index_zval(*container, obj);
 
     MSGPACK_UNSERIALIZE_FINISH_ITEM(unpack, 1);
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_map(
-    msgpack_unserialize_data *unpack, unsigned int count, zval **obj)
-{
-    msgpack_var_push(unpack->var_hash, obj);
-    if (count) unpack->stack[unpack->deps++] = count;
+int msgpack_unserialize_map(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
+    *obj = msgpack_var_push(unpack->var_hash);
+
+    if (count) {
+		unpack->stack[unpack->deps++] = count;
+	}
 
     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 
@@ -421,14 +387,15 @@ int msgpack_unserialize_map(
 
     return 0;
 }
+/* }}} */
 
-int msgpack_unserialize_map_item(
-    msgpack_unserialize_data *unpack, zval **container, zval *key, zval *val)
-{
+int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **container, zval *key, zval *val) /* {{{ */ {
     long deps;
+	zval *container_val;
 
     if (MSGPACK_G(php_only)) {
         zend_class_entry *ce;
+
         if (Z_TYPE_P(key) == IS_NULL) {
             unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 
@@ -453,7 +420,7 @@ int msgpack_unserialize_map_item(
                         break;
                 }
             } else if (Z_TYPE_P(val) == IS_STRING) {
-                ce = msgpack_unserialize_class(container, Z_STRVAL_P(val), Z_STRLEN_P(val), 1);
+                ce = msgpack_unserialize_class(container, Z_STR_P(val), 1);
 
                 if (ce == NULL) {
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
@@ -470,7 +437,7 @@ int msgpack_unserialize_map_item(
                 case MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT:
                     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
 
-                    ce = msgpack_unserialize_class(container, Z_STRVAL_P(key), Z_STRLEN_P(key), 0);
+                    ce = msgpack_unserialize_class(container, Z_STR_P(key), 0);
                     if (ce == NULL) {
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 
@@ -501,7 +468,7 @@ int msgpack_unserialize_map_item(
                     int type = unpack->type;
 
                     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
-                    if (msgpack_var_access(unpack->var_hash, Z_LVAL_P(val) - 1, &rval) != SUCCESS)  {
+                    if ((rval = msgpack_var_access(unpack->var_hash, Z_LVAL_P(val) - 1)) == NULL)  {
                         MSGPACK_WARNING("[msgpack] (%s) Invalid references value: %ld",
                             __FUNCTION__, Z_LVAL_P(val) - 1);
 
@@ -517,9 +484,10 @@ int msgpack_unserialize_map_item(
                     if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
                         ZVAL_MAKE_REF(*container);
                     }
-                    if (Z_REFCOUNTED_P(*container)) {
-                     Z_TRY_ADDREF_P(*container);
-                    }
+
+					if (Z_REFCOUNTED_P(*container)) {
+						Z_ADDREF_P(*container);
+					}
 
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
@@ -530,7 +498,7 @@ int msgpack_unserialize_map_item(
         }
     }
 
-    zval *container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
+    container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
 
     if (Z_TYPE_P(container_val) != IS_ARRAY && Z_TYPE_P(container_val) != IS_OBJECT) {
         array_init(container_val);
@@ -578,11 +546,11 @@ int msgpack_unserialize_map_item(
                         zval_ptr_dtor(val);
                     }
                 } else {
-                    convert_to_string(key);
-                    if ((zend_symtable_update(HASH_OF(container_val), zend_string_init(Z_STRVAL_P(key), Z_STRLEN_P(key), 0), val)) == NULL) {
+					zend_string *skey = zval_get_string(key);
+                    if ((zend_symtable_update(HASH_OF(container_val), skey, val)) == NULL) {
                         zval_ptr_dtor(val);
                     }
-                    zval_ptr_dtor(key);
+					zend_string_release(skey);
                 }
                 break;
         }
@@ -590,28 +558,32 @@ int msgpack_unserialize_map_item(
 
     deps = unpack->deps - 1;
     unpack->stack[deps]--;
-    if (unpack->stack[deps] == 0)
-    {
-        unpack->deps--;
-
+    if (unpack->stack[deps] == 0) {
         /* wakeup */
-        zend_string *wakeup_zstring = zend_string_init("__wakeup", sizeof("__wakeup") - 1, 0);
-
+        unpack->deps--;
         if (MSGPACK_G(php_only) &&
             Z_TYPE_P(container_val) == IS_OBJECT &&
             Z_OBJCE_P(container_val) != PHP_IC_ENTRY &&
-            zend_hash_exists(&Z_OBJCE_P(container_val)->function_table, wakeup_zstring))
-        {
-            zval f, h;
+            zend_hash_str_exists(&Z_OBJCE_P(container_val)->function_table, "__wakeup", sizeof("__wakeup") - 1)) {
+			zval f, h;
             ZVAL_STRING(&f, "__wakeup");
 
-            call_user_function_ex(CG(function_table), container_val, &f, &h, 0, NULL, 1, NULL TSRMLS_CC);
+            call_user_function_ex(CG(function_table), container_val, &f, &h, 0, NULL, 1, NULL);
 
             zval_ptr_dtor(&h);
             zval_ptr_dtor(&f);
         }
-        zend_string_release(wakeup_zstring);
     }
 
     return 0;
 }
+/* }}} */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */
