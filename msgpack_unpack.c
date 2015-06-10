@@ -11,21 +11,35 @@
 
 typedef struct {
     zval data[VAR_ENTRIES_MAX];
-    size_t used_slots;
+    int32_t used_slots;
     void *next;
 } var_entries;
 
-#define MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _count) \
-	/* msgpack_stack_pop(_unpack->var_hash, _count);  */ \
-    _unpack->stack[_unpack->deps-1]--;                   \
-    if (_unpack->stack[_unpack->deps-1] == 0) {          \
-        _unpack->deps--;                                 \
+#define MSGPACK_UNSERIALIZE_ALLOC_STACK(_unpack)                 \
+	if (UNEXPECTED(_unpack->deps == 0)) {                        \
+		*obj = _unpack->retval;                                  \
+	} else {                                                     \
+		*obj = msgpack_stack_push(_unpack->var_hash);            \
+	}
+
+#define MSGPACK_UNSERIALIZE_ALLOC_VALUE(_unpack)                 \
+	if (UNEXPECTED(_unpack->deps <= 0)) {                        \
+		*obj = _unpack->retval;                                  \
+	} else {                                                     \
+		*obj = msgpack_var_push(_unpack->var_hash);              \
+	}
+
+#define MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, op1, op2)       \
+	msgpack_stack_pop(_unpack->var_hash, op1, op2);              \
+    _unpack->stack[_unpack->deps-1]--;                           \
+    if (_unpack->stack[_unpack->deps-1] <= 0) {                  \
+        _unpack->deps--;                                         \
     }
 
 #define MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(_unpack, _key, _val) \
-    zval_ptr_dtor(_key);                                        \
-    zval_ptr_dtor(_val);                                        \
-    MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, 2);
+    zval_ptr_dtor(_key);                                         \
+    zval_ptr_dtor(_val);                                         \
+    MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _key, _val);
 
 static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_entries *var_hash, *prev = NULL;
@@ -43,8 +57,10 @@ static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
 
     if (!var_hash) {
         var_hash = ecalloc(1, sizeof(var_entries));
+		/*
         var_hash->used_slots = 0;
         var_hash->next = 0;
+		*/
 
         if (!var_hashx->first) {
             var_hashx->first = var_hash;
@@ -69,11 +85,11 @@ static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long id) 
 		return NULL;
     }
 
-    if (id < 0 || id >= var_hash->used_slots) {
+    if (id < 1 || id >= var_hash->used_slots) {
 		return NULL;
     }
 
-	return &var_hash->data[id];
+	return &var_hash->data[id - 1];
 }
 /* }}} */
 
@@ -93,8 +109,10 @@ static zval *msgpack_stack_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */
 
     if (!var_hash) {
         var_hash = ecalloc(1, sizeof(var_entries));
+		/*
         var_hash->used_slots = 0;
         var_hash->next = 0;
+		*/
 
         if (!var_hashx->first_dtor) {
             var_hashx->first_dtor = var_hash;
@@ -107,18 +125,35 @@ static zval *msgpack_stack_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */
 }
 /* }}} */
 
-static inline void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, uint32_t count) /* {{{ */ {
-	uint32_t i;
+static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, zval *op1, zval *op2) /* {{{ */ {
+	int32_t i;
 	var_entries *var_hash = var_hashx->first_dtor;
 
 	while (var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
 		var_hash = var_hash->next;
 	}
 
-	if (!var_hash || count <= 0) {
+	if (!var_hash) {
 		return;
 	}
 
+	if (op2 && Z_TYPE_P(op2) < IS_ARRAY) {
+		ZEND_ASSERT((&(var_hash->data[var_hash->used_slots -1]) == op2));
+		if ((&(var_hash->data[var_hash->used_slots -1]) == op2)) {
+			var_hash->used_slots--;
+			ZVAL_UNDEF(op2);
+		}
+	}
+
+	if (op1 && Z_TYPE_P(op1) < IS_ARRAY) {
+		ZEND_ASSERT((&(var_hash->data[var_hash->used_slots -1]) == op1));
+		if (&(var_hash->data[var_hash->used_slots -1]) == op1) {
+			var_hash->used_slots--;
+			ZVAL_UNDEF(op1);
+		}
+	}
+
+	/*
 	for (i = count; i > 0; i--) {
 		var_hash->used_slots--;
 		if (var_hash->used_slots < 0) {
@@ -129,6 +164,7 @@ static inline void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, uint
 			ZVAL_UNDEF(&var_hash->data[var_hash->used_slots]);
 		}
 	}
+	*/
 }
 /* }}} */
 
@@ -206,18 +242,17 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx) /* {{{ 
 /* }}} */
 
 void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err) /* {{{ */ {
+	size_t i;
     void *next;
     var_entries *var_hash = var_hashx->first;
 
     while (var_hash) {
-		/*
 		if (err) {
-			for (i = var_hash->used_slots - 1; i > 0; i--) {
-				zval_ptr_dtor(&var_hash->data[i]);
-				ZVAL_UNDEF(&var_hash->data[i]);
+			for (i = var_hash->used_slots; i > 0; i--) {
+				zval_ptr_dtor(&var_hash->data[i - 1]);
+				ZVAL_UNDEF(&var_hash->data[i - 1]);
 			}
 		}
-		*/
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
@@ -225,25 +260,13 @@ void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend
 
     var_hash = var_hashx->first_dtor;
     while (var_hash) {
-		/*
-		for (i = var_hash->used_slots - 1; i >= 0; i--) {
-			zval_ptr_dtor(&var_hash->data[i]);
-			ZVAL_UNDEF(&var_hash->data[i]);
+		for (i = var_hash->used_slots; i > 0; i--) {
+			zval_ptr_dtor(&var_hash->data[i-1]);
+			ZVAL_UNDEF(&var_hash->data[i - 1]);
 		}
-		*/
         next = var_hash->next;
         efree(var_hash);
         var_hash = next;
-    }
-}
-/* }}} */
-
-void msgpack_unserialize_set_return_value(msgpack_unserialize_data_t *var_hashx, zval *return_value) /* {{{ */ {
-    var_entries *var_hash;
-    if ((var_hash = var_hashx->first) != NULL) {
-        ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
-    } else if ((var_hash = var_hashx->first_dtor) != NULL) {
-        ZVAL_COPY_VALUE(return_value, &var_hash->data[0]);
     }
 }
 /* }}} */
@@ -255,7 +278,7 @@ void msgpack_unserialize_init(msgpack_unserialize_data *unpack) /* {{{ */ {
 /* }}} */
 
 int msgpack_unserialize_uint8(msgpack_unserialize_data *unpack, uint8_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -264,7 +287,7 @@ int msgpack_unserialize_uint8(msgpack_unserialize_data *unpack, uint8_t data, zv
 
 int msgpack_unserialize_uint16(msgpack_unserialize_data *unpack, uint16_t data, zval **obj) /* {{{ */ {
 
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -272,7 +295,7 @@ int msgpack_unserialize_uint16(msgpack_unserialize_data *unpack, uint16_t data, 
 /* }}} */
 
 int msgpack_unserialize_uint32(msgpack_unserialize_data *unpack, uint32_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -280,7 +303,7 @@ int msgpack_unserialize_uint32(msgpack_unserialize_data *unpack, uint32_t data, 
 /* }}} */
 
 int msgpack_unserialize_uint64(msgpack_unserialize_data *unpack, uint64_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -288,7 +311,7 @@ int msgpack_unserialize_uint64(msgpack_unserialize_data *unpack, uint64_t data, 
 /* }}} */
 
 int msgpack_unserialize_int8(msgpack_unserialize_data *unpack, int8_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -296,7 +319,7 @@ int msgpack_unserialize_int8(msgpack_unserialize_data *unpack, int8_t data, zval
 /* }}} */
 
 int msgpack_unserialize_int16(msgpack_unserialize_data *unpack, int16_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -304,7 +327,7 @@ int msgpack_unserialize_int16(msgpack_unserialize_data *unpack, int16_t data, zv
 /* }}} */
 
 int msgpack_unserialize_int32(msgpack_unserialize_data *unpack, int32_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -312,7 +335,7 @@ int msgpack_unserialize_int32(msgpack_unserialize_data *unpack, int32_t data, zv
 /* }}} */
 
 int msgpack_unserialize_int64(msgpack_unserialize_data *unpack, int64_t data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -320,7 +343,7 @@ int msgpack_unserialize_int64(msgpack_unserialize_data *unpack, int64_t data, zv
 /* }}} */
 
 int msgpack_unserialize_float(msgpack_unserialize_data *unpack, float data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_DOUBLE(*obj, data);
 
     return 0;
@@ -328,7 +351,7 @@ int msgpack_unserialize_float(msgpack_unserialize_data *unpack, float data, zval
 /* }}} */
 
 int msgpack_unserialize_double(msgpack_unserialize_data *unpack, double data, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_DOUBLE(*obj, data);
 
     return 0;
@@ -336,7 +359,7 @@ int msgpack_unserialize_double(msgpack_unserialize_data *unpack, double data, zv
 /* }}} */
 
 int msgpack_unserialize_nil(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_NULL(*obj);
 
     return 0;
@@ -344,7 +367,7 @@ int msgpack_unserialize_nil(msgpack_unserialize_data *unpack, zval **obj) /* {{{
 /* }}} */
 
 int msgpack_unserialize_true(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_BOOL(*obj, 1);
 
     return 0;
@@ -352,7 +375,7 @@ int msgpack_unserialize_true(msgpack_unserialize_data *unpack, zval **obj) /* {{
 /* }}} */
 
 int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
     ZVAL_BOOL(*obj, 0);
 
     return 0;
@@ -360,7 +383,7 @@ int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj) /* {
 /* }}} */
 
 int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
-    *obj = msgpack_stack_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
 	if (len == 0) {
 		ZVAL_EMPTY_STRING(*obj);
@@ -373,7 +396,7 @@ int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, 
 /* }}} */
 
 int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
-    *obj = msgpack_var_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);
 
     array_init(*obj);
 
@@ -388,14 +411,14 @@ int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int cou
 int msgpack_unserialize_array_item(msgpack_unserialize_data *unpack, zval **container, zval *obj) /* {{{ */ {
     add_next_index_zval(*container, obj);
 
-    MSGPACK_UNSERIALIZE_FINISH_ITEM(unpack, 1);
+	MSGPACK_UNSERIALIZE_FINISH_ITEM(unpack, obj, NULL);
 
     return 0;
 }
 /* }}} */
 
 int msgpack_unserialize_map(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
-    *obj = msgpack_var_push(unpack->var_hash);
+    MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);
 
     if (count) {
 		unpack->stack[unpack->deps++] = count;
@@ -409,7 +432,7 @@ int msgpack_unserialize_map(msgpack_unserialize_data *unpack, unsigned int count
         } else {
             array_init(*obj);
         }
-    }
+    } 
 
     return 0;
 }
@@ -498,7 +521,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
 
                     if (container != NULL) {
                         zval_ptr_dtor(*container);
-                    }
+					}
 
                     ZVAL_COPY_VALUE(*container, rval);
                     if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
@@ -572,24 +595,22 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
         }
     }
 
-	/* msgpack_stack_pop(unpack->var_hash, 2); */
+	msgpack_stack_pop(unpack->var_hash, key, val);
 
     deps = unpack->deps - 1;
     unpack->stack[deps]--;
-    if (unpack->stack[deps] == 0) {
-        /* wakeup */
-        unpack->deps--;
-        if (MSGPACK_G(php_only) &&
-            Z_TYPE_P(container_val) == IS_OBJECT &&
-            Z_OBJCE_P(container_val) != PHP_IC_ENTRY &&
-            zend_hash_str_exists(&Z_OBJCE_P(container_val)->function_table, "__wakeup", sizeof("__wakeup") - 1)) {
-			zval f, h;
-            ZVAL_STRING(&f, "__wakeup");
-
-            call_user_function_ex(CG(function_table), container_val, &f, &h, 0, NULL, 1, NULL);
-
-            zval_ptr_dtor(&h);
-            zval_ptr_dtor(&f);
+	if (unpack->stack[deps] == 0) {
+		/* wakeup */
+		unpack->deps--;
+		if (MSGPACK_G(php_only) &&
+				Z_TYPE_P(container_val) == IS_OBJECT &&
+				Z_OBJCE_P(container_val) != PHP_IC_ENTRY &&
+				zend_hash_str_exists(&Z_OBJCE_P(container_val)->function_table, "__wakeup", sizeof("__wakeup") - 1)) {
+			zval f, ret;
+			ZVAL_STRING(&f, "__wakeup");
+			call_user_function_ex(CG(function_table), container_val, &f, &ret, 0, NULL, 1, NULL);
+			zval_ptr_dtor(&ret);
+			zval_ptr_dtor(&f);
         }
     }
 

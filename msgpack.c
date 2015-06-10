@@ -166,7 +166,6 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
     ret = template_execute(&mp, val, vallen, &off);
 
     if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
-        msgpack_unserialize_set_return_value(&var_hash, &tmp);
         msgpack_unserialize_var_destroy(&var_hash, 0);
 
         ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&tmp), key_str, value) {
@@ -224,15 +223,13 @@ PHP_MSGPACK_API void php_msgpack_unserialize(zval *return_value, char *str, size
             MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
             break;
         case MSGPACK_UNPACK_CONTINUE:
-            msgpack_unserialize_set_return_value(&var_hash, return_value);
-            msgpack_unserialize_var_destroy(&var_hash, 0);
+            msgpack_unserialize_var_destroy(&var_hash, 1);
             MSGPACK_WARNING(
                 "[msgpack] (%s) Insufficient data for unserializing",
                 __FUNCTION__);
             break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
         case MSGPACK_UNPACK_SUCCESS:
-            msgpack_unserialize_set_return_value(&var_hash, return_value);
             msgpack_unserialize_var_destroy(&var_hash, 0);
             if (off < str_len) {
                 MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
