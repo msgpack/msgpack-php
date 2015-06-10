@@ -447,16 +447,12 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 }
             } else if (Z_TYPE_P(val) == IS_STRING) {
                 ce = msgpack_unserialize_class(container, Z_STR_P(val), 1);
-
                 if (ce == NULL) {
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                     return 0;
                 }
             }
-
             MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
             return 0;
         } else {
             switch (unpack->type) {
@@ -466,10 +462,8 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                     ce = msgpack_unserialize_class(container, Z_STR_P(key), 0);
                     if (ce == NULL) {
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                         return 0;
                     }
-
                     /* implementing Serializable */
                     if (ce->unserialize == NULL) {
                         MSGPACK_WARNING(
@@ -506,18 +500,14 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         zval_ptr_dtor(*container);
                     }
 
-                    *container = rval;
+                    ZVAL_COPY_VALUE(*container, rval);
                     if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
                         ZVAL_MAKE_REF(*container);
                     }
 
-					if (Z_REFCOUNTED_P(*container)) {
-						Z_ADDREF_P(*container);
-					}
-
+					Z_TRY_ADDREF_P(*container);
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                     return 0;
                 }
             }
@@ -540,11 +530,11 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
 
         zend_string_release(key_zstring);
         zval_ptr_dtor(key);
-        zval_ptr_dtor(val);
+      	zval_ptr_dtor(val);
     } else {
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
-                if ((val = zend_hash_index_update(HASH_OF(container_val), Z_LVAL_P(key), val)) == NULL) {
+                if (zend_hash_index_update(HASH_OF(container_val), Z_LVAL_P(key), val) == NULL) {
                     zval_ptr_dtor(val);
                     MSGPACK_WARNING(
                             "[msgpack] (%s) illegal offset type, skip this decoding",
@@ -553,7 +543,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 zval_ptr_dtor(key);
                 break;
             case IS_STRING:
-                if ((val = zend_hash_update(HASH_OF(container_val), Z_STR(*key), val)) == NULL) {
+                if (zend_hash_update(HASH_OF(container_val), Z_STR(*key), val) == NULL) {
                     zval_ptr_dtor(val);
                     MSGPACK_WARNING(
                             "[msgpack] (%s) illegal offset type, skip this decoding",

@@ -51,8 +51,8 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
 								return FAILURE;
 							}
                             default:
-							zend_hash_move_forward_ex(props, prop_pos);
-							zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, val);
+								zend_hash_move_forward_ex(props, prop_pos);
+								zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, val);
 							return SUCCESS;
                         }
                     }
@@ -69,22 +69,22 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
 }
 /* }}} */
 
-static inline int msgpack_convert_string_to_properties(zval *object, char *key, uint key_len, zval *val, HashTable *var)/* {{{ */ {
+static inline int msgpack_convert_string_to_properties(zval *object, zend_string *key, zval *val, HashTable *var)/* {{{ */ {
     zend_class_entry *ce = Z_OBJCE_P(object);
     HashTable *propers = Z_OBJPROP_P(object);
     zend_string *prot_name, *priv_name;
     zval pub_name;
     int return_code;
 
-    ZVAL_STRINGL(&pub_name, key, key_len);
-    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key, key_len, 1);
-    prot_name = zend_mangle_property_name("*", 1, key, key_len, 1);
+    ZVAL_STR(&pub_name, key);
+    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key->val, key->len, 1);
+    prot_name = zend_mangle_property_name("*", 1, key->val, key->len, 1);
 
     if (zend_hash_find(propers, priv_name) != NULL) {
-        zend_update_property(ce, object, key, key_len, val);
+        zend_update_property_ex(ce, object, key, val);
         return_code = SUCCESS;
     } else if (zend_hash_find(propers, prot_name) != NULL) {
-        zend_update_property(ce, object, key, key_len, val);
+        zend_update_property_ex(ce, object, key, val);
         return_code = SUCCESS;
     } else {
         zend_std_write_property(object, &pub_name, val, NULL);
@@ -94,7 +94,6 @@ static inline int msgpack_convert_string_to_properties(zval *object, char *key, 
 
     zend_string_release(priv_name);
     zend_string_release(prot_name);
-    zval_ptr_dtor(&pub_name);
 
     return return_code;
 }
@@ -104,8 +103,7 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
     zend_string *key;
     int key_type;
     ulong key_index;
-    zval *data, *arydata;
-    HashPosition pos, valpos;
+    zval *data;
     HashTable *ht, *htval;
 
     if (Z_TYPE_P(tpl) != IS_ARRAY) {
@@ -127,6 +125,8 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 
     /* string */
 	if (ht->nNumOfElements != ht->nNextFreeElement) {
+		HashPosition valpos;
+
 		htval = HASH_OF(value);
 
 		if (!htval) {
@@ -137,9 +137,8 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 		zend_hash_internal_pointer_reset_ex(htval, &valpos);
 		ZEND_HASH_FOREACH_KEY_VAL(ht, key_index, key, data) { 
 			if (key) {
-				int (*convert_function)(zval *, zval *, zval *) = NULL;
 				zval *dataval;
-
+				int (*convert_function)(zval *, zval *, zval *) = NULL;
 				switch (Z_TYPE_P(data)) {
 					case IS_ARRAY:
 						convert_function = msgpack_convert_array;
@@ -157,13 +156,16 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 					return FAILURE;
 				}
 
+				if (Z_TYPE_P(dataval) == IS_INDIRECT) {
+					dataval = Z_INDIRECT_P(dataval);
+				}
+
 				if (convert_function) {
 					zval rv;
 					if (convert_function(&rv, data, dataval) != SUCCESS) {
 						return FAILURE;
 					}
-					Z_TRY_ADDREF_P(dataval);
-					zend_symtable_update(Z_ARRVAL_P(return_value), key, dataval);
+					zend_symtable_update(Z_ARRVAL_P(return_value), key, &rv);
 				} else {
 					Z_TRY_ADDREF_P(dataval);
 					zend_symtable_update(Z_ARRVAL_P(return_value), key, dataval);
@@ -175,6 +177,8 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 		return SUCCESS;
     } else {
         /* index */
+		zval *arydata;
+		HashPosition pos;
         int (*convert_function)(zval *, zval *, zval *) = NULL;
 
         if (Z_TYPE_P(value) != IS_ARRAY) {
@@ -184,7 +188,6 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
 
         zend_hash_internal_pointer_reset_ex(ht, &pos);
         key_type = zend_hash_get_current_key_ex(ht, &key, &key_index, &pos);
-
         if (key_type == HASH_KEY_NON_EXISTENT) {
             MSGPACK_WARNING(
                     "[msgpack] (%s) first element in template array is empty",
@@ -215,46 +218,28 @@ int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ 
             return FAILURE;
         }
 
-        zend_hash_internal_pointer_reset_ex(htval, &valpos);
-        for (;; zend_hash_move_forward_ex(htval, &valpos)) {
-            key_type = zend_hash_get_current_key_ex(htval, &key, &key_index, &valpos);
-
-            if (key_type == HASH_KEY_NON_EXISTENT) {
-                break;
-            }
-
-            if ((arydata = zend_hash_get_current_data_ex(htval, &valpos)) == NULL) {
-                MSGPACK_WARNING( "[msgpack] (%s) can't get next data in indexed array", __FUNCTION__);
-                continue;
-            }
-
-            switch (key_type) {
-                case HASH_KEY_IS_LONG: {
-					zval rv;
-					if (convert_function) {
-						if (convert_function(&rv, data, arydata) != SUCCESS) {
-							MSGPACK_WARNING(
-									"[msgpack] (%s) "
-									"convert failure in HASH_KEY_IS_LONG "
-									"in indexed array",
-									__FUNCTION__);
-							return FAILURE;
-						}
-						add_next_index_zval(return_value, &rv);
-					} else {
-						Z_TRY_ADDREF_P(arydata);
-						add_next_index_zval(return_value, arydata);
+		ZEND_HASH_FOREACH_KEY_VAL_IND(htval, key_index, key, arydata) {
+			if (key) {
+				MSGPACK_WARNING("[msgpack] (%s) key is string", __FUNCTION__);
+				return FAILURE;
+			} else {
+				zval rv;
+				if (convert_function) {
+					if (convert_function(&rv, data, arydata) != SUCCESS) {
+						MSGPACK_WARNING(
+								"[msgpack] (%s) "
+								"convert failure in HASH_KEY_IS_LONG "
+								"in indexed array",
+								__FUNCTION__);
+						return FAILURE;
 					}
-					break;
+					add_next_index_zval(return_value, &rv);
+				} else {
+					Z_TRY_ADDREF_P(arydata);
+					add_next_index_zval(return_value, arydata);
 				}
-                case HASH_KEY_IS_STRING:
-                    MSGPACK_WARNING("[msgpack] (%s) key is string", __FUNCTION__);
-                    return FAILURE;
-                default:
-                    MSGPACK_WARNING("[msgpack] (%s) key is not string nor array", __FUNCTION__);
-                    return FAILURE;
-            }
-        }
+			}
+		} ZEND_HASH_FOREACH_END();
         return SUCCESS;
     }
 
@@ -282,6 +267,10 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
                           __FUNCTION__);
             return FAILURE;
     }
+
+	if (Z_TYPE_P(value) == IS_INDIRECT) {
+		value = Z_INDIRECT_P(value);
+	}
 
     if (Z_TYPE_P(value) == IS_OBJECT) {
         zend_class_entry *vce = Z_OBJCE_P(value);
@@ -327,8 +316,8 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
     switch (Z_TYPE_P(value)) {
         case IS_ARRAY:
 		 {
-            HashTable *ht, *ret, *var = NULL;
             int num;
+            HashTable *ht, *ret, *var = NULL;
             zend_string *str_key;
             zval *data;
             ulong num_key;
@@ -351,7 +340,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
 
                 ZEND_HASH_FOREACH_STR_KEY_VAL(ht, str_key, data) {
                     if (str_key) {
-                        if (msgpack_convert_string_to_properties(return_value, str_key->val, str_key->len, data, var) != SUCCESS) {
+                        if (msgpack_convert_string_to_properties(return_value, str_key, data, var) != SUCCESS) {
                             MSGPACK_WARNING("[msgpack] (%s) "
                                     "illegal offset type, skip this decoding",
                                     __FUNCTION__);

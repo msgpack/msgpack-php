@@ -81,9 +81,7 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
     REGISTER_INI_ENTRIES();
 
 #if HAVE_PHP_SESSION
-    php_session_register_serializer("msgpack",
-                                    PS_SERIALIZER_ENCODE_NAME(msgpack),
-                                    PS_SERIALIZER_DECODE_NAME(msgpack));
+    php_session_register_serializer("msgpack", PS_SERIALIZER_ENCODE_NAME(msgpack), PS_SERIALIZER_DECODE_NAME(msgpack));
 #endif
 
     msgpack_init_class();
