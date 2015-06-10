@@ -134,53 +134,54 @@ ZEND_GET_MODULE(msgpack)
 #if HAVE_PHP_SESSION
 PS_SERIALIZER_ENCODE_FUNC(msgpack) /* {{{ */
 {
-    smart_str buf = {0};
-    msgpack_serialize_data_t var_hash;
+	smart_str buf = {0};
+	msgpack_serialize_data_t var_hash;
 
-    msgpack_serialize_var_init(&var_hash);
+	msgpack_serialize_var_init(&var_hash);
 	msgpack_serialize_zval(&buf, &PS(http_session_vars), var_hash);
-    msgpack_serialize_var_destroy(&var_hash);
+	msgpack_serialize_var_destroy(&var_hash);
 
 	smart_str_0(&buf);
 
-    return buf.s;
+	return buf.s;
 }
 
 /* }}} */
 
 PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
-    int ret;
-    zend_string *key_str;
-    zval tmp, *value;
-    msgpack_unpack_t mp;
-    msgpack_unserialize_data_t var_hash;
-    size_t off = 0;
+	int ret;
+	zend_string *key_str;
+	zval tmp, *value;
+	msgpack_unpack_t mp;
+	msgpack_unserialize_data_t var_hash;
+	size_t off = 0;
 
-    template_init(&mp);
+	template_init(&mp);
 
-    msgpack_unserialize_var_init(&var_hash);
+	msgpack_unserialize_var_init(&var_hash);
 
-    mp.user.retval = &tmp;
-    mp.user.var_hash = &var_hash;
+	mp.user.retval = &tmp;
+	mp.user.var_hash = &var_hash;
 
-    ret = template_execute(&mp, val, vallen, &off);
+	ret = template_execute(&mp, val, vallen, &off);
 
-    if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
-        msgpack_unserialize_var_destroy(&var_hash, 0);
+	if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
+		msgpack_unserialize_var_destroy(&var_hash, 0);
 
-        ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&tmp), key_str, value) {
-            if (key_str) {
-                php_set_session_var(key_str, value, NULL);
-                php_add_session_var(key_str);
-            }
-        } ZEND_HASH_FOREACH_END();
+		ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&tmp), key_str, value) {
+			if (key_str) {
+				php_set_session_var(key_str, value, NULL);
+				php_add_session_var(key_str);
+				ZVAL_UNDEF(value);
+			}
+		} ZEND_HASH_FOREACH_END();
 
-        zval_ptr_dtor(&tmp);
-    } else {
-        msgpack_unserialize_var_destroy(&var_hash, 1);
-    }
+		zval_ptr_dtor(&tmp);
+	} else {
+		msgpack_unserialize_var_destroy(&var_hash, 1);
+	}
 
-    return SUCCESS;
+	return SUCCESS;
 }
 /* }}} */
 #endif
