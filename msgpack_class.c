@@ -310,8 +310,8 @@ static ZEND_METHOD(msgpack_unpacker, __construct) /* {{{ */ {
 static ZEND_METHOD(msgpack_unpacker, __destruct) /* {{{ */ {
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
     smart_str_free(&unpacker->buffer);
-    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
 	zval_ptr_dtor(&unpacker->retval);
+    msgpack_unserialize_var_destroy(&unpacker->var_hash, unpacker->error);
 }
 /* }}} */
 
