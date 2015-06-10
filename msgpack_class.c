@@ -430,33 +430,31 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
 /* }}} */
 
 static ZEND_METHOD(msgpack_unpacker, data) /* {{{ */ {
-    zval *object = NULL, func_name, reset_return;
-    php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
+	zval *object = NULL;
+	php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &object) == FAILURE) {
-        return;
-    }
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &object) == FAILURE) {
+		return;
+	}
 
-    if (unpacker->finished) {
-        msgpack_unserialize_set_return_value(&unpacker->var_hash, &unpacker->retval);
-    }
+	if (unpacker->finished) {
+		msgpack_unserialize_set_return_value(&unpacker->var_hash, &unpacker->retval);
+	}
 
-    if (object == NULL) {
-        ZVAL_COPY_VALUE(return_value, &unpacker->retval);
-    } else {
-        zval zv;
-        ZVAL_COPY_VALUE(&zv, &unpacker->retval);
+	if (object == NULL) {
+		ZVAL_COPY_VALUE(return_value, &unpacker->retval);
+	} else {
+		zval zv;
+		ZVAL_COPY_VALUE(&zv, &unpacker->retval);
 
-        if (msgpack_convert_object(return_value, object, &zv) != SUCCESS) {
+		if (msgpack_convert_object(return_value, object, &zv) != SUCCESS) {
 			zval_ptr_dtor(&zv);
-            RETURN_NULL();
-        }
+			RETURN_NULL();
+		}
 		zval_ptr_dtor(&zv);
-    }
+	}
 
-    ZVAL_STRING(&func_name, "reset");
-    call_user_function_ex(CG(function_table), getThis(), &func_name, &reset_return, 0, NULL, 0, NULL);
-    zval_ptr_dtor(&func_name);
+	ZEND_MN(msgpack_unpacker_reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 

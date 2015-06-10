@@ -314,7 +314,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 
                     msgpack_serialize_zval(buf, data, var_hash);
 
-                    if (Z_TYPE_P(data) == IS_ARRAY) {
+                    if (Z_TYPE_P(data_noref) == IS_ARRAY) {
 						ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(data_noref));
                     }
                 }
