@@ -63,13 +63,17 @@ static inline int msgpack_var_add(HashTable *var_hash, zval *var, zval **var_old
         p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)(var_noref));
         len = id + sizeof(id) - 1 - p;
     } else {
+		// TODO: uninitialized var_old?
         return 0;
     }
 
-    if (var_old && (*var_old = zend_hash_str_find(var_hash, p, len)) != NULL) {
+    if (var_old && ((*var_old = zend_hash_str_find(var_hash, p, len))) != NULL) {
         if (!Z_ISREF_P(var)) {
+			size_t offset = (char *)*var_old - (char*)var_hash->arData;
             ZVAL_LONG(&zv, -1);
             zend_hash_next_index_insert(var_hash, &zv);
+			/* table maybe resized */
+			*var_old = (zval *)((char *)var_hash->arData + offset);
         }
         return 0;
     }
