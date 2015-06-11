@@ -404,6 +404,7 @@ int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, 
 	if (len == 0) {
 		ZVAL_EMPTY_STRING(*obj);
 	} else {
+		/* TODO: check malformed input? */
 		ZVAL_STRINGL(*obj, data, len);
 	}
 
