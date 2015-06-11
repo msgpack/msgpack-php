@@ -666,7 +666,10 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
 	} else {
 		msgpack_var_replace(val, nval);
 	}
-	msgpack_stack_pop(unpack->var_hash, key);
+	if (MSGPACK_IS_STACK_VALUE(key)) {
+		/* just in case for malformed data */
+		msgpack_stack_pop(unpack->var_hash, key);
+	}
 
     deps = unpack->deps - 1;
     unpack->stack[deps]--;
