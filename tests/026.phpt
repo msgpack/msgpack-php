@@ -76,7 +76,10 @@ array(1) {
     [1]=>
     int(2)
     [2]=>
-    *RECURSION*
+    array(1) {
+      ["foo"]=>
+      *RECURSION*
+    }
   }
 }
 array(1) {
