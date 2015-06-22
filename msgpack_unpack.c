@@ -49,7 +49,7 @@ typedef struct {
     zval_ptr_dtor(_val);                                         \
     MSGPACK_UNSERIALIZE_FINISH_ITEM(_unpack, _key, _val);
 
-#define MSGPACK_IS_STACK_VALUE(_v)   (Z_TYPE_P((_v)) < IS_ARRAY)
+#define MSGPACK_IS_STACK_VALUE(_v)   (Z_TYPE_P((zval *)(_v)) < IS_ARRAY)
 
 static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_entries *var_hash, *prev = NULL;
