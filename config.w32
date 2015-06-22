@@ -1,7 +1,7 @@
 // $Id$
 // vim:ft=javascript
 
-ARG_ENABLE("msgpack", "for msgpack support", "yes");
+ARG_ENABLE("msgpack", "for msgpack support", "no");
 
 if (PHP_MSGPACK != "no") {
    EXTENSION("msgpack", "msgpack.c", PHP_MSGPACK_SHARED, "");
