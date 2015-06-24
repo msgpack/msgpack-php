@@ -57,6 +57,9 @@ int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj);
 int msgpack_unserialize_raw(
     msgpack_unserialize_data *unpack, const char* base, const char* data,
     unsigned int len, zval **obj);
+int msgpack_unserialize_bin(
+    msgpack_unserialize_data *unpack, const char* base, const char* data,
+    unsigned int len, zval **obj);
 int msgpack_unserialize_array(
     msgpack_unserialize_data *unpack, unsigned int count, zval **obj);
 int msgpack_unserialize_array_item(
@@ -117,6 +120,8 @@ static inline msgpack_unpack_object template_callback_root(unpack_user* user)
     msgpack_unserialize_false(user, obj)
 #define template_callback_raw(user, base, data, len, obj) \
     msgpack_unserialize_raw(user, base, data, len, obj)
+#define template_callback_bin(user, base, data, len, obj) \
+    msgpack_unserialize_bin(user, base, data, len, obj)
 #define template_callback_array(user, count, obj) \
     msgpack_unserialize_array(user, count, obj)
 #define template_callback_array_item(user, container, obj) \

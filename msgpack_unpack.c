@@ -412,6 +412,16 @@ int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, 
 }
 /* }}} */
 
+int msgpack_unserialize_bin(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
+
+	ZVAL_STRINGL(*obj, data, len);
+
+    return 0;
+}
+/* }}} */
+
+
 int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);
 
@@ -456,7 +466,7 @@ int msgpack_unserialize_map(msgpack_unserialize_data *unpack, unsigned int count
         }
     } else {
 		ZVAL_NULL(*obj);
-	}	
+    }
 
     return 0;
 }
