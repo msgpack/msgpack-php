@@ -509,6 +509,18 @@ int msgpack_unserialize_raw(
     return 0;
 }
 
+int msgpack_unserialize_bin(
+    msgpack_unserialize_data *unpack, const char* base,
+    const char* data, unsigned int len, zval **obj)
+{
+    MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
+
+    ZVAL_STRINGL(*obj, (char *)data, len, 1);
+
+    return 0;
+}
+
+
 int msgpack_unserialize_array(
     msgpack_unserialize_data *unpack, unsigned int count, zval **obj)
 {
