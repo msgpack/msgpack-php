@@ -1,15 +1,12 @@
-language: php 
+language: php
 
 php:
-  - 5.2
-  - 5.3
-  - 5.4
-  - 5.5
+  - nightly
 
 notifications:
   email: false
   irc: false
-   
+
 env:
   - REPORT_EXIT_STATUS=1 NO_INTERACTION=1
 
@@ -17,5 +14,5 @@ env:
 before_script:
     - ./travis/compile.sh
 
-# Run PHPs run-tests.php 
+# Run PHPs run-tests.php
 script: make test
