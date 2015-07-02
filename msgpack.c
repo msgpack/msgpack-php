@@ -279,10 +279,10 @@ static ZEND_FUNCTION(msgpack_unserialize) /* {{{ */ {
 	}
 
 	if (object == NULL) {
-		php_msgpack_unserialize(return_value, str->val, str->len);
+		php_msgpack_unserialize(return_value, ZSTR_VAL(str), ZSTR_LEN(str));
 	} else {
 		zval zv;
-		php_msgpack_unserialize(&zv, str->val, str->len);
+		php_msgpack_unserialize(&zv, ZSTR_VAL(str), ZSTR_LEN(str));
 
 		if (msgpack_convert_template(return_value, object, &zv) != SUCCESS) {
 			RETVAL_NULL();

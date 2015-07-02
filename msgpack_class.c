@@ -253,10 +253,10 @@ static ZEND_METHOD(msgpack, unpack) /* {{{ */ {
     MSGPACK_G(php_only) = base->php_only;
 
     if (object == NULL) {
-        php_msgpack_unserialize(return_value, str->val, str->len);
+        php_msgpack_unserialize(return_value, ZSTR_VAL(str), ZSTR_LEN(str));
     } else {
         zval zv;
-        php_msgpack_unserialize(&zv, str->val, str->len);
+        php_msgpack_unserialize(&zv, ZSTR_VAL(str), ZSTR_LEN(str));
 
         if (msgpack_convert_template(return_value, object, &zv) != SUCCESS) {
             RETVAL_NULL();
@@ -352,7 +352,7 @@ static ZEND_METHOD(msgpack_unpacker, feed) /* {{{ */ {
         RETURN_FALSE;
     }
 
-    smart_str_appendl(&unpacker->buffer, str->val, str->len);
+    smart_str_appendl(&unpacker->buffer, ZSTR_VAL(str), ZSTR_LEN(str));
 
     RETURN_TRUE;
 }
@@ -371,16 +371,16 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
     }
 
     if (str) {
-        data = str->val;
-        len = str->len;
+        data = ZSTR_VAL(str);
+        len = ZSTR_LEN(str);
         if (offset != NULL && (Z_TYPE_P(offset) == IS_LONG || Z_TYPE_P(offset) == IS_DOUBLE)) {
             off = Z_LVAL_P(offset);
         } else {
             off = 0;
         }
     } else if (unpacker->buffer.s) {
-        data = unpacker->buffer.s->val;
-        len = unpacker->buffer.s->len;
+        data = ZSTR_VAL(unpacker->buffer.s);
+        len = ZSTR_LEN(unpacker->buffer.s);
         off = unpacker->offset;
     } else {
 		data = NULL;
@@ -463,9 +463,9 @@ static ZEND_METHOD(msgpack_unpacker, reset) /* {{{ */ {
     smart_str buffer = {0};
     php_msgpack_unpacker_t *unpacker = Z_MSGPACK_UNPACKER_P(getThis());
 
-    if (unpacker->buffer.s && unpacker->buffer.s->len > unpacker->offset) {
-        smart_str_appendl(&buffer, unpacker->buffer.s->val + unpacker->offset,
-                          unpacker->buffer.s->len - unpacker->offset);
+    if (unpacker->buffer.s && ZSTR_LEN(unpacker->buffer.s) > unpacker->offset) {
+        smart_str_appendl(&buffer, ZSTR_VAL(unpacker->buffer.s) + unpacker->offset,
+                          ZSTR_LEN(unpacker->buffer.s) - unpacker->offset);
     }
 
     smart_str_free(&unpacker->buffer);
@@ -476,7 +476,7 @@ static ZEND_METHOD(msgpack_unpacker, reset) /* {{{ */ {
     unpacker->finished = 0;
 
     if (buffer.s) {
-        smart_str_appendl(&unpacker->buffer, buffer.s->val, buffer.s->len);
+        smart_str_appendl(&unpacker->buffer, ZSTR_VAL(buffer.s), ZSTR_LEN(buffer.s));
     }
 
     smart_str_free(&buffer);

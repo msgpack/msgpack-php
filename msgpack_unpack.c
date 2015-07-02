@@ -205,7 +205,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
         zval_ptr_dtor(&user_func);
         if (func_call_status != SUCCESS) {
             MSGPACK_WARNING("[msgpack] (%s) defined (%s) but not found",
-                            __FUNCTION__, class_name->val);
+                            __FUNCTION__, ZSTR_VAL(class_name));
 
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
@@ -215,7 +215,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
         if ((ce = zend_lookup_class(class_name)) == NULL) {
             MSGPACK_WARNING("[msgpack] (%s) Function %s() hasn't defined "
                             "the class it was called for",
-                            __FUNCTION__, class_name->val);
+                            __FUNCTION__, ZSTR_VAL(class_name));
 
             incomplete_class = 1;
             ce = PHP_IC_ENTRY;
@@ -234,7 +234,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
 
     /* store incomplete class name */
     if (incomplete_class) {
-        php_store_class_name(container_val, class_name->val, class_name->len);
+        php_store_class_name(container_val, ZSTR_VAL(class_name), ZSTR_LEN(class_name));
     }
 
     return ce;
@@ -420,7 +420,6 @@ int msgpack_unserialize_bin(msgpack_unserialize_data *unpack, const char* base, 
     return 0;
 }
 /* }}} */
-
 
 int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);

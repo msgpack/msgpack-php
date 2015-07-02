@@ -133,7 +133,7 @@ static inline void msgpack_serialize_class(smart_str *buf, zval *val, zval *retv
 		msgpack_serialize_string(buf, class_name, name_len);
 
 		ZEND_HASH_FOREACH_STR_KEY_VAL(ht, key_str, value) {
-			if (incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
+			if (incomplete_class && strcmp(ZSTR_VAL(key_str), MAGIC_MEMBER) == 0) {
 				continue;
 			}
 
@@ -158,11 +158,11 @@ static inline void msgpack_serialize_class(smart_str *buf, zval *val, zval *retv
 				if (ce) {
 					zend_string *priv_name, *prot_name;
 					do {
-						priv_name = zend_mangle_property_name(ce->name->val, ce->name->len,
+						priv_name = zend_mangle_property_name(ZSTR_VAL(ce->name), ZSTR_LEN(ce->name),
 								Z_STRVAL_P(value), Z_STRLEN_P(value),
 								ce->type & ZEND_INTERNAL_CLASS);
 						if ((data = zend_hash_find(Z_OBJPROP_P(val), priv_name)) != NULL) {
-							msgpack_serialize_string(buf, priv_name->val, priv_name->len);
+							msgpack_serialize_string(buf, ZSTR_VAL(priv_name), ZSTR_LEN(priv_name));
 							pefree(priv_name, ce->type & ZEND_INTERNAL_CLASS);
 							msgpack_serialize_zval(buf, data, var_hash);
 							break;
@@ -175,7 +175,7 @@ static inline void msgpack_serialize_class(smart_str *buf, zval *val, zval *retv
 								ce->type & ZEND_INTERNAL_CLASS);
 
 						if ((data = zend_hash_find(Z_OBJPROP_P(val), prot_name)) != NULL) {
-							msgpack_serialize_string(buf, prot_name->val, prot_name->len);
+							msgpack_serialize_string(buf, ZSTR_VAL(prot_name), ZSTR_LEN(prot_name));
 							pefree(prot_name, ce->type & ZEND_INTERNAL_CLASS);
 							msgpack_serialize_zval(buf, data, var_hash);
 							break;
@@ -265,11 +265,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 			zval *value, *value_noref;
 
 			ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
-				if (key_str && incomplete_class && strcmp(key_str->val, MAGIC_MEMBER) == 0) {
+				if (key_str && incomplete_class && strcmp(ZSTR_VAL(key_str), MAGIC_MEMBER) == 0) {
 					continue;
 				}
 				if (key_str && hash) {
-					msgpack_serialize_string(buf, key_str->val, key_str->len);
+					msgpack_serialize_string(buf, ZSTR_VAL(key_str), ZSTR_LEN(key_str));
 				} else if (hash) {
 					msgpack_pack_long(buf, key_long);
 				}
@@ -354,7 +354,7 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
 			msgpack_pack_nil(buf);
 			msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT);
 
-			msgpack_serialize_string(buf, ce->name->val, ce->name->len);
+			msgpack_serialize_string(buf, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name));
 			msgpack_pack_raw(buf, serialized_length);
 			msgpack_pack_raw_body(buf, serialized_data, serialized_length);
 		} else {
@@ -480,7 +480,7 @@ void msgpack_serialize_zval(smart_str *buf, zval *val, HashTable *var_hash) /* {
 				PHP_CLASS_ATTRIBUTES;
 				PHP_SET_CLASS_ATTRIBUTES(val_noref);
 
-				msgpack_serialize_object(buf, val, var_hash, class_name->val, class_name->len, incomplete_class);
+				msgpack_serialize_object(buf, val, var_hash, ZSTR_VAL(class_name), ZSTR_LEN(class_name), incomplete_class);
 
 				PHP_CLEANUP_CLASS_ATTRIBUTES();
 			}

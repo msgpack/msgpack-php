@@ -77,8 +77,8 @@ static inline int msgpack_convert_string_to_properties(zval *object, zend_string
     int return_code;
 
     ZVAL_STR(&pub_name, key);
-    priv_name = zend_mangle_property_name(ce->name->val, ce->name->len, key->val, key->len, 1);
-    prot_name = zend_mangle_property_name("*", 1, key->val, key->len, 1);
+    priv_name = zend_mangle_property_name(ZSTR_VAL(ce->name), ZSTR_LEN(ce->name), ZSTR_VAL(key), ZSTR_LEN(key), 1);
+    prot_name = zend_mangle_property_name("*", 1, ZSTR_VAL(key), ZSTR_LEN(key), 1);
 
     if (zend_hash_find(propers, priv_name) != NULL) {
         zend_update_property_ex(ce, object, key, val);
