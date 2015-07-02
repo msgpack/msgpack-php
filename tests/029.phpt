@@ -8,7 +8,7 @@ if (!extension_loaded("session")) {
 }
 ?>
 --FILE--
-<?php 
+<?php
 ob_start();
 phpinfo(INFO_MODULES);
 $str = ob_get_clean();
@@ -51,3 +51,4 @@ Directive => Local Value => Master Value
 msgpack.error_display => On => On
 msgpack.illegal_key_insert => Off => Off
 msgpack.php_only => On => On
+msgpack.use_str8_serialization => On => On

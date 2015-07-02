@@ -730,7 +730,7 @@ msgpack_pack_inline_func(_raw)(msgpack_pack_user x, size_t l)
 	if(l < 32) {
 		unsigned char d = 0xa0 | l;
 		msgpack_pack_append_buffer(x, &TAKE8_8(d), 1);
-	} else if (l < 256) {
+	} else if (l < 256 && MSGPACK_G(use_str8_serialization)) {
 		unsigned char buf[2];
 		buf[0] = 0xd9; buf[1] = (uint8_t)l;
 		msgpack_pack_append_buffer(x, buf, 2);
