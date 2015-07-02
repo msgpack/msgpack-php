@@ -511,7 +511,7 @@ void msgpack_init_class() /* {{{ */ {
     msgpack_unpacker_ce->create_object = php_msgpack_unpacker_new;
     memcpy(&msgpack_unpacker_handlers, zend_get_std_object_handlers(),sizeof msgpack_unpacker_handlers);
     msgpack_unpacker_handlers.offset = XtOffsetOf(php_msgpack_unpacker_t, object);
-    msgpack_handlers.free_obj = php_msgpack_base_free;
+    msgpack_handlers.free_obj = php_msgpack_unpacker_free;
 
 }
 /* }}} */
