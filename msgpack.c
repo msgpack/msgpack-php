@@ -45,6 +45,9 @@ STD_PHP_INI_BOOLEAN(
 STD_PHP_INI_BOOLEAN(
     "msgpack.illegal_key_insert", "0", PHP_INI_ALL, OnUpdateBool,
     illegal_key_insert, zend_msgpack_globals, msgpack_globals)
+STD_PHP_INI_BOOLEAN(
+    "msgpack.use_str8_serialization", "1", PHP_INI_ALL, OnUpdateBool,
+    use_str8_serialization, zend_msgpack_globals, msgpack_globals)
 PHP_INI_END()
 
 #if HAVE_PHP_SESSION
@@ -70,6 +73,7 @@ static void msgpack_init_globals(zend_msgpack_globals *msgpack_globals) /* {{{ *
 	msgpack_globals->php_only = 1;
 
 	msgpack_globals->illegal_key_insert = 0;
+	msgpack_globals->use_str8_serialization = 1;
 	msgpack_globals->serialize.var_hash = NULL;
 	msgpack_globals->serialize.level = 0;
 }
