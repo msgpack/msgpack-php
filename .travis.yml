@@ -1,4 +1,4 @@
-language: php 
+language: php
 
 php:
   - 5.2
@@ -9,13 +9,13 @@ php:
 notifications:
   email: false
   irc: false
-   
+
 env:
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS='--show-diff' CFLAGS="-Wall"
 
 #Compile
 before_script:
     - ./travis/compile.sh
 
-# Run PHPs run-tests.php 
+# Run PHPs run-tests.php
 script: make test
