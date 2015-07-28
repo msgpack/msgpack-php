@@ -727,6 +727,7 @@ msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int n)
 
 msgpack_pack_inline_func(_raw)(msgpack_pack_user x, size_t l)
 {
+	TSRMLS_FETCH();
 	if(l < 32) {
 		unsigned char d = 0xa0 | l;
 		msgpack_pack_append_buffer(x, &TAKE8_8(d), 1);
