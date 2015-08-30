@@ -12,11 +12,14 @@ notifications:
   irc: false
 
 env:
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS='--show-diff' CFLAGS="-Wall"
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS='--show-diff' LDFLAGS="-lgcov" CFLAGS="-Wall -coverage -O0" EXTRA_LDFLAGS="-precious-files-regex .libs/msgpack.gcno"
 
 #Compile
 before_script:
     - ./travis/compile.sh
 
 # Run PHPs run-tests.php
-script: make test
+script:
+  - make test
+  - gcov --object-directory .libs *.c
+  - bash <(curl -s https://codecov.io/bash)
