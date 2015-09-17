@@ -109,12 +109,12 @@ object(stdClass)#%d (1) {
   float(4.2)
 }
 OK
-object(stdClass)#1 (1) {
+object(stdClass)#%d (1) {
   ["string"]=>
   string(3) "str"
 }
 OK
-object(stdClass)#1 (1) {
+object(stdClass)#%d (1) {
   ["array"]=>
   array(1) {
     [0]=>
@@ -122,9 +122,9 @@ object(stdClass)#1 (1) {
   }
 }
 OK
-object(stdClass)#3 (1) {
+object(stdClass)#%d (1) {
   ["object"]=>
-  object(Foo)#2 (1) {
+  object(Foo)#%d (1) {
     ["a"]=>
     NULL
   }
