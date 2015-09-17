@@ -198,9 +198,14 @@ inline static zend_class_entry* msgpack_unserialize_class(
 {
     zend_class_entry *ce, **pce;
     zend_bool incomplete_class = 0;
-    zval *user_func, *retval_ptr, **args[1], *arg_func_name;
-    TSRMLS_FETCH();
+    zval *user_func, *retval_ptr, **args[1], *arg_func_name, container_tmp, *val;
+    HashPosition hash_pos;
+    char *key_str;
+    ulong key_long;
+    uint key_len;
 
+    TSRMLS_FETCH();
+    ZVAL_NULL(&container_tmp);
     do
     {
         /* Try to find class directly */
@@ -269,7 +274,23 @@ inline static zend_class_entry* msgpack_unserialize_class(
         return NULL;
     }
 
+    if (Z_TYPE_PP(container) == IS_ARRAY) {
+        ZVAL_COPY_VALUE(&container_tmp, *container);
+    }
+
     object_init_ex(*container, ce);
+
+    if (Z_TYPE(container_tmp) != IS_NULL) {
+        zend_hash_internal_pointer_reset_ex(HASH_OF(&container_tmp), &hash_pos);
+        while (zend_hash_get_current_data_ex(HASH_OF(&container_tmp), (void *)&val, &hash_pos) == SUCCESS) {
+            if (zend_hash_get_current_key_ex(HASH_OF(&container_tmp), &key_str, &key_len, &key_long, 0, &hash_pos) == HASH_KEY_IS_STRING) {
+                zend_symtable_update(HASH_OF(*container), key_str, key_len, val, sizeof(val), NULL);
+            } else {
+                zend_hash_index_update(HASH_OF(*container), key_len, val, sizeof(val), NULL);
+            }
+            zend_hash_move_forward_ex(HASH_OF(&container_tmp) , &hash_pos);
+        }
+    }
 
     /* store incomplete class name */
     if (incomplete_class)
