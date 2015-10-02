@@ -168,11 +168,14 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
 	mp.user.var_hash = &var_hash;
 
 	ret = template_execute(&mp, val, vallen, &off);
+	if (Z_TYPE_P(mp.user.retval) == IS_REFERENCE) {
+		ZVAL_DEREF(mp.user.retval);
+	}
 
 	if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
 		msgpack_unserialize_var_destroy(&var_hash, 0);
 
-		ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&tmp), key_str, value) {
+		ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(mp.user.retval), key_str, value) {
 			if (key_str) {
 				php_set_session_var(key_str, value, NULL);
 				php_add_session_var(key_str);
