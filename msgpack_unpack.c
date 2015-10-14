@@ -178,9 +178,11 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
     zend_class_entry *ce;
     int func_call_status;
     zend_bool incomplete_class = 0;
-    zval user_func, retval, args[1], *container_val;
+    zval user_func, retval, args[1], *container_val, container_tmp, *val;
+    zend_string *str_key;
 
     container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
+    ZVAL_UNDEF(&container_tmp);
 
     do {
         /* Try to find class directly */
@@ -229,7 +231,22 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
     }
 
     if (init_class || incomplete_class) {
+        if (Z_TYPE_P(container_val) == IS_ARRAY) {
+            ZVAL_COPY_VALUE(&container_tmp, container_val);
+        }
         object_init_ex(container_val, ce);
+
+        if (Z_TYPE(container_tmp) != IS_UNDEF) {
+            ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&container_tmp), str_key, val) {
+                const char *class_name, *prop_name;
+                size_t prop_len;
+
+                zend_unmangle_property_name_ex(str_key, &class_name, &prop_name, &prop_len);
+                zend_update_property(Z_OBJCE_P(container_val), container_val, prop_name, prop_len, val);
+            } ZEND_HASH_FOREACH_END();
+            zval_dtor(&container_tmp);
+        }
+
     }
 
     /* store incomplete class name */
