@@ -16,11 +16,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2015-04-27</date>
- <time>11:30:29</time>
+ <date>2015-10-27</date>
+ <time>10:42:29</time>
  <version>
-  <release>0.5.6</release>
-  <api>0.5.6</api>
+  <release>2.0.0</release>
+  <api>2.0.0</api>
  </version>
  <stability>
   <release>beta</release>
@@ -28,9 +28,7 @@
  </stability>
  <license filesource="LICENSE">New BSD</license>
  <notes>
-  - support str8 type (wudikua)
-  - Fix a warning and a possible crash (Mike)
-  - Fix crash with memcached (Mike)
+  - Release msgpack for PHP7
  </notes>
  <contents>
   <dir name="/">
@@ -69,19 +67,14 @@
     <file name="007.phpt" role="test" />
     <file name="008.phpt" role="test" />
     <file name="009.phpt" role="test" />
-    <file name="009b.phpt" role="test" />
     <file name="010.phpt" role="test" />
     <file name="012.phpt" role="test" />
-    <file name="012c.phpt" role="test" />
     <file name="013.phpt" role="test" />
     <file name="014.phpt" role="test" />
     <file name="015.phpt" role="test" />
     <file name="015b.phpt" role="test" />
-    <file name="015d.phpt" role="test" />
     <file name="015e.phpt" role="test" />
-    <file name="015f.phpt" role="test" />
     <file name="016.phpt" role="test" />
-    <file name="016c.phpt" role="test" />
     <file name="017.phpt" role="test" />
     <file name="018.phpt" role="test" />
     <file name="019.phpt" role="test" />
@@ -90,19 +83,10 @@
     <file name="022.phpt" role="test" />
     <file name="023.phpt" role="test" />
     <file name="024.phpt" role="test" />
-    <file name="024b.phpt" role="test" />
-    <file name="024c.phpt" role="test" />
     <file name="025.phpt" role="test" />
-    <file name="025c.phpt" role="test" />
     <file name="026.phpt" role="test" />
-    <file name="026b.phpt" role="test" />
-    <file name="026d.phpt" role="test" />
     <file name="027.phpt" role="test" />
-    <file name="027d.phpt" role="test" />
     <file name="028.phpt" role="test" />
-    <file name="028b.phpt" role="test" />
-    <file name="028c.phpt" role="test" />
-    <file name="028d.phpt" role="test" />
     <file name="029.phpt" role="test" />
     <file name="030.phpt" role="test" />
     <file name="031.phpt" role="test" />
@@ -118,33 +102,17 @@
     <file name="042.phpt" role="test" />
     <file name="050.phpt" role="test" />
     <file name="060.phpt" role="test" />
-    <file name="060b.phpt" role="test" />
-    <file name="060c.phpt" role="test" />
     <file name="061.phpt" role="test" />
-    <file name="061b.phpt" role="test" />
-    <file name="061c.phpt" role="test" />
     <file name="062.phpt" role="test" />
     <file name="063.phpt" role="test" />
     <file name="064.phpt" role="test" />
-    <file name="064b.phpt" role="test" />
-    <file name="064c.phpt" role="test" />
     <file name="065.phpt" role="test" />
-    <file name="065b.phpt" role="test" />
-    <file name="065c.phpt" role="test" />
     <file name="066.phpt" role="test" />
     <file name="067.phpt" role="test" />
     <file name="070.phpt" role="test" />
-    <file name="070b.phpt" role="test" />
-    <file name="070c.phpt" role="test" />
     <file name="071.phpt" role="test" />
-    <file name="071b.phpt" role="test" />
-    <file name="071c.phpt" role="test" />
     <file name="072.phpt" role="test" />
-    <file name="072b.phpt" role="test" />
-    <file name="072c.phpt" role="test" />
     <file name="073.phpt" role="test" />
-    <file name="073b.phpt" role="test" />
-    <file name="073c.phpt" role="test" />
     <file name="080.phpt" role="test" />
     <file name="081.phpt" role="test" />
     <file name="082.phpt" role="test" />
@@ -156,99 +124,51 @@
     <file name="088.phpt" role="test" />
     <file name="089.phpt" role="test" />
     <file name="090.phpt" role="test" />
-    <file name="090b.phpt" role="test" />
     <file name="091.phpt" role="test" />
-    <file name="091b.phpt" role="test" />
     <file name="092.phpt" role="test" />
-    <file name="092b.phpt" role="test" />
     <file name="093.phpt" role="test" />
-    <file name="093b.phpt" role="test" />
-    <file name="094.phpt" role="test" />
-    <file name="094b.phpt" role="test" />
     <file name="095.phpt" role="test" />
-    <file name="095b.phpt" role="test" />
     <file name="096.phpt" role="test" />
-    <file name="096b.phpt" role="test" />
     <file name="097.phpt" role="test" />
-    <file name="097b.phpt" role="test" />
     <file name="098.phpt" role="test" />
-    <file name="098b.phpt" role="test" />
     <file name="099.phpt" role="test" />
-    <file name="099b.phpt" role="test" />
     <file name="100.phpt" role="test" />
-    <file name="100b.phpt" role="test" />
     <file name="101.phpt" role="test" />
-    <file name="101b.phpt" role="test" />
     <file name="102.phpt" role="test" />
-    <file name="102b.phpt" role="test" />
     <file name="103.phpt" role="test" />
-    <file name="103b.phpt" role="test" />
     <file name="104.phpt" role="test" />
-    <file name="104b.phpt" role="test" />
     <file name="105.phpt" role="test" />
-    <file name="105b.phpt" role="test" />
     <file name="106.phpt" role="test" />
-    <file name="106b.phpt" role="test" />
     <file name="107.phpt" role="test" />
-    <file name="107b.phpt" role="test" />
     <file name="108.phpt" role="test" />
-    <file name="108b.phpt" role="test" />
     <file name="109.phpt" role="test" />
-    <file name="109b.phpt" role="test" />
     <file name="110.phpt" role="test" />
-    <file name="110b.phpt" role="test" />
     <file name="111.phpt" role="test" />
-    <file name="111b.phpt" role="test" />
     <file name="112.phpt" role="test" />
-    <file name="112b.phpt" role="test" />
     <file name="113.phpt" role="test" />
-    <file name="113b.phpt" role="test" />
     <file name="114.phpt" role="test" />
-    <file name="114b.phpt" role="test" />
     <file name="115.phpt" role="test" />
-    <file name="115b.phpt" role="test" />
     <file name="116.phpt" role="test" />
-    <file name="116b.phpt" role="test" />
     <file name="117.phpt" role="test" />
-    <file name="117b.phpt" role="test" />
     <file name="118.phpt" role="test" />
-    <file name="118b.phpt" role="test" />
     <file name="119.phpt" role="test" />
-    <file name="119b.phpt" role="test" />
     <file name="120.phpt" role="test" />
-    <file name="120b.phpt" role="test" />
     <file name="121.phpt" role="test" />
-    <file name="121b.phpt" role="test" />
     <file name="122.phpt" role="test" />
-    <file name="122b.phpt" role="test" />
     <file name="123.phpt" role="test" />
-    <file name="123b.phpt" role="test" />
     <file name="124.phpt" role="test" />
-    <file name="124b.phpt" role="test" />
     <file name="125.phpt" role="test" />
-    <file name="125b.phpt" role="test" />
     <file name="126.phpt" role="test" />
-    <file name="126b.phpt" role="test" />
     <file name="127.phpt" role="test" />
-    <file name="127b.phpt" role="test" />
     <file name="128.phpt" role="test" />
-    <file name="128b.phpt" role="test" />
     <file name="129.phpt" role="test" />
-    <file name="129b.phpt" role="test" />
     <file name="130.phpt" role="test" />
-    <file name="130b.phpt" role="test" />
     <file name="131.phpt" role="test" />
-    <file name="131b.phpt" role="test" />
     <file name="132.phpt" role="test" />
-    <file name="132b.phpt" role="test" />
     <file name="133.phpt" role="test" />
-    <file name="133b.phpt" role="test" />
     <file name="134.phpt" role="test" />
-    <file name="134b.phpt" role="test" />
     <file name="135.phpt" role="test" />
-    <file name="135b.phpt" role="test" />
     <file name="136.phpt" role="test" />
-    <file name="136b.phpt" role="test" />
     <file name="137.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
@@ -259,7 +179,7 @@
  <dependencies>
   <required>
    <php>
-    <min>5.0.0</min>
+    <min>7.0.0</min>
    </php>
    <pearinstaller>
     <min>1.4.3</min>
@@ -269,6 +189,22 @@
  <providesextension>msgpack</providesextension>
  <extsrcrelease />
  <changelog> 
+  <release> 
+   <date>2015-10-27</date> 
+   <version> 
+    <release>2.0.0</release> 
+    <api>2.0.0</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes>
+   - Release msgpack for PHP7
+   </notes> 
+  </release> 
+
   <release> 
    <date>2015-04-27</date> 
    <version> 
@@ -286,7 +222,6 @@
    - Fix crash with memcached (Mike)
    </notes> 
   </release> 
-
   <release> 
    <date>2013-02-19</date> 
    <version> 
