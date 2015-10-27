@@ -1,7 +1,7 @@
 language: php
 
 php:
-  - nightly
+  - 7.0
 
 notifications:
   email: false
