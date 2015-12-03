@@ -1,5 +1,5 @@
 --TEST--
-Bug #13
+Bug #13 (ensure that __get/__set aren't called when packing/unpacking)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
