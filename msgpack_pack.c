@@ -454,6 +454,7 @@ void msgpack_serialize_zval(smart_str *buf, zval *val, HashTable *var_hash) /* {
 	}
 
 	switch (Z_TYPE_P(val_noref)) {
+		case IS_UNDEF:
 		case IS_NULL:
 			msgpack_pack_nil(buf);
 			break;
