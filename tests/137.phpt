@@ -1,5 +1,7 @@
 --TEST--
 unpack/pack str8
+--INI--
+msgpack.use_str8_serialization = 1
 --SKIPIF--
 <?php
 	if (version_compare(PHP_VERSION, '5.2.0') < 0) {
