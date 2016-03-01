@@ -53,7 +53,7 @@ test('array', $array, true);
 --EXPECTF--
 array(3) {
   [0]=>
-  object(Obj)#1 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     string(2) "aa"
     [%r"?b"?:protected"?%r]=>
@@ -64,7 +64,7 @@ array(3) {
     string(2) "dd"
   }
   [1]=>
-  object(Obj)#2 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     string(2) "ee"
     [%r"?b"?:protected"?%r]=>
@@ -75,7 +75,7 @@ array(3) {
     string(2) "hh"
   }
   [2]=>
-  object(Obj)#3 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     int(1)
     [%r"?b"?:protected"?%r]=>
@@ -88,7 +88,7 @@ array(3) {
 }
 array(3) {
   [0]=>
-  object(Obj)#4 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     string(2) "aa"
     [%r"?b"?:protected"?%r]=>
@@ -99,7 +99,7 @@ array(3) {
     NULL
   }
   [1]=>
-  object(Obj)#5 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     string(2) "ee"
     [%r"?b"?:protected"?%r]=>
@@ -110,7 +110,7 @@ array(3) {
     NULL
   }
   [2]=>
-  object(Obj)#6 (4) {
+  object(Obj)#%d (4) {
     ["a"]=>
     int(1)
     [%r"?b"?:protected"?%r]=>
