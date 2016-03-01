@@ -283,11 +283,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 				if ((Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(value_noref)) > 1)) {
 					msgpack_pack_nil(buf);
 				} else {
-					if (Z_TYPE_P(value_noref) == IS_ARRAY) {
+					if (Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))) {
 						ZEND_HASH_INC_APPLY_COUNT(Z_ARRVAL_P(value_noref));
 					}
 					msgpack_serialize_zval(buf, value, var_hash);
-					if (Z_TYPE_P(value_noref) == IS_ARRAY) {
+					if (Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))) {
 						ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(value_noref));
 					}
 				}
@@ -310,13 +310,13 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 						data_noref = data;
 					}
 
-					if (Z_TYPE_P(data_noref) == IS_ARRAY) {
+					if (Z_TYPE_P(data_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))) {
 						ZEND_HASH_INC_APPLY_COUNT(Z_ARRVAL_P(data_noref));
 					}
 
 					msgpack_serialize_zval(buf, data, var_hash);
 
-					if (Z_TYPE_P(data_noref) == IS_ARRAY) {
+					if (Z_TYPE_P(data_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))) {
 						ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(data_noref));
 					}
 				}
