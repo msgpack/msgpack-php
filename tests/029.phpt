@@ -44,6 +44,7 @@ msgpack
 
 MessagePack Support => enabled
 Session Support => enabled
+APCu Serializer Support => enabled
 extension Version => %s
 header Version => %s
 
