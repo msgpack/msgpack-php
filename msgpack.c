@@ -13,6 +13,10 @@
 #include "ext/session/php_session.h" /* for php_session_register_serializer */
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+#include "ext/apcu/apc_serializer.h"
+#endif /* HAVE_APCU_SUPPORT */
+
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
 #include "msgpack_unpack.h"
@@ -57,6 +61,12 @@ PHP_INI_END()
 PS_SERIALIZER_FUNCS(msgpack);
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+/** Apc serializer function prototypes */
+static int APC_SERIALIZER_NAME(msgpack) (APC_SERIALIZER_ARGS);
+static int APC_UNSERIALIZER_NAME(msgpack) (APC_UNSERIALIZER_ARGS);
+#endif
+
 static zend_function_entry msgpack_functions[] = {
     ZEND_FE(msgpack_serialize, arginfo_msgpack_serialize)
     ZEND_FE(msgpack_unserialize, arginfo_msgpack_unserialize)
@@ -92,6 +102,13 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
     php_session_register_serializer("msgpack", PS_SERIALIZER_ENCODE_NAME(msgpack), PS_SERIALIZER_DECODE_NAME(msgpack));
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+	apc_register_serializer("msgpack",
+		APC_SERIALIZER_NAME(msgpack),
+		APC_UNSERIALIZER_NAME(msgpack),
+		NULL TSRMLS_CC);
+#endif
+
     msgpack_init_class();
 
     REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_PHPONLY",
@@ -115,6 +132,9 @@ static ZEND_MINFO_FUNCTION(msgpack) /* {{{ */ {
     php_info_print_table_row(2, "MessagePack Support", "enabled");
 #if HAVE_PHP_SESSION
     php_info_print_table_row(2, "Session Support", "enabled" );
+#endif
+#if defined(HAVE_APCU_SUPPORT)
+	php_info_print_table_row(2, "APCu Serializer Support", "enabled" );
 #endif
     php_info_print_table_row(2, "extension Version", PHP_MSGPACK_VERSION);
     php_info_print_table_row(2, "header Version", MSGPACK_VERSION);
@@ -305,6 +325,54 @@ static ZEND_FUNCTION(msgpack_unserialize) /* {{{ */ {
     }
 }
 /* }}} */
+
+#if defined(HAVE_APCU_SUPPORT)
+/* {{{ apc_serialize function */
+static int APC_SERIALIZER_NAME(msgpack) ( APC_SERIALIZER_ARGS ) {
+	(void)config;
+
+	smart_str res = {0};
+	msgpack_serialize_data_t var_hash;
+
+	msgpack_serialize_var_init(&var_hash);
+	msgpack_serialize_zval(&res, (zval *) value, var_hash);
+	msgpack_serialize_var_destroy(&var_hash);
+
+	smart_str_0(&res);
+
+	*buf = (unsigned char *) estrndup(ZSTR_VAL(res.s), ZSTR_LEN(res.s));
+	*buf_len = ZSTR_LEN(res.s);
+
+	return 1;
+}
+/* }}} */
+/* {{{ apc_unserialize function */
+static int APC_UNSERIALIZER_NAME(msgpack) ( APC_UNSERIALIZER_ARGS ) {
+	(void)config;
+
+	int ret;
+	msgpack_unpack_t mp;
+	msgpack_unserialize_data_t var_hash;
+	size_t off = 0;
+
+	template_init(&mp);
+
+	msgpack_unserialize_var_init(&var_hash);
+
+	mp.user.retval = value;
+	mp.user.var_hash = &var_hash;
+
+	ret = template_execute(&mp, (char *) buf, buf_len, &off);
+	if (Z_TYPE_P(mp.user.retval) == IS_REFERENCE) {
+		ZVAL_DEREF(mp.user.retval);
+	}
+
+	msgpack_unserialize_var_destroy(&var_hash, 0);
+
+	return ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS;
+}
+/* }}} */
+#endif
 
 /*
  * Local variables:
