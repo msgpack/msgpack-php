@@ -289,9 +289,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
         zend_fcall_info_cache fcc;
 
         fci.size = sizeof(fci);
+#if PHP_VERSION_ID < 70100
         fci.function_table = EG(function_table);
-        fci.function_name = function_name;
         fci.symbol_table = NULL;
+#endif
+        fci.function_name = function_name;
         fci.object = Z_OBJ_P(return_value);
         fci.retval = &retval;
         fci.param_count = 0;
@@ -300,7 +302,12 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
 
         fcc.initialized = 1;
         fcc.function_handler = ce->constructor;
+
+#if PHP_VERSION_ID < 70100
         fcc.calling_scope = EG(scope);
+#else
+        fcc.calling_scope = zend_get_executed_scope();
+#endif
         fcc.called_scope = Z_OBJCE_P(return_value);
         fcc.object = Z_OBJ_P(return_value);
 
