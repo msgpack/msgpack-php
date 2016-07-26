@@ -1,5 +1,6 @@
 #include "php.h"
 
+#include <zend_extensions.h>
 #include "php_msgpack.h"
 #include "msgpack_convert.h"
 #include "msgpack_errors.h"
@@ -289,9 +290,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
         zend_fcall_info_cache fcc;
 
         fci.size = sizeof(fci);
-        fci.function_table = EG(function_table);
         fci.function_name = function_name;
-        fci.symbol_table = NULL;
         fci.object = Z_OBJ_P(return_value);
         fci.retval = &retval;
         fci.param_count = 0;
@@ -300,7 +299,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
 
         fcc.initialized = 1;
         fcc.function_handler = ce->constructor;
+#if ZEND_EXTENSION_API_NO >= 320160303
+        fcc.calling_scope = zend_get_executed_scope();
+#else
         fcc.calling_scope = EG(scope);
+#endif
         fcc.called_scope = Z_OBJCE_P(return_value);
         fcc.object = Z_OBJ_P(return_value);
 
