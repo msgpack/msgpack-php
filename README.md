@@ -8,7 +8,7 @@ It enables to exchange structured objects between many languages like JSON.
 But unlike JSON, it is very fast and small.
 
 ## Requirement
-- PHP 5.0 +
+- PHP 7.0 +
 
 ## Install
 
