@@ -39,7 +39,7 @@ $data = array(0 => 1, 1 => 2, 2 => 3);
 $packer = new \MessagePack(false); //same as $packer->setOption(\MessagePack::OPT_PHPONLY, false);
 $packed = $packer->pack($data);
 
-$unpacker = new \MessagePackUnpacker(false);
+$unpacker = new \MessagePackUnpacker(false); //same as $unpacker->setOption(\MessagePack::OPT_PHPONLY, false);
 $unpacker->feed($packed);
 $unpacker->execute();
 $unpacked = $unpacker->data();
@@ -53,11 +53,11 @@ $unpacker->reset();
 $data1 = array(0 => 1, 1 => 2, 2 => 3);
 $data2 = array("a" => 1, "b" => 2, "c" => 3);
 
-$packer = new \MessagePack(false); //same as $packer->setOption(\MessagePack::OPT_PHPONLY, false);
+$packer = new \MessagePack(false);
 $packed1 = $packer->pack($data1);
 $packed2 = $packer->pack($data2);
 
-$unpacker = new \MessagePackUnpacker();
+$unpacker = new \MessagePackUnpacker(false);
 $buffer = "";
 $nread = 0;
 
