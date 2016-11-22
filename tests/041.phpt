@@ -10,7 +10,6 @@ function test($type, $variable) {
     var_dump($variable);
     var_dump($unserialized);
 
-    echo bin2hex($serialized), PHP_EOL;
     echo PHP_EOL;
 }
 
@@ -24,24 +23,19 @@ test('double -0.0:', -0.0);
 double NaN:
 float(NAN)
 float(NAN)
-cb7ff8000000000000
 
 double Inf:
 float(INF)
 float(INF)
-cb7ff0000000000000
 
 double -Inf:
 float(-INF)
 float(-INF)
-cbfff0000000000000
 
 double 0.0:
 float(0)
 float(0)
-cb0000000000000000
 
 double -0.0:
-float(0)
-float(0)
-cb0000000000000000
+float(-0)
+float(-0)
