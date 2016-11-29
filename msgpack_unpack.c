@@ -280,7 +280,7 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx) /* {{{ 
 /* }}} */
 
 void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err) /* {{{ */ {
-	size_t i;
+	int32_t i;
     void *next;
     var_entries *var_hash = var_hashx->first;
 
