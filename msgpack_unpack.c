@@ -92,7 +92,7 @@ static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
 /* }}} */
 
 static inline void msgpack_var_replace(zval *old, zval *new) /* {{{ */ {
-	if (!MSGPACK_IS_STACK_VALUE(old)) {
+	if (!MSGPACK_IS_STACK_VALUE(old) && Z_TYPE_P(old) != IS_REFERENCE) {
 		ZVAL_INDIRECT(old, new);
 	}
 }
