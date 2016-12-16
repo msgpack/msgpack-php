@@ -16,21 +16,19 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2016-03-01</date>
- <time>11:15:00</time>
+ <date>2016-12-07</date>
+ <time>12:15:00</time>
  <version>
-  <release>2.0.1</release>
-  <api>2.0.1</api>
+  <release>2.0.2</release>
+  <api>2.0.2</api>
  </version>
  <stability>
-  <release>beta</release>
-  <api>beta</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license filesource="LICENSE">New BSD</license>
  <notes>
-  - Fixed issue #82 (Check hash protection flag to avoid memory corruption)
-  - Fixed Issue #80 (Serialized failed on unseted value)
-  - When packing/unpacking a zend_object don't call magic methods __set/__get
+  - Fixed issue #104 (PHP7.1 build:Use own definition of msgpack_unserialize_data_t)
  </notes>
  <contents>
   <dir name="/">
@@ -192,6 +190,22 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2016-12-07</date> 
+   <version> 
+    <release>2.0.2</release> 
+    <api>2.0.2</api> 
+   </version> 
+   <stability> 
+    <release>stable</release> 
+    <api>stable</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes>
+    - Fixed issue #104 (PHP7.1 build:Use own definition of msgpack_unserialize_data_t)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2016-03-01</date> 
    <version> 
     <release>2.0.1</release> 
@@ -208,7 +222,6 @@
     - When packing/unpacking a zend_object don't call magic methods __set/__get
    </notes> 
   </release> 
-
   <release> 
    <date>2015-10-27</date> 
    <version> 

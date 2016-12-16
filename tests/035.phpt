@@ -1,16 +1,11 @@
 --TEST--
 Profiling perf test.
 --SKIPIF--
-<?php
-if (!extension_loaded("msgpack") || !extension_loaded("mcrypt")) {
-    echo "skip";
-}
-?>
 --FILE--
 <?php
 $data_array = array();
 for ($i = 0; $i < 5000; $i++) {
-    $data_array[mcrypt_create_iv(10, MCRYPT_DEV_URANDOM)] = mcrypt_create_iv(10, MCRYPT_DEV_URANDOM);
+    $data_array[random_bytes(10)] = random_bytes(10);
 }
 
 $time_start = microtime(true);

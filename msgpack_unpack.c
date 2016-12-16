@@ -11,7 +11,7 @@
 
 typedef struct {
     zval data[VAR_ENTRIES_MAX];
-    int32_t used_slots;
+    zend_long used_slots;
     void *next;
 } var_entries;
 
@@ -92,13 +92,13 @@ static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
 /* }}} */
 
 static inline void msgpack_var_replace(zval *old, zval *new) /* {{{ */ {
-	if (!MSGPACK_IS_STACK_VALUE(old)) {
+	if (!MSGPACK_IS_STACK_VALUE(old) && Z_TYPE_P(old) != IS_REFERENCE) {
 		ZVAL_INDIRECT(old, new);
 	}
 }
 /* }}} */
 
-static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, long id) /* {{{ */ {
+static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, zend_long id) /* {{{ */ {
     var_entries *var_hash = var_hashx->first;
 
     while (id >= VAR_ENTRIES_MAX && var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
@@ -280,7 +280,7 @@ void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx) /* {{{ 
 /* }}} */
 
 void msgpack_unserialize_var_destroy(msgpack_unserialize_data_t *var_hashx, zend_bool err) /* {{{ */ {
-	size_t i;
+	zend_long i;
     void *next;
     var_entries *var_hash = var_hashx->first;
 

@@ -31,7 +31,7 @@ foreach ($datas as $data)
         for ($i = 0; $i < $len - 1; $i++)
         {
             $sub = substr($str, 0, $i);
-            $sub .= mcrypt_create_iv(30, MCRYPT_DEV_URANDOM);
+            $sub .= random_bytes(30);
             $php_errormsg = null;
             $v = msgpack_unserialize($sub);
         }

@@ -16,7 +16,13 @@ typedef enum
     MSGPACK_UNPACK_PARSE_ERROR = -1,
 } msgpack_unpack_return;
 
-typedef struct php_unserialize_data msgpack_unserialize_data_t;
+typedef struct _msgpack_unserialize_data {
+       void *first;
+       void *last;
+       void *first_dtor;
+       void *last_dtor;
+       HashTable *allowed_classes;
+} msgpack_unserialize_data_t;
 
 typedef struct {
     zval *retval;
