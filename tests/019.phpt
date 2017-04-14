@@ -17,7 +17,7 @@ function test($type, $variable, $test) {
     echo $test || $unserialized->b == 2 ? 'OK' : 'ERROR', PHP_EOL;
 }
 
-function __autoload($classname) {
+function test_autoload($classname) {
     class Obj {
         var $a;
         var $b;
@@ -28,6 +28,7 @@ function __autoload($classname) {
         }
     }
 }
+spl_autoload_register('test_autoload');
 
 test('autoload', '83c0a34f626aa16101a16202', false);
 ?>
