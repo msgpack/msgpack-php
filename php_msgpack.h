@@ -41,7 +41,7 @@ ZEND_EXTERN_MODULE_GLOBALS(msgpack)
 
 PHP_MSGPACK_API void php_msgpack_serialize(
     smart_str *buf, zval *val);
-PHP_MSGPACK_API void php_msgpack_unserialize(
+PHP_MSGPACK_API int php_msgpack_unserialize(
     zval *return_value, char *str, size_t str_len);
 
 #endif  /* PHP_MSGPACK_H */

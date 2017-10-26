@@ -203,14 +203,15 @@ PHP_MSGPACK_API void php_msgpack_serialize(smart_str *buf, zval *val) /* {{{ */ 
 }
 /* }}} */
 
-PHP_MSGPACK_API void php_msgpack_unserialize(zval *return_value, char *str, size_t str_len) /* {{{ */ {
+PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_t str_len) /* {{{ */ {
 	int ret;
 	size_t off = 0;
 	msgpack_unpack_t mp;
 	msgpack_unserialize_data_t var_hash;
 
 	if (str_len <= 0) {
-		RETURN_NULL();
+		RETVAL_NULL();
+		return FAILURE;
 	}
 
 	template_init(&mp);
@@ -224,28 +225,25 @@ PHP_MSGPACK_API void php_msgpack_unserialize(zval *return_value, char *str, size
 
 	switch (ret) {
 		case MSGPACK_UNPACK_PARSE_ERROR:
-			zval_dtor(return_value);
-			msgpack_unserialize_var_destroy(&var_hash, 1);
 			MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
-			RETURN_FALSE;
+			break;
 		case MSGPACK_UNPACK_CONTINUE:
-			zval_dtor(return_value);
-			msgpack_unserialize_var_destroy(&var_hash, 1);
 			MSGPACK_WARNING("[msgpack] (%s) Insufficient data for unserializing", __FUNCTION__);
-			RETURN_FALSE;
+			break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
 		case MSGPACK_UNPACK_SUCCESS:
 			msgpack_unserialize_var_destroy(&var_hash, 0);
 			if (off < str_len) {
 				MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
 			}
-			break;
+			return SUCCESS;
         default:
-			zval_dtor(return_value);
-			msgpack_unserialize_var_destroy(&var_hash, 1);
 			MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
-			RETURN_FALSE;
     }
+	zval_dtor(return_value);
+	msgpack_unserialize_var_destroy(&var_hash, 1);
+	RETVAL_FALSE;
+	return FAILURE;
 }
 /* }}} */
 
