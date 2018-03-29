@@ -1,10 +1,6 @@
 --TEST--
 Issue #80 (Serialized failed on unseted value)
 --SKIPIF--
-<?php
-if (!extension_loaded("msgpack")) {
-   echo "skip"; 
-}
 --FILE--
 <?php
 

@@ -3,9 +3,6 @@ Profiling perf test.
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 $data_array = array();
 for ($i = 0; $i < 5000; $i++) {

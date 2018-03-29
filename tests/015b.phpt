@@ -12,9 +12,6 @@ if (!extension_loaded("session")) {
 session.serialize_handler=msgpack
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 $output = '';
 

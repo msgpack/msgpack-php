@@ -3,9 +3,6 @@ Check for integer serialisation
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 function test($type, $variable) {
     $serialized = msgpack_serialize($variable);

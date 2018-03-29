@@ -3,9 +3,6 @@ disabled php only (ini_set)
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 ini_set('msgpack.php_only', 0);
 

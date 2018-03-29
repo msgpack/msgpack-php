@@ -7,10 +7,6 @@ if (version_compare(PHP_VERSION, '5.2.0') < 0) {
 }
 --FILE--
 <?php
-if(!extension_loaded('msgpack'))
-{
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 error_reporting(0);
 ini_set('msgpack.php_only', 0);

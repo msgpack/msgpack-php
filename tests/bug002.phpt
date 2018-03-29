@@ -3,9 +3,6 @@ Bug #2 (Deserializing a large array of nested objects used to give "zend_mm_heap
 --SKIPIF--
 --FILE--
 <?php
-if (!extension_loaded("msgpack")) {
-   dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 $data = array();
 $tmp = &$data;

@@ -3,9 +3,6 @@ Extra bytes unbuffered streaming unserialization
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 function test($type, $variable, $test = null) {
     $unpacker = new MessagePackUnpacker();

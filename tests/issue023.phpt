@@ -1,10 +1,6 @@
 --TEST--
 Issue #23 (Empty objects get serialized with incorrect type)
 --SKIPIF--
-<?php
-if (!extension_loaded("msgpack")) {
-   echo "skip"; 
-}
 --FILE--
 <?php
 class test {} 

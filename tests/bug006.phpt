@@ -5,9 +5,6 @@ Bug #6 (bug with incorrect packing of mixed arrays)
 if (version_compare(PHP_VERSION, '5.2.0') < 0) {
     echo "skip tests in PHP 5.2 or newer";
 }
-if (!extension_loaded("msgpack")) {
-   echo "skip"; 
-}
 --FILE--
 <?php
 $data = array('key' => 2, 1 => 3);

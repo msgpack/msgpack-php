@@ -9,9 +9,6 @@ if ((version_compare(PHP_VERSION, '5.2.13') <= 0) ||
 }
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 $unpacker = new MessagePackUnpacker();
 

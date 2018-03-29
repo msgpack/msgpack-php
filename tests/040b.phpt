@@ -7,9 +7,6 @@ if (version_compare(PHP_VERSION, '7.1.0', 'ge')) {
 }
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 error_reporting(E_ERROR | E_PARSE);
 

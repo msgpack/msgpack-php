@@ -3,9 +3,6 @@ disabled php only for class methods unpacker (set option)
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 function test($type, $variable, $test = null)
 {

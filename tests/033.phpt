@@ -3,9 +3,6 @@ Object test, cyclic references
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 class Foo {
     public $parent;

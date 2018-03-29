@@ -12,9 +12,6 @@ if (!extension_loaded("session")) {
 }
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 class Foo {
     private static $s1 = array();

@@ -3,9 +3,6 @@ Unserialize invalid random data
 --SKIPIF--
 --FILE--
 <?php 
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 $datas = array(
     87817,

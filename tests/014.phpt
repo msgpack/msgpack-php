@@ -3,9 +3,6 @@ Object-Reference test
 --SKIPIF--
 --FILE--
 <?php
-if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
-}
 
 function test($type, $variable, $test) {
     $serialized = msgpack_serialize($variable);
