@@ -1,6 +1,10 @@
 --TEST--
 broken random data test : MessagePack class
 --SKIPIF--
+<?php
+if (version_compare(PHP_VERSION, '7.1.0', 'ge')) {
+    echo "skip known to produce odd data in PHP 7.1+";
+}
 --FILE--
 <?php
 if(!extension_loaded('msgpack')) {
