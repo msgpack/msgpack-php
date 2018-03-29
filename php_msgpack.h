@@ -44,4 +44,21 @@ PHP_MSGPACK_API void php_msgpack_serialize(
 PHP_MSGPACK_API int php_msgpack_unserialize(
     zval *return_value, char *str, size_t str_len);
 
+/** Backport macro from PHP 7.3*/
+#ifndef Z_IS_RECURSIVE_P
+#define Z_IS_RECURSIVE_P(obj) (ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(obj)) > 0)
+#endif
+
+#ifndef Z_REFCOUNTED
+#define Z_REFCOUNTED ZEND_HASH_APPLY_PROTECTION(obj)
+#endif
+
+#ifndef Z_PROTECT_RECURSION_P
+#define Z_PROTECT_RECURSION_P(obj) ZEND_HASH_INC_APPLY_COUNT(Z_ARRVAL_P(obj))
+#endif
+
+#ifndef Z_UNPROTECT_RECURSION_P
+#define Z_UNPROTECT_RECURSION_P(obj) ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(obj))
+#endif
+
 #endif  /* PHP_MSGPACK_H */
