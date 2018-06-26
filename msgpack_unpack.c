@@ -557,7 +557,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                     if (ce->unserialize == NULL) {
                         MSGPACK_WARNING(
                             "[msgpack] (%s) Class %s has no unserializer",
-                            __FUNCTION__, ce->name);
+                            __FUNCTION__, ZSTR_VAL(ce->name));
 
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
 

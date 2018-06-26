@@ -314,7 +314,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
         if (zend_call_function(&fci, &fcc) == FAILURE) {
             MSGPACK_WARNING(
                 "[msgpack] (%s) Invocation of %s's constructor failed",
-                __FUNCTION__, ce->name);
+                __FUNCTION__, ZSTR_VAL(ce->name));
 
             return FAILURE;
         }
