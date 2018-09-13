@@ -280,16 +280,12 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 					value_noref = value;
 				}
 
-				if (Z_TYPE_P(value_noref) == IS_ARRAY && Z_IS_RECURSIVE_P(value_noref)) {
-					msgpack_pack_nil(buf);
-				} else {
-					if (Z_TYPE_P(value_noref) == IS_ARRAY && Z_REFCOUNTED_P(value_noref)) {
-						Z_PROTECT_RECURSION_P(value_noref);
-					}
-					msgpack_serialize_zval(buf, value, var_hash);
-					if (Z_TYPE_P(value_noref) == IS_ARRAY && Z_REFCOUNTED_P(value_noref)) {
-						Z_UNPROTECT_RECURSION_P(value_noref);
-					}
+				if (Z_TYPE_P(value_noref) == IS_ARRAY && Z_REFCOUNTED_P(value_noref)) {
+					Z_PROTECT_RECURSION_P(value_noref);
+				}
+				msgpack_serialize_zval(buf, value, var_hash);
+				if (Z_TYPE_P(value_noref) == IS_ARRAY && Z_REFCOUNTED_P(value_noref)) {
+					Z_UNPROTECT_RECURSION_P(value_noref);
 				}
 			} ZEND_HASH_FOREACH_END();
 		} else {
@@ -297,11 +293,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 			zval *data, *data_noref;
 
 			for (i = 0; i < n; i++) {
-				if ((data = zend_hash_index_find(ht, i)) == NULL || &data == &val ||
-						(Z_TYPE_P(data) == IS_ARRAY && Z_IS_RECURSIVE_P(data))) {
+				if ((data = zend_hash_index_find(ht, i)) == NULL || &data == &val) {
 					msgpack_pack_nil(buf);
-				} else if (Z_TYPE_P(data) == IS_REFERENCE && Z_TYPE_P(Z_REFVAL_P(data)) == IS_ARRAY &&
-						Z_IS_RECURSIVE_P(Z_REFVAL_P(data))) {
+				} else if (Z_TYPE_P(data) == IS_ARRAY && Z_IS_RECURSIVE_P(data)) {
+					msgpack_pack_nil(buf);
+				} else if (Z_TYPE_P(data) == IS_REFERENCE && Z_TYPE_P(Z_REFVAL_P(data)) == IS_ARRAY && Z_IS_RECURSIVE_P(Z_REFVAL_P(data))) {
 					msgpack_pack_nil(buf);
 				} else {
 					if (Z_TYPE_P(data) == IS_REFERENCE) {
