@@ -3,7 +3,7 @@ dist: xenial
 sudo: required
 
 php:
-  - 7.3.0RC1
+  - 7.3
   - 7.2
   - 7.1
   - 7.0
