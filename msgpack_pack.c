@@ -280,15 +280,41 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 					value_noref = value;
 				}
 
-				if ((Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(value_noref)) > 1)) {
+				if (Z_TYPE_P(value_noref) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+				   	ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(value_noref))
+#else
+					Z_IS_RECURSIVE_P(value_noref)
+#endif
+				) {
 					msgpack_pack_nil(buf);
 				} else {
-					if (Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))) {
+					if (Z_TYPE_P(value_noref) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+						ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))
+#else
+						Z_REFCOUNTED_P(value_noref)
+#endif
+					) {
+#if PHP_VERSION_ID < 70300
 						ZEND_HASH_INC_APPLY_COUNT(Z_ARRVAL_P(value_noref));
+#else
+						Z_PROTECT_RECURSION_P(value_noref);
+#endif
 					}
 					msgpack_serialize_zval(buf, value, var_hash);
-					if (Z_TYPE_P(value_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))) {
+					if (Z_TYPE_P(value_noref) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+						ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(value_noref))
+#else
+						Z_REFCOUNTED_P(value_noref)
+#endif
+					  ) {
+#if PHP_VERSION_ID < 70300
 						ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(value_noref));
+#else
+						Z_UNPROTECT_RECURSION_P(value_noref);
+#endif
 					}
 				}
 			} ZEND_HASH_FOREACH_END();
@@ -297,11 +323,21 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 			zval *data, *data_noref;
 
 			for (i = 0; i < n; i++) {
-				if ((data = zend_hash_index_find(ht, i)) == NULL || &data == &val ||
-						(Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(data)) > 1)) {
+				if ((data = zend_hash_index_find(ht, i)) == NULL || &data == &val || (Z_TYPE_P(data) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+					ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(data))
+#else
+					Z_IS_RECURSIVE_P(data)
+#endif
+				)) {
 					msgpack_pack_nil(buf);
 				} else if (Z_TYPE_P(data) == IS_REFERENCE && Z_TYPE_P(Z_REFVAL_P(data)) == IS_ARRAY &&
-						ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(Z_REFVAL_P(data))) > 1) {
+#if PHP_VERSION_ID < 70300
+				   	ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(Z_REFVAL_P(data)))
+#else
+					Z_IS_RECURSIVE_P(Z_REFVAL_P(data))
+#endif
+				   ) {
 					msgpack_pack_nil(buf);
 				} else {
 					if (Z_TYPE_P(data) == IS_REFERENCE) {
@@ -310,14 +346,34 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 						data_noref = data;
 					}
 
-					if (Z_TYPE_P(data_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))) {
+					if (Z_TYPE_P(data_noref) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+						ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))
+#else
+						Z_REFCOUNTED_P(data_noref)
+#endif
+					) {
+#if PHP_VERSION_ID < 70300
 						ZEND_HASH_INC_APPLY_COUNT(Z_ARRVAL_P(data_noref));
+#else
+						Z_PROTECT_RECURSION_P(data_noref);
+#endif
 					}
 
 					msgpack_serialize_zval(buf, data, var_hash);
 
-					if (Z_TYPE_P(data_noref) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))) {
+					if (Z_TYPE_P(data_noref) == IS_ARRAY &&
+#if PHP_VERSION_ID < 70300
+						ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data_noref))
+#else
+						Z_REFCOUNTED_P(data_noref)
+#endif
+					) {
+#if PHP_VERSION_ID < 70300
 						ZEND_HASH_DEC_APPLY_COUNT(Z_ARRVAL_P(data_noref));
+#else
+						Z_UNPROTECT_RECURSION_P(data_noref);
+#endif
 					}
 				}
 			}

@@ -300,7 +300,9 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
         fci.params = &params;
         fci.no_separation = 1;
 
+#if PHP_VERSION_ID < 70300
         fcc.initialized = 1;
+#endif
         fcc.function_handler = ce->constructor;
 
 #if PHP_VERSION_ID < 70100
