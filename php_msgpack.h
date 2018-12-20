@@ -3,7 +3,7 @@
 
 #include "Zend/zend_smart_str.h" /* for smart_string */
 
-#define PHP_MSGPACK_VERSION "2.0.3-dev"
+#define PHP_MSGPACK_VERSION "2.0.3"
 
 extern zend_module_entry msgpack_module_entry;
 #define phpext_msgpack_ptr &msgpack_module_entry
