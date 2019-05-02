@@ -218,7 +218,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 	}
 
 	if (ht) {
+#if PHP_VERSION_ID < 70000
 		n = zend_hash_num_elements(ht);
+#else
+		n = zend_array_count(ht);
+#endif
 	} else {
 		n = 0;
 	}
@@ -264,7 +268,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 			zend_ulong   key_long;
 			zval *value, *value_noref;
 
+#if PHP_VERSION_ID < 70000
 			ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
+#else
+			ZEND_HASH_FOREACH_KEY_VAL_IND(ht, key_long, key_str, value) {
+#endif
 				if (key_str && incomplete_class && strcmp(ZSTR_VAL(key_str), MAGIC_MEMBER) == 0) {
 					continue;
 				}
