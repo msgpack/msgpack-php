@@ -164,6 +164,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
 
 	msgpack_unserialize_var_init(&var_hash);
 
+	ZVAL_UNDEF(&tmp);
 	mp.user.retval = &tmp;
 	mp.user.var_hash = &var_hash;
 
@@ -175,13 +176,18 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
 	if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
 		msgpack_unserialize_var_destroy(&var_hash, 0);
 
-		ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(mp.user.retval), key_str, value) {
-			if (key_str) {
-				php_set_session_var(key_str, value, NULL);
-				php_add_session_var(key_str);
-				ZVAL_UNDEF(value);
-			}
-		} ZEND_HASH_FOREACH_END();
+		switch(Z_TYPE_P(mp.user.retval)) {
+		case IS_ARRAY:
+		case IS_OBJECT:
+			ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(mp.user.retval), key_str, value) {
+				if (key_str) {
+					php_set_session_var(key_str, value, NULL);
+					php_add_session_var(key_str);
+					ZVAL_UNDEF(value);
+				}
+			} ZEND_HASH_FOREACH_END();
+			break;
+		}
 
 		zval_ptr_dtor(&tmp);
 	} else {
