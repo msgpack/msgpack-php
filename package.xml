@@ -181,6 +181,10 @@
     <file name="issue023.phpt" role="test" />
     <file name="issue080.phpt" role="test" />
     <file name="issue094.phpt" role="test" />
+    <file name="issue083.phpt" role="test" />
+    <file name="issue107.phpt" role="test" />
+    <file name="issue132.phpt" role="test" />
+    <file name="issue139.phpt" role="test" />
    </dir>
   </dir>
  </contents>
