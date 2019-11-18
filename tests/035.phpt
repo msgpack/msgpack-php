@@ -1,6 +1,14 @@
 --TEST--
 Profiling perf test.
 --SKIPIF--
+<?php
+if (!extension_loaded("msgpack")) {
+	die("skip");
+}
+if (defined("PHP_DEBUG")) {
+	die("skip debug build");
+}
+?>
 --FILE--
 <?php
 $data_array = array();
