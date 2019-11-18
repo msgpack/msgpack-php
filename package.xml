@@ -127,6 +127,7 @@
     <file name="091.phpt" role="test" />
     <file name="092.phpt" role="test" />
     <file name="093.phpt" role="test" />
+    <file name="094.phpt" role="test" />
     <file name="095.phpt" role="test" />
     <file name="096.phpt" role="test" />
     <file name="097.phpt" role="test" />
@@ -170,9 +171,16 @@
     <file name="135.phpt" role="test" />
     <file name="136.phpt" role="test" />
     <file name="137.phpt" role="test" />
+    <file name="138.phpt" role="test" />
+    <file name="139.phpt" role="test" />
+    <file name="bug002.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
     <file name="bug012.phpt" role="test" />
+    <file name="bug013.phpt" role="test" />
+    <file name="issue023.phpt" role="test" />
+    <file name="issue080.phpt" role="test" />
+    <file name="issue094.phpt" role="test" />
    </dir>
   </dir>
  </contents>
