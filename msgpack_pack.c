@@ -21,23 +21,16 @@
 #include "msgpack/pack_template.h"
 
 static inline int msgpack_check_ht_is_map(zval *array) /* {{{ */ {
-	uint32_t count;
+	Bucket *b;
+	zend_ulong i = 0;
 
-	ZEND_ASSERT(Z_TYPE_P(array) == IS_ARRAY);
-
-	count = zend_hash_num_elements(Z_ARRVAL_P(array));
-
-	if (count != (Z_ARRVAL_P(array))->nNextFreeElement) {
-		return 1;
-	} else {
-		zend_string *key;
-
-		ZEND_HASH_FOREACH_STR_KEY(Z_ARRVAL_P(array), key) {
-			if (key) {
-				return 1;
-			}
-		} ZEND_HASH_FOREACH_END();
+	ZEND_HASH_FOREACH_BUCKET(Z_ARRVAL_P(array), b)
+	{
+		if (b->key || b->h != i++) {
+			return 1;
+		}
 	}
+	ZEND_HASH_FOREACH_END();
 	return 0;
 }
 /* }}} */

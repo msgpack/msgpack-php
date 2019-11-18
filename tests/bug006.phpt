@@ -33,9 +33,9 @@ Array
 )
 Array
 (
-    [0] => dummy
     [1] => foo
     [2] => bar
+    [0] => dummy
 )
 string(3) "foo"
 string(3) "bar"
