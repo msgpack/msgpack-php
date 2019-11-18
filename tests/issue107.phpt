@@ -1,5 +1,5 @@
 --TEST--
-Issue #107: ($unpacker->execute() bug)
+Issue #107 ($unpacker->execute() bug)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
@@ -224,23 +224,23 @@ Array
                             [86] => 8rdRnRJogZ24OCEfPvpkgTceF35NoAoth64EDB9BWOVHfVRK6ZAmZuvPfje8OVkMOqStnlYyqaK2YeZlzBX0qC
                             [87] => hfQLIrDVn4YIwoQSLMXnxxq7vQo9N5NmdaP2iNk8m6krK00VMelcXQoT3k25eMWXU7cZ4GiRuVCW5kI32Zx9Yjr
                             [88] => W0erFeCopYKW3fK8jXvXKR8TxMfSbkFQlsB12VcZ4VJwosOpT4oNptmH5u9qib9JpmmyQSO756EVp3edaHwNxY6h
-                            [89] => bkgASrL1SSC%s
-                            [90] => 0
-                            [91] => 0
-                            [92] => 0
-                            [93] => 0
-                            [94] => 0
-                            [95] => 0
-                            [96] => 0
-                            [97] => 0
-                            [98] => 0
-                            [99] => 0
+                            [89] => bkgASrL1SSC%a
+                            [90] => %d
+                            [91] => %d
+                            [92] => %d
+                            [93] => %d
+                            [94] => %d
+                            [95] => %d
+                            [96] => %d
+                            [97] => %d
+                            [98] => %d
+                            [99] => %d
                         )
 
-                    [0] => 0
+                    [%d] => %d
                 )
 
-            [0] => 0
+            [%d] => %d
         )
 
 )
