@@ -197,6 +197,9 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 	HashTable *ht;
 	zend_bool hash = 1;
 	zend_bool is_ref = 0;
+#if PHP_VERSION_ID >= 70400
+	zend_bool free_ht = 0;
+#endif
 
 	if (UNEXPECTED(Z_TYPE_P(val) == IS_REFERENCE)) {
 		is_ref = 1;
@@ -204,7 +207,16 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 	}
 
 	if (object) {
+#if PHP_VERSION_ID >= 70400
+		if (Z_OBJ_HANDLER_P(val, get_properties_for)) {
+			ht = Z_OBJ_HANDLER_P(val, get_properties_for)(val, ZEND_PROP_PURPOSE_ARRAY_CAST);
+			free_ht = 1;
+		} else {
+			ht = Z_OBJPROP_P(val);
+		}
+#else
 		ht = Z_OBJPROP_P(val);
+#endif
 	} else {
 		ZEND_ASSERT(Z_TYPE_P(val) == IS_ARRAY);
 		ht = Z_ARRVAL_P(val);
@@ -372,6 +384,11 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 			}
 		}
 	}
+#if PHP_VERSION_ID >= 70400
+	if (free_ht && ht) {
+		zend_array_destroy(ht);
+	}
+#endif
 }
 /* }}} */
 
