@@ -197,8 +197,7 @@ static ZEND_METHOD(msgpack, setOption) /* {{{ */ {
 
     switch (option) {
         case MSGPACK_CLASS_OPT_PHPONLY:
-            convert_to_boolean(value);
-            base->php_only = (Z_TYPE_P(value) == IS_TRUE) ? 1 : 0;
+            base->php_only = i_zend_is_true(value);
             break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePack::setOption) "
@@ -326,8 +325,7 @@ static ZEND_METHOD(msgpack_unpacker, setOption) /* {{{ */ {
 
     switch (option) {
         case MSGPACK_CLASS_OPT_PHPONLY:
-            convert_to_boolean(value);
-            unpacker->php_only = Z_LVAL_P(value);
+            unpacker->php_only = i_zend_is_true(value);
             break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePackUnpacker::setOption) "
