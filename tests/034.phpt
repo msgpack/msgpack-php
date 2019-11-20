@@ -1,7 +1,7 @@
 --TEST--
 Unserialize invalid random data
 --SKIPIF--
-<?php 
+<?php
 if (!extension_loaded('msgpack')) {
     die("skip");
 }

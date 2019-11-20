@@ -3,7 +3,7 @@ Issue #137 (DateTime(Immutable) serialization doesn't work with php 7.4)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 --FILE--
 <?php

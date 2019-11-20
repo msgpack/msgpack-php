@@ -3,7 +3,7 @@ Bug #2 (Deserializing a large array of nested objects gives "zend_mm_heap corrup
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 ?>
 --FILE--

@@ -3,7 +3,7 @@ Issue #107 ($unpacker->execute() bug)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-	die("skip");
+    die("skip");
 }
 ?>
 --FILE--
@@ -135,7 +135,7 @@ Array
                     [u] => 8574784417457
                     [o] => Array
                         (
-                            [0] => 
+                            [0] =>
                             [1] => m
                             [2] => EF
                             [3] => tdz

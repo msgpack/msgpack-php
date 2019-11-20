@@ -3,7 +3,7 @@ Bug #12 (msgpack_seriallize interfere with php serialize)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 if (version_compare(PHP_VERSION, '5.4.0') < 0) {
     echo "skip tests before PHP 5.4";

@@ -3,7 +3,7 @@ Issue #94 (PHP7 segmentation fault with references)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 --FILE--
 <?php

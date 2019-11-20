@@ -3,10 +3,10 @@ Profiling perf test.
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-	die("skip");
+    die("skip");
 }
 if (defined("PHP_DEBUG") && PHP_DEBUG) {
-	die("skip debug build");
+    die("skip debug build");
 }
 ?>
 --FILE--

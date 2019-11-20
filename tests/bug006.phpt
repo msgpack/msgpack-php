@@ -6,7 +6,7 @@ if (version_compare(PHP_VERSION, '5.2.0') < 0) {
     echo "skip tests in PHP 5.2 or newer";
 }
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 --FILE--
 <?php

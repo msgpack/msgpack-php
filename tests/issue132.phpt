@@ -3,10 +3,10 @@ Issue #132 (Segmentation fault when using cloned unpacker)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 if (!extension_loaded("session")) {
-	echo "skip - need ext/session";
+    echo "skip - need ext/session";
 }
 ?>
 --FILE--

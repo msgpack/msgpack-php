@@ -3,7 +3,7 @@ Check for msgpack presence
 --SKIPIF--
 <?php if (!extension_loaded("msgpack")) print "skip"; ?>
 --FILE--
-<?php 
+<?php
 echo "msgpack extension is available";
 ?>
 --EXPECT--

@@ -3,19 +3,19 @@ Issue #80 (Serialized failed on unseted value)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
-   echo "skip"; 
+   echo "skip";
 }
 --FILE--
 <?php
 
 class MyClass
 {
-	protected $field;
+    protected $field;
 
-	public function preSerialize()
-	{
-		unset($this->field);
-	}
+    public function preSerialize()
+    {
+        unset($this->field);
+    }
 }
 
 $t = new MyClass();

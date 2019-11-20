@@ -2,7 +2,7 @@
 Check for bool serialisation
 --SKIPIF--
 --FILE--
-<?php 
+<?php
 if(!extension_loaded('msgpack')) {
     dl('msgpack.' . PHP_SHLIB_SUFFIX);
 }
