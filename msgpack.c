@@ -167,6 +167,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
 	ZVAL_UNDEF(&tmp);
 	mp.user.retval = &tmp;
 	mp.user.var_hash = &var_hash;
+	mp.user.eof = val + vallen;
 
 	ret = template_execute(&mp, val, vallen, &off);
 	if (Z_TYPE_P(mp.user.retval) == IS_REFERENCE) {
@@ -226,10 +227,14 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
 
 	mp.user.retval = return_value;
 	mp.user.var_hash = &var_hash;
+	mp.user.eof = str + str_len;
 
 	ret = template_execute(&mp, str, (size_t)str_len, &off);
 
 	switch (ret) {
+		case MSGPACK_UNPACK_NOMEM_ERROR:
+			MSGPACK_WARNING("[msgpack] (%s) Memory error", __FUNCTION__);
+			break;
 		case MSGPACK_UNPACK_PARSE_ERROR:
 			MSGPACK_WARNING("[msgpack] (%s) Parse error", __FUNCTION__);
 			break;

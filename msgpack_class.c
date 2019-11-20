@@ -399,6 +399,7 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
         (&unpacker->mp)->user.var_hash = &unpacker->var_hash;
     }
     (&unpacker->mp)->user.retval = &unpacker->retval;
+    (&unpacker->mp)->user.eof = data + len;
 
     MSGPACK_G(error_display) = 0;
     MSGPACK_G(php_only) = unpacker->php_only;

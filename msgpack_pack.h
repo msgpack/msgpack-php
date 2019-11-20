@@ -6,6 +6,11 @@
 
 typedef HashTable* msgpack_serialize_data_t;
 
+typedef struct msgpack_timestamp {
+    int64_t tv_sec;
+    uint32_t tv_nsec;
+} msgpack_timestamp;
+
 enum msgpack_serialize_type
 {
     MSGPACK_SERIALIZE_TYPE_NONE =  0,

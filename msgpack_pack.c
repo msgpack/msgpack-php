@@ -102,8 +102,13 @@ void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash) /* {{{ */
 /* }}} */
 
 inline static void msgpack_serialize_string(smart_str *buf, char *str, size_t len) /* {{{ */ {
-	msgpack_pack_raw(buf, len);
-	msgpack_pack_raw_body(buf, str, len);
+	if (MSGPACK_G(use_str8_serialization)) {
+		msgpack_pack_str(buf, len);
+		msgpack_pack_str_body(buf, str, len);
+	} else {
+		msgpack_pack_v4raw(buf, len);
+		msgpack_pack_v4raw_body(buf, str, len);
+	}
 }
 /* }}} */
 
@@ -421,8 +426,8 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
 			msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT);
 
 			msgpack_serialize_string(buf, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name));
-			msgpack_pack_raw(buf, serialized_length);
-			msgpack_pack_raw_body(buf, serialized_data, serialized_length);
+			msgpack_pack_str(buf, serialized_length);
+			msgpack_pack_str_body(buf, serialized_data, serialized_length);
 		} else {
 			msgpack_pack_nil(buf);
 		}

@@ -9,6 +9,10 @@
 
 #define VAR_ENTRIES_MAX 1024
 
+#if PHP_VERSION_ID < 70400
+# define zval_try_get_string zval_get_string
+#endif
+
 typedef struct {
     zval data[VAR_ENTRIES_MAX];
     zend_long used_slots;
@@ -60,6 +64,13 @@ typedef struct {
     ce->__get = __get;                                           \
 
 #define MSGPACK_IS_STACK_VALUE(_v)   (Z_TYPE_P((zval *)(_v)) < IS_ARRAY)
+
+#define MSGPACK_VALIDATE_INPUT_DATA_LENGTH(data, len, eof) \
+	((data) + (len) <= (eof))
+#define MSGPACK_VALIDATE_INPUT(user, data, len) \
+	if (!MSGPACK_VALIDATE_INPUT_DATA_LENGTH(data, len, (user)->eof)) { \
+		return MSGPACK_UNPACK_PARSE_ERROR; \
+	}
 
 static zval *msgpack_var_push(msgpack_unserialize_data_t *var_hashx) /* {{{ */ {
     var_entries *var_hash, *prev = NULL;
@@ -250,9 +261,13 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
 			ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&container_tmp), str_key, val) {
 				const char *class_name, *prop_name;
 				size_t prop_len;
-				zend_class_entry *ce = Z_OBJCE_P(container_val);
+				zend_class_entry *ce;
 				zend_function *__set, *__get;
 
+				if (!str_key) {
+					continue;
+				}
+				ce = Z_OBJCE_P(container_val);
 				UNSET_MAGIC_METHODS(ce);
 				zend_unmangle_property_name_ex(str_key, &class_name, &prop_name, &prop_len);
 				zend_update_property(ce, container_val, prop_name, prop_len, val);
@@ -343,6 +358,7 @@ int msgpack_unserialize_uint32(msgpack_unserialize_data *unpack, uint32_t data, 
 int msgpack_unserialize_uint64(msgpack_unserialize_data *unpack, uint64_t data, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
+    /* FIXME >= PHP_INT_MAX */
     ZVAL_LONG(*obj, data);
 
     return 0;
@@ -430,7 +446,8 @@ int msgpack_unserialize_false(msgpack_unserialize_data *unpack, zval **obj) /* {
 }
 /* }}} */
 
-int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+int msgpack_unserialize_str(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+	MSGPACK_VALIDATE_INPUT(unpack, data, len);
     MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
 	if (len == 0) {
@@ -444,10 +461,11 @@ int msgpack_unserialize_raw(msgpack_unserialize_data *unpack, const char* base, 
 }
 /* }}} */
 
-int msgpack_unserialize_bin(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+int msgpack_unserialize_ext(msgpack_unserialize_data *unpack, const char* base, const char* data, unsigned int len, zval **obj) /* {{{ */ {
+	MSGPACK_VALIDATE_INPUT(unpack, data, len);
     MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
-	ZVAL_STRINGL(*obj, data, len);
+	ZVAL_NULL(*obj);
 
     return 0;
 }
@@ -656,11 +674,19 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         zval_ptr_dtor(val);
                     }
                 } else {
-					zend_string *skey = zval_get_string(key);
-                    if ((nval = zend_symtable_update(Z_OBJPROP_P(container_val), skey, val)) == NULL) {
+					zend_string *skey = zval_try_get_string(key);
+#if PHP_VERSION_ID >= 70400
+					if (!skey && EG(exception)) {
+						zend_object_release(EG(exception));
+						EG(exception) = NULL;
+					}
+#endif
+                    if (!skey || !(nval = zend_symtable_update(Z_OBJPROP_P(container_val), skey, val))) {
                         zval_ptr_dtor(val);
                     }
-					zend_string_release(skey);
+                    if (skey) {
+                    	zend_string_release(skey);
+                    }
                 }
 				break;
 		}
@@ -697,11 +723,19 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         zval_ptr_dtor(val);
                     }
                 } else {
-					zend_string *skey = zval_get_string(key);
-                    if ((nval = zend_symtable_update(Z_ARRVAL_P(container_val), skey, val)) == NULL) {
+					zend_string *skey = zval_try_get_string(key);
+#if PHP_VERSION_ID >= 70400
+					if (!skey && EG(exception)) {
+						zend_object_release(EG(exception));
+						EG(exception) = NULL;
+					}
+#endif
+                    if (!skey || !(nval = zend_symtable_update(Z_ARRVAL_P(container_val), skey, val))) {
                         zval_ptr_dtor(val);
                     }
-					zend_string_release(skey);
+                    if (skey) {
+                    	zend_string_release(skey);
+                    }
                 }
                 break;
         }

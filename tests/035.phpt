@@ -5,7 +5,7 @@ Profiling perf test.
 if (!extension_loaded("msgpack")) {
 	die("skip");
 }
-if (defined("PHP_DEBUG")) {
+if (defined("PHP_DEBUG") && PHP_DEBUG) {
 	die("skip debug build");
 }
 ?>

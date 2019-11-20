@@ -44,4 +44,12 @@ PHP_MSGPACK_API void php_msgpack_serialize(
 PHP_MSGPACK_API int php_msgpack_unserialize(
     zval *return_value, char *str, size_t str_len);
 
+#ifdef WORDS_BIGENDIAN
+# define MSGPACK_ENDIAN_BIG_BYTE 1
+# define MSGPACK_ENDIAN_LITTLE_BYTE 0
+#else
+# define MSGPACK_ENDIAN_LITTLE_BYTE 1
+# define MSGPACK_ENDIAN_BIG_BYTE 0
+#endif
+
 #endif  /* PHP_MSGPACK_H */
