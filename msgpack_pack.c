@@ -292,7 +292,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 
                 if (Z_TYPE_P(value_noref) == IS_ARRAY &&
 #if PHP_VERSION_ID < 70300
-                       ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(value_noref))
+                    ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(value_noref))
 #else
                     Z_IS_RECURSIVE_P(value_noref)
 #endif
@@ -343,7 +343,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
                     msgpack_pack_nil(buf);
                 } else if (Z_TYPE_P(data) == IS_REFERENCE && Z_TYPE_P(Z_REFVAL_P(data)) == IS_ARRAY &&
 #if PHP_VERSION_ID < 70300
-                       ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(Z_REFVAL_P(data)))
+                    ZEND_HASH_GET_APPLY_COUNT(Z_ARRVAL_P(Z_REFVAL_P(data)))
 #else
                     Z_IS_RECURSIVE_P(Z_REFVAL_P(data))
 #endif
