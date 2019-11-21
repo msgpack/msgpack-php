@@ -157,16 +157,12 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
     zend_string *key_str;
     zval tmp, *value;
     msgpack_unpack_t mp;
-    msgpack_unserialize_data_t var_hash;
     size_t off = 0;
 
     template_init(&mp);
 
-    msgpack_unserialize_var_init(&var_hash);
-
     ZVAL_UNDEF(&tmp);
     mp.user.retval = &tmp;
-    mp.user.var_hash = &var_hash;
     mp.user.eof = val + vallen;
 
     ret = template_execute(&mp, val, vallen, &off);
@@ -175,7 +171,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
     }
 
     if (ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS) {
-        msgpack_unserialize_var_destroy(&var_hash, 0);
+        msgpack_unserialize_var_destroy(&mp.user.var_hash, 0);
 
         switch(Z_TYPE_P(mp.user.retval)) {
         case IS_ARRAY:
@@ -192,7 +188,7 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
 
         zval_ptr_dtor(&tmp);
     } else {
-        msgpack_unserialize_var_destroy(&var_hash, 1);
+        msgpack_unserialize_var_destroy(&mp.user.var_hash, 1);
     }
 
     return SUCCESS;
@@ -214,7 +210,6 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
     int ret;
     size_t off = 0;
     msgpack_unpack_t mp;
-    msgpack_unserialize_data_t var_hash;
 
     if (str_len <= 0) {
         RETVAL_NULL();
@@ -223,10 +218,7 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
 
     template_init(&mp);
 
-    msgpack_unserialize_var_init(&var_hash);
-
     mp.user.retval = return_value;
-    mp.user.var_hash = &var_hash;
     mp.user.eof = str + str_len;
 
     ret = template_execute(&mp, str, (size_t)str_len, &off);
@@ -243,7 +235,7 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
             break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
         case MSGPACK_UNPACK_SUCCESS:
-            msgpack_unserialize_var_destroy(&var_hash, 0);
+            msgpack_unserialize_var_destroy(&mp.user.var_hash, 0);
             if (off < str_len) {
                 MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
             }
@@ -252,7 +244,7 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
     }
     zval_dtor(return_value);
-    msgpack_unserialize_var_destroy(&var_hash, 1);
+    msgpack_unserialize_var_destroy(&mp.user.var_hash, 1);
     RETVAL_FALSE;
     return FAILURE;
 }
