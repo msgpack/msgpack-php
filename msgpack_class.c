@@ -298,8 +298,6 @@ static ZEND_METHOD(msgpack_unpacker, __construct) /* {{{ */ {
     unpacker->error = 0;
 
     template_init(&unpacker->mp);
-
-    msgpack_unserialize_var_init(&unpacker->mp.user.var_hash);
 }
 /* }}} */
 
@@ -388,8 +386,6 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
         unpacker->error = 0;
 
         template_init(&unpacker->mp);
-
-        msgpack_unserialize_var_init(&unpacker->mp.user.var_hash);
     }
     (&unpacker->mp)->user.retval = &unpacker->retval;
     (&unpacker->mp)->user.eof = data + len;
@@ -479,8 +475,6 @@ static ZEND_METHOD(msgpack_unpacker, reset) /* {{{ */ {
     unpacker->error = 0;
 
     template_init(&unpacker->mp);
-
-    msgpack_unserialize_var_init(&unpacker->mp.user.var_hash);
 }
 /* }}} */
 
