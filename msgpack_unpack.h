@@ -27,11 +27,12 @@ typedef struct _msgpack_unserialize_data {
 
 typedef struct {
     zval *retval;
-    long deps;
-    msgpack_unserialize_data_t *var_hash;
-    long stack[MSGPACK_EMBED_STACK_SIZE];
-    int type;
     const char *eof;
+    msgpack_unserialize_data_t *var_hash;
+    int type;
+    unsigned int count;
+    long deps;
+    long stack[MSGPACK_EMBED_STACK_SIZE];
 } msgpack_unserialize_data;
 
 void msgpack_unserialize_var_init(msgpack_unserialize_data_t *var_hashx);
