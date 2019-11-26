@@ -197,6 +197,59 @@ static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, zval *v) /*
 }
 /* }}} */
 
+static inline zval *update_property(const zend_class_entry *ce, HashTable *props, zend_string *mangled, zval *val) {
+    const char *class_name, *prop_name;
+    size_t prop_len;
+    zval *new_val;
+    zend_string *unmangled, *new_key;
+    zend_property_info *existing_propinfo;
+
+    if (SUCCESS != zend_unmangle_property_name_ex(mangled, &class_name, &prop_name, &prop_len)) {
+        return NULL;
+    }
+
+    unmangled = zend_string_init(prop_name, prop_len, 0);
+    existing_propinfo = zend_hash_find_ptr(&ce->properties_info, unmangled);
+
+    if ((class_name == NULL || !strcmp(class_name, "*") || !strcasecmp(class_name, ZSTR_VAL(ce->name)))
+            && (existing_propinfo != NULL)
+            && (existing_propinfo->flags & ZEND_ACC_PPP_MASK)) {
+        if (existing_propinfo->flags & ZEND_ACC_PROTECTED) {
+            new_key = zend_mangle_property_name(
+                "*", 1, ZSTR_VAL(unmangled), ZSTR_LEN(unmangled), 0);
+        } else if (existing_propinfo->flags & ZEND_ACC_PRIVATE) {
+            if (class_name != NULL && strcmp(class_name, "*") != 0) {
+                new_key = zend_mangle_property_name(
+                    class_name, strlen(class_name),
+                        ZSTR_VAL(unmangled), ZSTR_LEN(unmangled),
+                        0);
+            } else {
+                new_key = zend_mangle_property_name(
+                    ZSTR_VAL(existing_propinfo->ce->name), ZSTR_LEN(existing_propinfo->ce->name),
+                    ZSTR_VAL(unmangled), ZSTR_LEN(unmangled),
+                    0);
+            }
+        } else {
+            ZEND_ASSERT(existing_propinfo->flags & ZEND_ACC_PUBLIC);
+            new_key = unmangled;
+        }
+    } else {
+        new_key = mangled;
+    }
+
+    Z_TRY_ADDREF_P(val);
+    new_val = zend_hash_update_ind(props, new_key, val);
+
+    if (new_key != unmangled) {
+        zend_string_release(unmangled);
+    }
+    if (new_key != mangled) {
+        zend_string_release(new_key);
+    }
+
+    return new_val;
+}
+
 static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string *class_name, zend_bool init_class) /* {{{ */ {
     zend_class_entry *ce;
     int func_call_status;
@@ -260,22 +313,12 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
         object_init_ex(container_val, ce);
 
         if (Z_TYPE(container_tmp) != IS_UNDEF) {
-            ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&container_tmp), str_key, val) {
-                const char *class_name, *prop_name;
-                size_t prop_len;
-                zend_class_entry *ce;
-                zend_function *__set, *__get;
-
-                if (!str_key) {
-                    continue;
-                }
-                ce = Z_OBJCE_P(container_val);
-                UNSET_MAGIC_METHODS(ce);
-                zend_unmangle_property_name_ex(str_key, &class_name, &prop_name, &prop_len);
-                zend_update_property(ce, container_val, prop_name, prop_len, val);
-                RESET_MAGIC_METHODS(ce);
-
-            } ZEND_HASH_FOREACH_END();
+            HashTable *props = Z_OBJPROP_P(container_val);
+            ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&container_tmp), str_key, val)
+            {
+                update_property(ce, props, str_key, val);
+            }
+            ZEND_HASH_FOREACH_END();
             zval_dtor(&container_tmp);
         }
 
@@ -491,7 +534,7 @@ int msgpack_unserialize_array_item(msgpack_unserialize_data *unpack, zval **cont
     zval *nval;
 
     if (!*container || Z_TYPE_P(*container) != IS_ARRAY) {
-    	return -1;
+        return -1;
     }
 
     nval = zend_hash_next_index_insert(Z_ARRVAL_P(*container), obj);
@@ -649,18 +692,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 break;
             case IS_STRING:
                 if (Z_OBJCE_P(container_val) != PHP_IC_ENTRY) {
-                    const char *class_name, *prop_name;
-                    zend_class_entry *ce = Z_OBJCE_P(container_val);
-                    zval rv;
-                    size_t prop_len;
-                    zend_function *__get, *__set;
-
-                    UNSET_MAGIC_METHODS(ce);
-                    zend_unmangle_property_name_ex(Z_STR_P(key), &class_name, &prop_name, &prop_len);
-                    zend_update_property(ce, container_val, prop_name, prop_len, val);
-                    nval = zend_read_property(Z_OBJCE_P(container_val), container_val, prop_name, prop_len, 1, &rv);
-                    RESET_MAGIC_METHODS(ce);
-
+                    nval = update_property(Z_OBJCE_P(container_val), Z_OBJPROP_P(container_val), Z_STR_P(key), val);
                     zval_ptr_dtor(key);
                     zval_ptr_dtor(val);
                 } else {
