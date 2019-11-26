@@ -735,6 +735,10 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
     } else {
         if (Z_TYPE_P(container_val) != IS_ARRAY) {
             array_init_size(container_val, MIN(unpack->count, 1<<16));
+#if PHP_VERSION_ID >= 70300
+            /* avoid re-alloc due packed..mixed conversion */
+            zend_hash_real_init_mixed(Z_ARRVAL_P(container_val));
+#endif
         }
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
