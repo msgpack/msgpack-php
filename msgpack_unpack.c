@@ -477,7 +477,7 @@ int msgpack_unserialize_ext(msgpack_unserialize_data *unpack, const char* base, 
 int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int count, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_VALUE(unpack);
 
-    array_init_size(*obj, count);
+    array_init_size(*obj, MIN(count, 1<<16));
 
     if (count) {
         unpack->stack[unpack->deps++] = count;
@@ -488,7 +488,13 @@ int msgpack_unserialize_array(msgpack_unserialize_data *unpack, unsigned int cou
 /* }}} */
 
 int msgpack_unserialize_array_item(msgpack_unserialize_data *unpack, zval **container, zval *obj) /* {{{ */ {
-    zval *nval = zend_hash_next_index_insert(Z_ARRVAL_P(*container), obj);
+    zval *nval;
+
+    if (!*container || Z_TYPE_P(*container) != IS_ARRAY) {
+    	return -1;
+    }
+
+    nval = zend_hash_next_index_insert(Z_ARRVAL_P(*container), obj);
 
     if (MSGPACK_IS_STACK_VALUE(obj)) {
         MSGPACK_UNSERIALIZE_FINISH_ITEM(unpack, obj, NULL);
@@ -696,7 +702,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
         }
     } else {
         if (Z_TYPE_P(container_val) != IS_ARRAY) {
-            array_init_size(container_val, unpack->count);
+            array_init_size(container_val, MIN(unpack->count, 1<<16));
         }
         switch (Z_TYPE_P(key)) {
             case IS_LONG:
