@@ -228,7 +228,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
     }
 
     if (ht) {
-        n = zend_hash_num_elements(ht);
+        n = zend_array_count(ht);
     } else {
         n = 0;
     }
@@ -274,7 +274,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
             zend_ulong   key_long;
             zval *value, *value_noref;
 
-            ZEND_HASH_FOREACH_KEY_VAL(ht, key_long, key_str, value) {
+            ZEND_HASH_FOREACH_KEY_VAL_IND(ht, key_long, key_str, value) {
                 if (key_str && incomplete_class && strcmp(ZSTR_VAL(key_str), MAGIC_MEMBER) == 0) {
                     continue;
                 }
