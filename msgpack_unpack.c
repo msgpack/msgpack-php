@@ -500,7 +500,12 @@ int msgpack_unserialize_str(msgpack_unserialize_data *unpack, const char* base, 
         ZVAL_EMPTY_STRING(*obj);
     } else {
         /* TODO: check malformed input? */
-        ZVAL_STRINGL(*obj, data, len);
+        if (len < 1<<8) {
+            zend_string *zs = zend_string_init_interned(data, len, 0);
+            ZVAL_STR(*obj, zs);
+        } else {
+            ZVAL_STRINGL(*obj, data, len);
+        }
     }
 
     return 0;
