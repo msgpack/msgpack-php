@@ -395,17 +395,37 @@ int msgpack_unserialize_uint16(msgpack_unserialize_data *unpack, uint16_t data, 
 int msgpack_unserialize_uint32(msgpack_unserialize_data *unpack, uint32_t data, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
-    ZVAL_LONG(*obj, data);
+    if (data <= (uint32_t) ZEND_LONG_MAX) {
+        ZVAL_LONG(*obj, data);
+    } else {
+        ZVAL_DOUBLE(*obj, data);
+    }
 
     return 0;
 }
 /* }}} */
 
+/* see zend_print_ulong_to_buf() in Zend/zend_operators.h */
+static inline char *print_u64_to_buf(char *buf, uint64_t num) {
+	*buf = '\0';
+	do {
+		*--buf = (char) (num % 10) + '0';
+		num /= 10;
+	} while (num > 0);
+	return buf;
+}
+
 int msgpack_unserialize_uint64(msgpack_unserialize_data *unpack, uint64_t data, zval **obj) /* {{{ */ {
     MSGPACK_UNSERIALIZE_ALLOC_STACK(unpack);
 
-    /* FIXME >= PHP_INT_MAX */
-    ZVAL_LONG(*obj, data);
+    if (data <= (uint64_t) ZEND_LONG_MAX) {
+        ZVAL_LONG(*obj, data);
+    } else if (data <= 1L<<52) {
+        ZVAL_DOUBLE(*obj, data);
+    } else {
+        char buf[0x20] = {0}, *ptr = print_u64_to_buf(&buf[sizeof(buf)-1], data);
+        ZVAL_STRING(*obj, ptr);
+    }
 
     return 0;
 }
