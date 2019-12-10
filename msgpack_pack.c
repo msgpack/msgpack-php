@@ -319,26 +319,35 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
             } ZEND_HASH_FOREACH_END();
         } else {
             uint32_t i;
-            zval *data, *data_noref;
 
             for (i = 0; i < n; i++) {
-                if ((data = zend_hash_index_find(ht, i)) == NULL || &data == &val || (Z_TYPE_P(data) == IS_ARRAY && Z_IS_RECURSIVE_P(data))) {
-                    msgpack_pack_nil(buf);
-                } else if (Z_TYPE_P(data) == IS_REFERENCE && Z_TYPE_P(Z_REFVAL_P(data)) == IS_ARRAY && Z_IS_RECURSIVE_P(Z_REFVAL_P(data))) {
-                    msgpack_pack_nil(buf);
-                } else {
-                    if (Z_TYPE_P(data) == IS_REFERENCE) {
-                        data_noref = Z_REFVAL_P(data);
-                    } else {
-                        data_noref = data;
-                    }
+                zval *data_noref, *data = zend_hash_index_find(ht, i);
 
+                if (!data) {
+                    MSGPACK_WARNING("[msgpack (%s) array index %u is not set", __FUNCTION__, i);
+                    msgpack_pack_nil(buf);
+                    continue;
+                }
+
+                if (Z_TYPE_P(data) == IS_REFERENCE) {
+                    data_noref = Z_REFVAL_P(data);
+                } else {
+                    data_noref = data;
+                }
+
+                if (Z_TYPE_P(data_noref) == IS_ARRAY && Z_IS_RECURSIVE_P(data_noref)) {
+                    if (MSGPACK_G(php_only)) {
+                        /* pack ref */
+                        msgpack_serialize_zval(buf, data, var_hash);
+                    } else {
+                        /* you lose */
+                        msgpack_pack_nil(buf);
+                    }
+                } else {
                     if (Z_TYPE_P(data_noref) == IS_ARRAY && Z_CAN_PROTECT_RECURSION_P(data_noref)) {
                         Z_PROTECT_RECURSION_P(data_noref);
                     }
-
                     msgpack_serialize_zval(buf, data, var_hash);
-
                     if (Z_TYPE_P(data_noref) == IS_ARRAY && Z_CAN_PROTECT_RECURSION_P(data_noref)) {
                         Z_UNPROTECT_RECURSION_P(data_noref);
                     }
