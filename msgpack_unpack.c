@@ -12,6 +12,9 @@
 #if PHP_VERSION_ID < 70400
 # define zval_try_get_string zval_get_string
 #endif
+#if PHP_VERSION_ID < 70200
+# define zend_string_init_interned zend_string_init
+#endif
 
 typedef struct {
     zend_long used_slots;
