@@ -69,14 +69,14 @@ array(2) {
 }
 OK
 cyclic
-9182c0010082c00100c0
+9182c0010082c0010082c0020002
 array(1) {
   [0]=>
-  array(1) {
+  &array(1) {
     [0]=>
     array(1) {
       [0]=>
-      NULL
+      *RECURSION*
     }
   }
 }
@@ -93,11 +93,11 @@ array(1) {
 }
 array(1) {
   [0]=>
-  array(1) {
+  &array(1) {
     [0]=>
     array(1) {
       [0]=>
-      NULL
+      *RECURSION*
     }
   }
 }

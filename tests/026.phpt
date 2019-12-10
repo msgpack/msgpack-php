@@ -45,7 +45,7 @@ var_dump($k);
 ?>
 --EXPECT--
 array
-82a16182a162a163a164a165a16683c001a16182a162a163a164a165a166c0
+82a16182a162a163a164a165a16683c001a16182a162a163a164a165a16682c0020003
 array(2) {
   ["a"]=>
   array(2) {
@@ -55,7 +55,7 @@ array(2) {
     string(1) "e"
   }
   ["f"]=>
-  array(2) {
+  &array(2) {
     ["a"]=>
     array(2) {
       ["b"]=>
@@ -64,7 +64,7 @@ array(2) {
       string(1) "e"
     }
     ["f"]=>
-    NULL
+    *RECURSION*
   }
 }
 OK
@@ -84,7 +84,7 @@ array(1) {
 }
 array(1) {
   ["foo"]=>
-  array(3) {
+  &array(3) {
     [0]=>
     int(1)
     [1]=>
@@ -92,13 +92,13 @@ array(1) {
     [2]=>
     array(1) {
       ["foo"]=>
-      NULL
+      *RECURSION*
     }
   }
 }
 array(1) {
   ["foo"]=>
-  array(3) {
+  &array(3) {
     [0]=>
     int(1)
     [1]=>
@@ -106,7 +106,7 @@ array(1) {
     [2]=>
     array(1) {
       ["foo"]=>
-      NULL
+      *RECURSION*
     }
   }
 }
