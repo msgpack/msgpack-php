@@ -4,14 +4,14 @@
 #include "msgpack_convert.h"
 #include "msgpack_errors.h"
 
-static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object, HashTable **properties, HashPosition *prop_pos, uint key_index, zval *val, HashTable *var) /* {{{ */ {
+static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object, HashTable **properties, HashPosition *prop_pos, unsigned int key_index, zval *val, HashTable *var) /* {{{ */ {
     zval key_zv;
 	HashTable *props = *properties;
 
     if (props != NULL) {
         zval *data, tplval, *dataval, prop_key_zv;
         zend_string *prop_key;
-        ulong prop_key_index;
+        zend_ulong prop_key_index;
         const char *class_name, *prop_name;
         size_t prop_len;
 
@@ -102,7 +102,7 @@ static inline int msgpack_convert_string_to_properties(zval *object, zend_string
 int msgpack_convert_array(zval *return_value, zval *tpl, zval *value) /* {{{ */ {
     zend_string *key;
     int key_type;
-    ulong key_index;
+    zend_ulong key_index;
     zval *data;
     HashTable *ht, *htval;
 
@@ -329,7 +329,7 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
             HashTable *ht, *ret, *var = NULL;
             zend_string *str_key;
             zval *data;
-            ulong num_key;
+            zend_ulong num_key;
 
             ht = HASH_OF(value);
             ret = HASH_OF(return_value);
