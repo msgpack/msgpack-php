@@ -1,11 +1,16 @@
 --TEST--
 broken random data test
 --SKIPIF--
---FILE--
 <?php
 if(!extension_loaded('msgpack')) {
-    dl('msgpack.' . PHP_SHLIB_SUFFIX);
+    die("skip");
 }
+if (version_compare(PHP_VERSION, "7.1", ">=")) {
+    die("skip PHP >= 7.1");
+}
+?>
+--FILE--
+<?php
 
 error_reporting(E_ERROR | E_PARSE);
 
