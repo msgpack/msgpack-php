@@ -3,11 +3,15 @@ language: php
 php:
   - 7.0
   - 7.1
+  - 7.2
+  - 7.3
+  - 7.4
+  - nightly
 
 matrix:
-    fast_finish: true
-    allow_failures:
-        - php: 7.1
+  fast_finish: true
+  allow_failures:
+    - php: nightly
 
 notifications:
   email: false
@@ -16,11 +20,11 @@ notifications:
 env:
   - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS='--show-diff' LDFLAGS="-lgcov" CFLAGS="-Wall -coverage -O0" EXTRA_LDFLAGS="-precious-files-regex .libs/msgpack.gcno"
 
-#Compile
 before_script:
-    - ./travis/compile.sh
+  - phpize
+  - ./configure
+  - make
 
-# Run PHPs run-tests.php
 script:
   - make test
   - gcov --object-directory .libs *.c
