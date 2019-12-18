@@ -2,7 +2,7 @@
 Issue #81 (Ignore IS_UNDEF)
 --SKIPIF--
 <?php
-if (!extension_loaded("msgpack)) {
+if (!extension_loaded("msgpack")) {
     die("skip");
 }
 ?>
