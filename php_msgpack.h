@@ -23,6 +23,7 @@ extern zend_module_entry msgpack_module_entry;
 ZEND_BEGIN_MODULE_GLOBALS(msgpack)
     zend_bool error_display;
     zend_bool php_only;
+    zend_bool assoc;
     zend_bool illegal_key_insert;
     zend_bool use_str8_serialization;
     struct {

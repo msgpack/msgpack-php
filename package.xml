@@ -173,6 +173,7 @@
     <file name="137.phpt" role="test" />
     <file name="138.phpt" role="test" />
     <file name="139.phpt" role="test" />
+    <file name="assoc.phpt" role="test" />
     <file name="bug002.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
