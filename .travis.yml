@@ -27,5 +27,7 @@ before_script:
 
 script:
   - make test
+
+after_script:
   - gcov --object-directory .libs *.c
   - bash <(curl -s https://codecov.io/bash)

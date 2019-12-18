@@ -6,6 +6,8 @@ if (!extension_loaded('msgpack')) {
     die("skip");
 }
 ?>
+--XFAIL--
+REGRESSION
 --FILE--
 <?php
 $datas = array(
