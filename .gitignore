@@ -33,3 +33,10 @@ tests/*.php
 tests/*.exp
 tests/*.log
 tests/*.sh
+tests/*.mem
+.cproject
+.deps
+.project
+.settings/
+.vscode/
+*~
