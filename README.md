@@ -14,15 +14,17 @@ But unlike JSON, it is very fast and small.
 
 ### Install from PECL
 Msgpack is an PECL extension, thus you can simply install it by:
-````
-pecl install msgpack
-````
+
+```shell
+$ pecl install msgpack
+```
+
 ### Compile Msgpack from source
-````
-$/path/to/phpize
-$./configure 
-$make && make install
-````
+```shell
+$ /path/to/phpize
+$ ./configure --with-php-config=/path/to/php-config
+$ make && make install
+```
 
 ### Example
 ```php
@@ -32,22 +34,23 @@ $msg = msgpack_pack($data);
 $data = msgpack_unpack($msg);
 ```
 
-### Example Advanced
+### Advanced Example
 ```php
 <?php
 $data = array(0 => 1, 1 => 2, 2 => 3);
-$packer = new \MessagePack(false); //same as $packer->setOption(\MessagePack::OPT_PHPONLY, false);
+$packer = new \MessagePack(false);
+// ^ same as $packer->setOption(\MessagePack::OPT_PHPONLY, false);
 $packed = $packer->pack($data);
 
-$unpacker = new \MessagePackUnpacker(false); //same as $unpacker->setOption(\MessagePack::OPT_PHPONLY, false);
+$unpacker = new \MessagePackUnpacker(false);
+// ^ same as $unpacker->setOption(\MessagePack::OPT_PHPONLY, false);
 $unpacker->feed($packed);
 $unpacker->execute();
 $unpacked = $unpacker->data();
 $unpacker->reset();
-
 ```
 
-### Example Advanced Streaming
+### Advanced Streaming Example
 ```php
 <?php
 $data1 = array(0 => 1, 1 => 2, 2 => 3);
@@ -83,5 +86,5 @@ while(true) {
 
 ```
 
-# Resources
+## Resources
  * [msgpack](http://msgpack.org/)
