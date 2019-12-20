@@ -32,9 +32,32 @@
   <api>stable</api>
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
- <notes>
-  - Fixed PHP-7.3 Compatibility
- </notes>
+ <notes><![CDATA[
++ Improved performance
++ Upgraded bundled msgpack headers to 3.2.0
+* Merged PR #101: Update README in order to match compatibile PHP version
+* Merged PR #125: fix ce->name is a zend_string
+* Merged PR #106: Update README
+* Merged PR #126: add mising tests in archive
+* Merged PR #135: Add fixes for issue #81 This also includes tests.
+* Merged PR #143: Fixed build with PHP-7.4
+* Fixed issue #139: Segmentation fault when using cloned unpacker
+* Fixed issue #132: Segfault on session php7.3
+* Fixed issue #107: $unpacker->execute() bug
+* Fixed issue #83: Arrays and negative index
+* Fixed issue #137: DateTime(Immutable) serialization doesn't work with php 7.4 RC1
+* Fixed issue #105: MessagePackUnpacker() bug
+* Fixed issue #90: msgpack_unpack is super slow (30x times igbinary) on big data sets
+* Fixed issue #91: Private property in base class
+* Fixed issue #67: Integer overflow on a 64-bit system
+* Fixed issue #33: int64 and uint64 decode is not supported in 32-bit php
+* Fixed issue #119: uint64 numbers are cast to uint on Windows
+* Fixed issue #134: msgpack-php msgpack_serialize/msgpack_pack not handling properly large int
+* Fixed issue #81: Serialize optimization
+* Fixed issue #108: tests/041.phpt failure
+* Fixed issue #142: Recursion encoded as NULL
+* Fixed issue #138: Serializers comparison for session like data
+ ]]></notes>
  <contents>
   <dir name="/">
    <file name="LICENSE" role="doc" />
