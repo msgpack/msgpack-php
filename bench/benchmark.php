@@ -1,5 +1,5 @@
 <?php
-$loop = 10000;
+$loop = 100000;
 $retry = 10;
 $value_display = false;
 
