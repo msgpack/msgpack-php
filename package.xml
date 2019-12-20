@@ -16,17 +16,22 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2018-12-20</date>
- <time>18:22:00</time>
+ <lead>
+  <name>Michael Wallner</name>
+  <user>mike</user>
+  <email>mike@php.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2019-12-20</date>
  <version>
-  <release>2.0.3</release>
+  <release>2.1.0beta1</release>
   <api>2.0.3</api>
  </version>
  <stability>
-  <release>stable</release>
+  <release>beta</release>
   <api>stable</api>
  </stability>
- <license filesource="LICENSE">New BSD</license>
+ <license filesource="LICENSE">3-Clause-BSD</license>
  <notes>
   - Fixed PHP-7.3 Compatibility
  </notes>
@@ -35,11 +40,9 @@
    <file name="LICENSE" role="doc" />
    <file name="README.md" role="doc" />
    <file name="CREDITS" role="doc" />
-   <file name="ChangeLog" role="doc" />
    <file name="EXPERIMENTAL" role="doc" />
    <file name="config.m4" role="src" />
    <file name="config.w32" role="src" />
-   <file name="msgpack.php" role="src" />
    <file name="msgpack.c" role="src" />
    <file name="msgpack_class.c" role="src" />
    <file name="msgpack_class.h" role="src" />
@@ -57,6 +60,7 @@
    <file name="msgpack/unpack_template.h" role="src" />
    <file name="msgpack/sysdep.h" role="src" />
    <file name="msgpack/version.h" role="src" />
+   <file name="msgpack/version_master.h" role="src" />
    <dir name="tests">
     <file name="001.phpt" role="test" />
     <file name="002.phpt" role="test" />
@@ -173,17 +177,22 @@
     <file name="137.phpt" role="test" />
     <file name="138.phpt" role="test" />
     <file name="139.phpt" role="test" />
+    <file name="140.phpt" role="test" />
     <file name="bug002.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
     <file name="bug012.phpt" role="test" />
     <file name="bug013.phpt" role="test" />
     <file name="issue023.phpt" role="test" />
+    <file name="issue067.phpt" role="test" />
     <file name="issue080.phpt" role="test" />
-    <file name="issue094.phpt" role="test" />
+    <file name="issue081.phpt" role="test" />
     <file name="issue083.phpt" role="test" />
+    <file name="issue091.phpt" role="test" />
+    <file name="issue094.phpt" role="test" />
     <file name="issue107.phpt" role="test" />
     <file name="issue132.phpt" role="test" />
+    <file name="issue137.phpt" role="test" />
     <file name="issue139.phpt" role="test" />
    </dir>
   </dir>
