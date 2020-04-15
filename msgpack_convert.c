@@ -64,7 +64,15 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
         *properties = NULL;
     }
     ZVAL_LONG(&key_zv, key_index);
+#if PHP_VERSION_ID < 80000
     zend_std_write_property(object, &key_zv, val, NULL);
+#else
+    {
+        zend_string *key = zval_get_string(&key_zv);
+        zend_std_write_property(Z_OBJ_P(object), key, val, NULL);
+        zend_string_release(key);
+    }
+#endif
     return SUCCESS;
 }
 /* }}} */
@@ -87,7 +95,11 @@ static inline int msgpack_convert_string_to_properties(zval *object, zend_string
         zend_update_property_ex(ce, object, key, val);
         return_code = SUCCESS;
     } else {
+#if PHP_VERSION_ID < 80000
         zend_std_write_property(object, &pub_name, val, NULL);
+#else
+        zend_std_write_property(Z_OBJ_P(object), key, val, NULL);
+#endif
         return_code = FAILURE;
     }
     zend_hash_add(var, Z_STR(pub_name), val);
@@ -358,7 +370,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
                 } ZEND_HASH_FOREACH_END();
 
                 /* index */
+#if PHP_VERSION_ID < 80000
                 properties = Z_OBJ_HT_P(return_value)->get_properties(return_value);
+#else
+                properties = Z_OBJ_HT_P(return_value)->get_properties(Z_OBJ_P(return_value));
+#endif
                 if (HASH_OF(tpl)) {
                     properties = HASH_OF(tpl);
                 }
@@ -433,7 +449,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
             HashTable *properties = NULL;
             HashPosition prop_pos;
 
+#if PHP_VERSION_ID < 80000
             properties = Z_OBJ_HT_P(return_value)->get_properties(return_value);
+#else
+            properties = Z_OBJ_HT_P(return_value)->get_properties(Z_OBJ_P(return_value));
+#endif
             zend_hash_internal_pointer_reset_ex(properties, &prop_pos);
 
             if (msgpack_convert_long_to_properties(HASH_OF(return_value), return_value, &properties, &prop_pos, 0, value, NULL) != SUCCESS) {
