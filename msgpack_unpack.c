@@ -116,7 +116,7 @@ static inline void msgpack_var_replace(zval *old, zval *new) /* {{{ */ {
 static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, zend_long id) /* {{{ */ {
     var_entries *var_hash = var_hashx->first;
 
-    while (id >= VAR_ENTRIES_MAX && var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
+    while (id > VAR_ENTRIES_MAX && var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
         var_hash = var_hash->next;
         id -= VAR_ENTRIES_MAX;
     }
@@ -125,7 +125,7 @@ static zval *msgpack_var_access(msgpack_unserialize_data_t *var_hashx, zend_long
         return NULL;
     }
 
-    if (id > 0 && id < var_hash->used_slots) {
+    if (id > 0 && id <= var_hash->used_slots) {
         zval *zv = &var_hash->data[id - 1];
         if (UNEXPECTED(Z_TYPE_P(zv) == IS_INDIRECT)) {
             zv = Z_INDIRECT_P(zv);
