@@ -12,9 +12,6 @@
 #if PHP_VERSION_ID < 70400
 # define zval_try_get_string zval_get_string
 #endif
-#if PHP_VERSION_ID < 70200
-# define zend_string_init_interned zend_string_init
-#endif
 
 typedef struct {
     zend_long used_slots;
@@ -523,12 +520,7 @@ int msgpack_unserialize_str(msgpack_unserialize_data *unpack, const char* base, 
         ZVAL_EMPTY_STRING(*obj);
     } else {
         /* TODO: check malformed input? */
-        if (len < 1<<8) {
-            zend_string *zs = zend_string_init_interned(data, len, 0);
-            ZVAL_STR(*obj, zs);
-        } else {
-            ZVAL_STRINGL(*obj, data, len);
-        }
+        ZVAL_STRINGL(*obj, data, len);
     }
 
     return 0;
