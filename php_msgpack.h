@@ -53,4 +53,10 @@ PHP_MSGPACK_API int php_msgpack_unserialize(
 # define MSGPACK_ENDIAN_BIG_BYTE 0
 #endif
 
+#if PHP_VERSION_ID < 80000
+# define OBJ_FOR_PROP(zv) (zv)
+#else
+# define OBJ_FOR_PROP(zv) Z_OBJ_P(zv)
+#endif
+
 #endif  /* PHP_MSGPACK_H */
