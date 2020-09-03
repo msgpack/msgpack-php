@@ -282,7 +282,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
         ZVAL_STRING(&user_func, PG(unserialize_callback_func));
         ZVAL_STR(&args[0], class_name);
 
-        func_call_status = call_user_function_ex(CG(function_table), NULL, &user_func, &retval, 1, args, 0, NULL);
+        func_call_status = call_user_function(CG(function_table), NULL, &user_func, &retval, 1, args);
         zval_ptr_dtor(&user_func);
         if (func_call_status != SUCCESS) {
             MSGPACK_WARNING("[msgpack] (%s) defined (%s) but not found",
@@ -329,7 +329,11 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
 
     /* store incomplete class name */
     if (incomplete_class) {
+#if PHP_VERSION_ID < 80000
         php_store_class_name(container_val, ZSTR_VAL(class_name), ZSTR_LEN(class_name));
+#else
+        php_store_class_name(container_val, class_name);
+#endif
     }
 
     return ce;
@@ -836,7 +840,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 zend_hash_str_exists(&Z_OBJCE_P(container_val)->function_table, "__wakeup", sizeof("__wakeup") - 1)) {
             zval wakeup, r;
             ZVAL_STRING(&wakeup, "__wakeup");
-            call_user_function_ex(CG(function_table), container_val, &wakeup, &r, 0, NULL, 1, NULL);
+            call_user_function(CG(function_table), container_val, &wakeup, &r, 0, NULL);
             zval_ptr_dtor(&r);
             zval_ptr_dtor(&wakeup);
         }
