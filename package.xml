@@ -71,6 +71,7 @@
     <file name="007.phpt" role="test" />
     <file name="008.phpt" role="test" />
     <file name="009.phpt" role="test" />
+    <file name="009a.phpt" role="test" />
     <file name="010.phpt" role="test" />
     <file name="012.phpt" role="test" />
     <file name="013.phpt" role="test" />
@@ -89,6 +90,7 @@
     <file name="024.phpt" role="test" />
     <file name="025.phpt" role="test" />
     <file name="026.phpt" role="test" />
+    <file name="026a.phpt" role="test" />
     <file name="027.phpt" role="test" />
     <file name="028.phpt" role="test" />
     <file name="029.phpt" role="test" />
