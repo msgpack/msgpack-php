@@ -19,24 +19,10 @@ function test($type, $variable, $test) {
     echo $test || $unserialized === null ? 'OK' : 'FAIL', PHP_EOL;
 }
 
-if (function_exists('curl_init')) {
-    $test = 'curl';
-    $res = curl_init('http://php.net/');
-} else {
-    $test = 'dir';
-    $res = opendir('/tmp');
-}
-
+$res = opendir('/tmp');
 test('resource', $res, false);
+closedir($res);
 
-switch ($test) {
-    case 'curl':
-        curl_close($res);
-        break;
-    default:
-        closedir($res);
-        break;
-}
 ?>
 --EXPECT--
 resource
