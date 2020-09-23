@@ -296,28 +296,27 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
 
     /* Run the constructor if there is one */
     if (ce->constructor && (ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
-        zval retval, params, function_name;
+        zval retval;
         zend_fcall_info fci;
         zend_fcall_info_cache fcc;
+
+        memset(&fci, 0, sizeof(fci));
+        memset(&fcc, 0, sizeof(fcc));
 
         fci.size = sizeof(fci);
 #if PHP_VERSION_ID < 70100
         fci.function_table = EG(function_table);
-        fci.symbol_table = NULL;
 #endif
-        fci.function_name = function_name;
         fci.object = Z_OBJ_P(return_value);
         fci.retval = &retval;
-        fci.param_count = 0;
-        fci.params = &params;
 #if PHP_VERSION_ID < 80000
         fci.no_separation = 1;
 #endif
+
 #if PHP_VERSION_ID < 70300
         fcc.initialized = 1;
 #endif
         fcc.function_handler = ce->constructor;
-
 #if PHP_VERSION_ID < 70100
         fcc.calling_scope = EG(scope);
 #else
