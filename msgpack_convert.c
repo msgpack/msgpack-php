@@ -36,7 +36,7 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
 
                                 if (msgpack_convert_array(&tplval, data, dataval) == SUCCESS) {
                                     zend_hash_move_forward_ex(props, prop_pos);
-                                    zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
+                                    zend_update_property(Z_OBJCE_P(object), OBJ_FOR_PROP(object), prop_name, prop_len, &tplval);
                                     return SUCCESS;
                                 }
                                 return FAILURE;
@@ -45,14 +45,14 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
                             {
                                 if (msgpack_convert_object(&tplval, data, val) == SUCCESS) {
                                     zend_hash_move_forward_ex(props, prop_pos);
-                                    zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, &tplval);
+                                    zend_update_property(Z_OBJCE_P(object), OBJ_FOR_PROP(object), prop_name, prop_len, &tplval);
                                     return SUCCESS;
                                 }
                                 return FAILURE;
                             }
                             default:
                                 zend_hash_move_forward_ex(props, prop_pos);
-                                zend_update_property(Z_OBJCE_P(object), object, prop_name, prop_len, val);
+                                zend_update_property(Z_OBJCE_P(object), OBJ_FOR_PROP(object), prop_name, prop_len, val);
                             return SUCCESS;
                         }
                     }
@@ -64,7 +64,15 @@ static inline int msgpack_convert_long_to_properties(HashTable *ht, zval *object
         *properties = NULL;
     }
     ZVAL_LONG(&key_zv, key_index);
+#if PHP_VERSION_ID < 80000
     zend_std_write_property(object, &key_zv, val, NULL);
+#else
+    {
+        zend_string *key = zval_get_string(&key_zv);
+        zend_std_write_property(Z_OBJ_P(object), key, val, NULL);
+        zend_string_release(key);
+    }
+#endif
     return SUCCESS;
 }
 /* }}} */
@@ -81,13 +89,17 @@ static inline int msgpack_convert_string_to_properties(zval *object, zend_string
     prot_name = zend_mangle_property_name("*", 1, ZSTR_VAL(key), ZSTR_LEN(key), 1);
 
     if (zend_hash_find(propers, priv_name) != NULL) {
-        zend_update_property_ex(ce, object, key, val);
+        zend_update_property_ex(ce, OBJ_FOR_PROP(object), key, val);
         return_code = SUCCESS;
     } else if (zend_hash_find(propers, prot_name) != NULL) {
-        zend_update_property_ex(ce, object, key, val);
+        zend_update_property_ex(ce, OBJ_FOR_PROP(object), key, val);
         return_code = SUCCESS;
     } else {
+#if PHP_VERSION_ID < 80000
         zend_std_write_property(object, &pub_name, val, NULL);
+#else
+        zend_std_write_property(Z_OBJ_P(object), key, val, NULL);
+#endif
         return_code = FAILURE;
     }
     zend_hash_add(var, Z_STR(pub_name), val);
@@ -298,8 +310,9 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
         fci.retval = &retval;
         fci.param_count = 0;
         fci.params = &params;
+#if PHP_VERSION_ID < 80000
         fci.no_separation = 1;
-
+#endif
 #if PHP_VERSION_ID < 70300
         fcc.initialized = 1;
 #endif
@@ -358,7 +371,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
                 } ZEND_HASH_FOREACH_END();
 
                 /* index */
+#if PHP_VERSION_ID < 80000
                 properties = Z_OBJ_HT_P(return_value)->get_properties(return_value);
+#else
+                properties = Z_OBJ_HT_P(return_value)->get_properties(Z_OBJ_P(return_value));
+#endif
                 if (HASH_OF(tpl)) {
                     properties = HASH_OF(tpl);
                 }
@@ -418,10 +435,10 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
                             return FAILURE;
                         }
 
-                        zend_update_property_ex(ce, return_value, str_key, &nv);
+                        zend_update_property_ex(ce, OBJ_FOR_PROP(return_value), str_key, &nv);
                         zval_ptr_dtor(&nv);
                     } else  {
-                        zend_update_property(ce, return_value, prop_name, prop_len, aryval);
+                        zend_update_property(ce, OBJ_FOR_PROP(return_value), prop_name, prop_len, aryval);
                     }
                     num_key++;
                 } ZEND_HASH_FOREACH_END();
@@ -433,7 +450,11 @@ int msgpack_convert_object(zval *return_value, zval *tpl, zval *value) /* {{{ */
             HashTable *properties = NULL;
             HashPosition prop_pos;
 
+#if PHP_VERSION_ID < 80000
             properties = Z_OBJ_HT_P(return_value)->get_properties(return_value);
+#else
+            properties = Z_OBJ_HT_P(return_value)->get_properties(Z_OBJ_P(return_value));
+#endif
             zend_hash_internal_pointer_reset_ex(properties, &prop_pos);
 
             if (msgpack_convert_long_to_properties(HASH_OF(return_value), return_value, &properties, &prop_pos, 0, value, NULL) != SUCCESS) {

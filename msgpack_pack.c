@@ -223,7 +223,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
     if (object) {
 #if PHP_VERSION_ID >= 70400
         if (Z_OBJ_HANDLER_P(val, get_properties_for)) {
-            ht = Z_OBJ_HANDLER_P(val, get_properties_for)(val, ZEND_PROP_PURPOSE_ARRAY_CAST);
+            ht = Z_OBJ_HANDLER_P(val, get_properties_for)(OBJ_FOR_PROP(val), ZEND_PROP_PURPOSE_ARRAY_CAST);
             free_ht = 1;
         } else {
             ht = Z_OBJPROP_P(val);
@@ -409,7 +409,7 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
 
     if (ce && ce != PHP_IC_ENTRY &&
             zend_hash_exists(&ce->function_table, sleep_zstring)) {
-        if ((res = call_user_function_ex(CG(function_table), val_noref, &fname, &retval, 0, 0, 1, NULL)) == SUCCESS) {
+        if ((res = call_user_function(CG(function_table), val_noref, &fname, &retval, 0, 0)) == SUCCESS) {
 
             if (EG(exception)) {
                 zval_ptr_dtor(&retval);

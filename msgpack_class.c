@@ -274,7 +274,7 @@ static ZEND_METHOD(msgpack, unpacker) /* {{{ */ {
     ZVAL_STRING(&func_name, "__construct");
 
     object_init_ex(return_value, msgpack_unpacker_ce);
-    call_user_function_ex(CG(function_table), return_value, &func_name, &construct_return, 1, args, 0, NULL);
+    call_user_function(CG(function_table), return_value, &func_name, &construct_return, 1, args);
 
     zval_ptr_dtor(&func_name);
 }
