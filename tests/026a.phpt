@@ -3,8 +3,9 @@ Cyclic array test
 --INI--
 --SKIPIF--
 <?php
-if (version_compare(PHP_VERSION, "8.0.0dev", ">=")) {
-    die("skip PHP >= 8.0");
+
+if (version_compare(PHP_VERSION, "8.0.0dev", "<")) {
+    die("skip PHP < 8.0");
 }
 ?>
 --FILE--
@@ -75,10 +76,7 @@ array(1) {
     [1]=>
     int(2)
     [2]=>
-    array(1) {
-      ["foo"]=>
-      *RECURSION*
-    }
+    *RECURSION*
   }
 }
 array(1) {

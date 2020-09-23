@@ -2,8 +2,8 @@
 Check for reference serialization
 --SKIPIF--
 <?php
-if (version_compare(PHP_VERSION, "8.0.0dev", ">=")) {
-    die("skip PHP >= 8.0\n");
+if (version_compare(PHP_VERSION, "8.0.0dev", "<")) {
+    die("skip PHP < 8.0\n");
 }
 ?>
 --FILE--
@@ -84,10 +84,7 @@ array(1) {
   [0]=>
   &array(1) {
     [0]=>
-    &array(1) {
-      [0]=>
-      *RECURSION*
-    }
+    *RECURSION*
   }
 }
 array(1) {
