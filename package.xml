@@ -22,9 +22,9 @@
   <email>mike@php.net</email>
   <active>yes</active>
  </lead>
- <date>2020-07-27</date>
+ <date>2020-11-27</date>
  <version>
-  <release>2.1.1</release>
+  <release>2.1.2</release>
   <api>2.0.3</api>
  </version>
  <stability>
@@ -33,7 +33,10 @@
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
  <notes><![CDATA[
-* Fixed issue #149: msgpack unpack error
+* PHP-8 compatibility (Remi Collet, Michael Wallner)
+* Fixed #152: Split tests for #67 regarding 32/64bit platforms. (Andy Postnikov)
+* Fixed #153 and #147: Small string optimization causes excessive memory 
+  consumption under specific workloads. (Michael Wallner)
  ]]></notes>
  <contents>
   <dir name="/">
@@ -215,6 +218,22 @@
  <providesextension>msgpack</providesextension>
  <extsrcrelease />
  <changelog>
+  <release>
+   <date>2020-07-27</date>
+    <version>
+     <release>2.1.1</release>
+     <api>2.0.3</api>
+    </version>
+    <stability>
+     <release>stable</release>
+     <api>stable</api>
+    </stability>
+    <license filesource="LICENSE">3-Clause-BSD</license>
+    <notes><![CDATA[
+* Fixed issue #149: msgpack unpack error
+]]></notes>
+  </release>
+
   <release>
    <date>2020-02-28</date>
    <version>
