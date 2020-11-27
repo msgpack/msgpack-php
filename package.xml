@@ -33,7 +33,7 @@
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
  <notes><![CDATA[
-* PHP-8 compatibility (Remi Collet, Michael Wallner)
+* PHP-8 compatibility. (Remi Collet, Michael Wallner)
 * Fixed #152: Split tests for #67 regarding 32/64bit platforms. (Andy Postnikov)
 * Fixed #153 and #147: Small string optimization causes excessive memory 
   consumption under specific workloads. (Michael Wallner)
@@ -191,6 +191,7 @@
     <file name="bug013.phpt" role="test" />
     <file name="issue023.phpt" role="test" />
     <file name="issue067.phpt" role="test" />
+    <file name="issue067_32bit.phpt" role="test" />
     <file name="issue080.phpt" role="test" />
     <file name="issue081.phpt" role="test" />
     <file name="issue083.phpt" role="test" />
