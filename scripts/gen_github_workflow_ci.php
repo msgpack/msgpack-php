@@ -81,7 +81,7 @@ foreach ($job as $id => $env) {
       - name: Coverage
         if: success()
         run: |
-          cd src/.libs
+          cd .libs
           bash <(curl -s https://codecov.io/bash) -X xcode -X coveragepy
 <?php endif; ?>
 
