@@ -1,0 +1,461 @@
+# generated file; do not edit!
+
+name: ci
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  old-matrix-0:
+    name: old-matrix-0
+    env:
+      PHP: "7.0"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  old-matrix-1:
+    name: old-matrix-1
+    env:
+      PHP: "7.1"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  old-matrix-2:
+    name: old-matrix-2
+    env:
+      PHP: "7.2"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  old-matrix-3:
+    name: old-matrix-3
+    env:
+      PHP: "7.3"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  old-matrix-4:
+    name: old-matrix-4
+    env:
+      PHP: "7.4"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  master-0:
+    name: master-0
+    continue-on-error: true
+    env:
+      PHP: "master"
+      enable_debug: "yes"
+      enable_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-none-0:
+    name: cur-none-0
+    env:
+      PHP: "8.0"
+      enable_session: "no"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-0:
+    name: cur-dbg-zts-0
+    env:
+      PHP: "8.0"
+      enable_debug: "yes"
+      enable_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-1:
+    name: cur-dbg-zts-1
+    env:
+      PHP: "8.0"
+      enable_debug: "no"
+      enable_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-2:
+    name: cur-dbg-zts-2
+    env:
+      PHP: "8.0"
+      enable_debug: "yes"
+      enable_zts: "no"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-3:
+    name: cur-dbg-zts-3
+    env:
+      PHP: "8.0"
+      enable_debug: "no"
+      enable_zts: "no"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-4:
+    name: cur-dbg-zts-4
+    env:
+      PHP: "8.0"
+      enable_debug: "yes"
+      enable_zts: "yes"
+      enable_session: "no"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-5:
+    name: cur-dbg-zts-5
+    env:
+      PHP: "8.0"
+      enable_debug: "no"
+      enable_zts: "yes"
+      enable_session: "no"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-6:
+    name: cur-dbg-zts-6
+    env:
+      PHP: "8.0"
+      enable_debug: "yes"
+      enable_zts: "no"
+      enable_session: "no"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-dbg-zts-7:
+    name: cur-dbg-zts-7
+    env:
+      PHP: "8.0"
+      enable_debug: "no"
+      enable_zts: "no"
+      enable_session: "no"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  cur-cov-0:
+    name: cur-cov-0
+    env:
+      CFLAGS: "-O0 -g --coverage"
+      CXXFLAGS: "-O0 -g --coverage"
+      PHP: "8.0"
+      enable_session: "yes"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+      - name: Coverage
+        if: success()
+        run: |
+          cd src/.libs
+          bash <(curl -s https://codecov.io/bash) -X xcode -X coveragepy
+
