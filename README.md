@@ -1,10 +1,10 @@
 # Msgpack for PHP
-[![Build Status](https://secure.travis-ci.org/msgpack/msgpack-php.png)](https://travis-ci.org/msgpack/msgpack-php)
+[![Build Status](https://github.com/msgpack/msgpack-php/workflows/ci/badge.svg?branch=master)](https://github.com/msgpack/msgpack-php/actions?query=workflow%3Aci+branch%3Amaster)
 
-This extension provide API for communicating with MessagePack serialization. 
+This extension provides an API for communicating with MessagePack serialization. 
 
 MessagePack is a binary-based efficient object serialization library.
-It enables to exchange structured objects between many languages like JSON.
+It enables to exchange structured objects between many languages just like JSON.
 But unlike JSON, it is very fast and small.
 
 ## Requirement
@@ -16,14 +16,15 @@ But unlike JSON, it is very fast and small.
 Msgpack is an PECL extension, thus you can simply install it by:
 
 ```shell
-$ pecl install msgpack
+pecl install msgpack
 ```
 
 ### Compile Msgpack from source
+
 ```shell
-$ /path/to/phpize
-$ ./configure --with-php-config=/path/to/php-config
-$ make && make install
+/path/to/phpize
+./configure --with-php-config=/path/to/php-config
+make && make install
 ```
 
 ### Example
