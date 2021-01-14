@@ -37,7 +37,7 @@ $job = $gen->github([
     "PHP" => $cur,
     "enable_debug",
     "enable_zts",
-    "enable_session",
+    "enable_session" => "yes",
 ], 
 "cur-cov" => [
 // once everything enabled for current, with coverage
