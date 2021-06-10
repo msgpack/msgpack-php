@@ -23,6 +23,14 @@ class Foo implements Serializable {
     public function unserialize($str) {
         echo "Should not be run.\n";
     }
+
+    public function __serialize() {
+        return $this->serialize();
+    }
+
+    public function __unserialize($serialized) {
+        return $this->unserialize();
+    }
 }
 
 $array = array($closure, new Foo());
