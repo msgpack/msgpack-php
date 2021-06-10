@@ -46,6 +46,14 @@ class Obj implements Serializable {
             throw new Exception("exception in unserialize $c");
         }
     }
+
+    public function __serialize() {
+        return $this->serialize();
+    }
+
+    public function __unserialize($serialized) {
+        return $this->unserialize();
+    }
 }
 
 $a = new Obj(1, 0);

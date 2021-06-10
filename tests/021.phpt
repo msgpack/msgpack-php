@@ -38,6 +38,14 @@ class Obj implements Serializable {
         $tmp = unpack('N*', $serialized);
         $this->__construct($tmp[1], $tmp[2]);
     }
+
+    public function __serialize() {
+        return $this->serialize();
+    }
+
+    public function __unserialize($serialized) {
+        return $this->unserialize();
+    }
 }
 
 $o = new Obj(1, 2);
