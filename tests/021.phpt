@@ -40,11 +40,11 @@ class Obj implements Serializable {
     }
 
     public function __serialize() {
-        return $this->serialize();
+        return [$this->serialize()];
     }
 
     public function __unserialize($serialized) {
-        return $this->unserialize();
+        return $this->unserialize($serialized[0]);
     }
 }
 
