@@ -2,6 +2,7 @@
 #include "php.h"
 #include "php_ini.h"
 #include "Zend/zend_smart_str.h"
+#include "Zend/zend_exceptions.h"
 #include "ext/standard/php_incomplete_class.h"
 #include "ext/standard/php_var.h"
 
@@ -363,12 +364,13 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
 }
 /* }}} */
 
-static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable *var_hash, char* class_name, uint32_t name_len, zend_bool incomplete_class) /* {{{ */ {
+static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable *var_hash) /* {{{ */ {
     int res;
     zval retval, fname;
     zval *val_noref;
     zend_class_entry *ce = NULL;
     zend_string *sleep_zstring;
+    PHP_CLASS_ATTRIBUTES;
 
     if (UNEXPECTED(Z_TYPE_P(val) == IS_REFERENCE)) {
         val_noref = Z_REFVAL_P(val);
@@ -376,9 +378,20 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
         val_noref = val;
     }
 
+    PHP_SET_CLASS_ATTRIBUTES(val_noref);
+
     if (Z_OBJCE_P(val_noref)) {
         ce = Z_OBJCE_P(val_noref);
     }
+
+#if PHP_VERSION_ID >= 80100
+    if (ce && (ce->ce_flags & ZEND_ACC_NOT_SERIALIZABLE)) {
+        msgpack_pack_nil(buf);
+        zend_throw_exception_ex(NULL, 0, "Serialization of '%s' is not allowed", ZSTR_VAL(ce->name));
+        PHP_CLEANUP_CLASS_ATTRIBUTES();
+        return;
+    }
+#endif
 
     if (ce && ce->serialize != NULL) {
         unsigned char *serialized_data = NULL;
@@ -401,25 +414,27 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
         if (serialized_data) {
             efree(serialized_data);
         }
+
+        PHP_CLEANUP_CLASS_ATTRIBUTES();
         return;
     }
 
     sleep_zstring = zend_string_init("__sleep", sizeof("__sleep") - 1, 0);
     ZVAL_STR(&fname, sleep_zstring);
 
-    if (ce && ce != PHP_IC_ENTRY &&
-            zend_hash_exists(&ce->function_table, sleep_zstring)) {
+    if (!incomplete_class && ce && zend_hash_exists(&ce->function_table, sleep_zstring)) {
         if ((res = call_user_function(CG(function_table), val_noref, &fname, &retval, 0, 0)) == SUCCESS) {
 
             if (EG(exception)) {
                 zval_ptr_dtor(&retval);
                 zval_ptr_dtor(&fname);
+                PHP_CLEANUP_CLASS_ATTRIBUTES();
                 return;
             }
             if (Z_TYPE(retval) == IS_ARRAY) {
                 msgpack_serialize_class(
                         buf, val_noref, &retval, var_hash,
-                        class_name, name_len, incomplete_class);
+                        class_name->val, class_name->len, incomplete_class);
             } else {
                 MSGPACK_NOTICE(
                         "[msgpack] (%s) __sleep should return an array only "
@@ -429,6 +444,7 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
             }
             zval_ptr_dtor(&retval);
             zval_ptr_dtor(&fname);
+            PHP_CLEANUP_CLASS_ATTRIBUTES();
             return;
         }
     }
@@ -436,7 +452,9 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
     zval_ptr_dtor(&fname);
     msgpack_serialize_array(
             buf, val, var_hash, 1,
-            class_name, name_len, incomplete_class);
+            class_name->val, class_name->len, incomplete_class);
+
+    PHP_CLEANUP_CLASS_ATTRIBUTES();
 }
 /* }}} */
 
@@ -514,14 +532,7 @@ void msgpack_serialize_zval(smart_str *buf, zval *val, HashTable *var_hash) /* {
             msgpack_serialize_array(buf, val, var_hash, 0, NULL, 0, 0);
             break;
         case IS_OBJECT:
-            {
-                PHP_CLASS_ATTRIBUTES;
-                PHP_SET_CLASS_ATTRIBUTES(val_noref);
-
-                msgpack_serialize_object(buf, val, var_hash, ZSTR_VAL(class_name), ZSTR_LEN(class_name), incomplete_class);
-
-                PHP_CLEANUP_CLASS_ATTRIBUTES();
-            }
+            msgpack_serialize_object(buf, val, var_hash);
             break;
         default:
             MSGPACK_WARNING(
