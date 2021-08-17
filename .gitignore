@@ -40,3 +40,5 @@ tests/*.mem
 .settings/
 .vscode/
 *~
+*.dep
+*.o
