@@ -615,25 +615,30 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         ZVAL_MAKE_REF(*container);
                         break;
                     case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
-                        unpack->type = MSGPACK_SERIALIZE_TYPE_RECURSIVE;
-                        break;
                     case MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT:
-                        unpack->type = MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT;
-                        break;
                     case MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE:
-                        unpack->type = MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE;
-                        break;
                     case MSGPACK_SERIALIZE_TYPE_OBJECT:
-                        unpack->type = MSGPACK_SERIALIZE_TYPE_OBJECT;
+                        unpack->type = Z_LVAL_P(val);
                         break;
                     default:
                         break;
                 }
             } else if (Z_TYPE_P(val) == IS_STRING) {
-                ce = msgpack_unserialize_class(container, Z_STR_P(val), 1);
-                if (ce == NULL) {
-                    MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-                    return 0;
+                msgpack_unserialize_class(container, Z_STR_P(val), 1);
+#if PHP_VERSION_ID >= 70400
+            } else if (Z_TYPE_P(val) == IS_ARRAY) {
+                if (Z_TYPE_P(*container) == IS_OBJECT && (ce = Z_OBJCE_P(*container)) && ce->__unserialize) {
+                    zval param;
+                    ZVAL_COPY(&param, val);
+                    zend_object *prev_exc = EG(exception);
+
+                    zend_call_known_instance_method_with_1_params(
+                        ce->__unserialize, Z_OBJ_P(*container), NULL, &param);
+                    if (EG(exception) != prev_exc) {
+                        GC_ADD_FLAGS(Z_OBJ_P(*container), IS_OBJ_DESTRUCTOR_CALLED);
+                    }
+                    zval_ptr_dtor(&param);
+#endif
                 }
             }
             MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
@@ -662,8 +667,8 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                     ce->unserialize(*container, ce, (const unsigned char *)Z_STRVAL_P(val), Z_STRLEN_P(val) + 1, NULL);
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                     return 0;
+
                 case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
                 case MSGPACK_SERIALIZE_TYPE_OBJECT:
                 case MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE:
@@ -672,7 +677,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                     int type = unpack->type;
 
                     unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
-                    if ((rval = msgpack_var_access(&unpack->var_hash, Z_LVAL_P(val) - 1)) == NULL)  {
+                    if (!(rval = msgpack_var_access(&unpack->var_hash, Z_LVAL_P(val) - 1)))  {
                         if (UNEXPECTED(Z_LVAL_P(val) == 1 /* access the retval */)) {
                             rval = unpack->retval;
                         } else {
@@ -688,12 +693,10 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         zval_ptr_dtor(*container);
                     }
 
-                    ZVAL_COPY_VALUE(*container, rval);
+                    ZVAL_COPY(*container, rval);
                     if (type == MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE) {
                         ZVAL_MAKE_REF(*container);
                     }
-
-                    Z_TRY_ADDREF_P(*container);
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
                     return 0;
