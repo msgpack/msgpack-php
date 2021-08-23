@@ -638,8 +638,8 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                         GC_ADD_FLAGS(Z_OBJ_P(*container), IS_OBJ_DESTRUCTOR_CALLED);
                     }
                     zval_ptr_dtor(&param);
-#endif
                 }
+#endif
             }
             MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
             return 0;
