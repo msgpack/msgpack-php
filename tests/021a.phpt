@@ -2,8 +2,8 @@
 Object Serializable interface
 --SKIPIF--
 <?php
-if (version_compare(PHP_VERSION, '5.1.0') < 0 || version_compare(PHP_VERSION, '8.1.0dev') >= 0) {
-    echo "skip tests in PHP 5.1-8.1";
+if (version_compare(PHP_VERSION, '8.1.0dev') < 0) {
+    echo "skip tests in PHP 8.1+";
 }
 --FILE--
 <?php
@@ -39,6 +39,13 @@ class Obj implements Serializable {
         $this->__construct($tmp[1], $tmp[2]);
     }
 
+    public function __serialize() {
+        return [$this->serialize()];
+    }
+
+    public function __unserialize($serialized) {
+        return $this->unserialize($serialized[0]);
+    }
 }
 
 $o = new Obj(1, 2);
@@ -47,7 +54,7 @@ test('object', $o, false);
 ?>
 --EXPECTF--
 object
-82c003a34f626aa80000000100000002
+82c0a34f626ac091a80000000100000002
 object(Obj)#%d (2) {
   ["a"]=>
   int(1)
