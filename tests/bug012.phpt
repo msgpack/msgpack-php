@@ -1,5 +1,5 @@
 --TEST--
-Bug #12 (msgpack_seriallize interfere with php serialize)
+Bug #12 (msgpack_serialize interfere with php serialize)
 --SKIPIF--
 <?php
 if (!extension_loaded("msgpack")) {
