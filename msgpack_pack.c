@@ -410,7 +410,7 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
     if (ce && ce->__serialize) {
         zval retval, obj;
 
-        ZVAL_OBJ_COPY(&obj, Z_OBJ_P(val_noref));
+        ZVAL_COPY(&obj, val_noref);
         zend_call_known_instance_method_with_0_params(Z_OBJCE(obj)->__serialize, Z_OBJ(obj), &retval);
 
         if (!EG(exception)) {
