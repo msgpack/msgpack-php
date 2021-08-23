@@ -136,6 +136,10 @@ static inline void msgpack_serialize_class(smart_str *buf, zval *val, zval *retv
                 continue;
             }
 
+            if (EG(exception)) {
+                return;
+            }
+
             if (Z_TYPE_P(value) != IS_STRING) {
                 ZVAL_DEREF(value);
                 if (Z_TYPE_P(value) != IS_STRING) {
@@ -288,6 +292,10 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
                 if (key_str && incomplete_class && strcmp(ZSTR_VAL(key_str), MAGIC_MEMBER) == 0) {
                     continue;
                 }
+
+                if (EG(exception)) {
+                    goto done;
+                }
                 if (key_str && hash) {
                     msgpack_serialize_string(buf, ZSTR_VAL(key_str), ZSTR_LEN(key_str));
                 } else if (hash) {
@@ -330,6 +338,10 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
                     continue;
                 }
 
+                if (EG(exception)) {
+                    goto done;
+                }
+
                 if (Z_TYPE_P(data) == IS_REFERENCE) {
                     data_noref = Z_REFVAL_P(data);
                 } else {
@@ -356,6 +368,7 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
             }
         }
     }
+    done: ;
 #if PHP_VERSION_ID >= 70400
     if (free_ht && ht) {
         zend_array_destroy(ht);
@@ -393,7 +406,37 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
     }
 #endif
 
-    if (ce && ce->serialize != NULL) {
+#if PHP_VERSION_ID >= 70400
+    if (ce && ce->__serialize) {
+        zval retval, obj;
+
+        ZVAL_OBJ_COPY(&obj, Z_OBJ_P(val_noref));
+        zend_call_known_instance_method_with_0_params(Z_OBJCE(obj)->__serialize, Z_OBJ(obj), &retval);
+
+        if (!EG(exception)) {
+            if (Z_TYPE(retval) == IS_ARRAY) {
+                msgpack_pack_map(buf, 2);
+
+                msgpack_pack_nil(buf);
+                msgpack_serialize_string(buf, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name));
+                msgpack_pack_nil(buf);
+                msgpack_serialize_zval(buf, &retval, var_hash);
+            } else {
+                msgpack_pack_nil(buf);
+                zend_type_error("%s::__serialize() must return an array", ZSTR_VAL(ce->name));
+            }
+        } else {
+            msgpack_pack_nil(buf);
+        }
+
+        zval_ptr_dtor(&obj);
+        zval_ptr_dtor(&retval);
+        PHP_CLEANUP_CLASS_ATTRIBUTES();
+        return;
+    }
+#endif
+
+    if (ce && ce->serialize) {
         unsigned char *serialized_data = NULL;
         size_t serialized_length;
 
