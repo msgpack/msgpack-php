@@ -409,11 +409,11 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
 #endif
 
 #if PHP_VERSION_ID >= 70400
-    if (ce && ce->__serialize) {
+    if (IS_MAGIC_SERIALIZABLE(ce)) {
         zval retval, obj;
 
         ZVAL_COPY(&obj, val_noref);
-        zend_call_known_instance_method_with_0_params(Z_OBJCE(obj)->__serialize, Z_OBJ(obj), &retval);
+        CALL_MAGIC_SERIALIZE(ce, Z_OBJ(obj), &retval);
 
         if (!EG(exception)) {
             if (Z_TYPE(retval) == IS_ARRAY) {

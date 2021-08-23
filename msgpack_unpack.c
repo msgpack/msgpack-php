@@ -627,14 +627,13 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                 msgpack_unserialize_class(container, Z_STR_P(val), 1);
 #if PHP_VERSION_ID >= 70400
             } else if (Z_TYPE_P(val) == IS_ARRAY) {
-                if (Z_TYPE_P(*container) == IS_OBJECT && (ce = Z_OBJCE_P(*container)) && ce->__unserialize) {
+                if (Z_TYPE_P(*container) == IS_OBJECT && IS_MAGIC_SERIALIZABLE((ce = Z_OBJCE_P(*container)))) {
                     zval param;
                     ZVAL_COPY(&param, val);
-                    zend_object *prev_exc = EG(exception);
 
-                    zend_call_known_instance_method_with_1_params(
-                        ce->__unserialize, Z_OBJ_P(*container), NULL, &param);
-                    if (EG(exception) != prev_exc) {
+                    CALL_MAGIC_UNSERIALIZE(ce, Z_OBJ_P(*container), NULL, &param);
+
+                    if (EG(exception)) {
                         GC_ADD_FLAGS(Z_OBJ_P(*container), IS_OBJ_DESTRUCTOR_CALLED);
                     }
                     zval_ptr_dtor(&param);
