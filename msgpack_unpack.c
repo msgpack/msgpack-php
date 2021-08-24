@@ -13,9 +13,9 @@
 # define zval_try_get_string zval_get_string
 #endif
 
-typedef struct {
+typedef struct var_entries {
     zend_long used_slots;
-    void *next;
+    struct var_entries *next;
     zval data[VAR_ENTRIES_MAX];
 } var_entries;
 
