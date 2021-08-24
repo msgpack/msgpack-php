@@ -68,7 +68,7 @@ typedef struct var_entries {
 #define MSGPACK_VALIDATE_INPUT_DATA_LENGTH(data, len, eof) \
     ((data) + (len) <= (eof))
 #define MSGPACK_VALIDATE_INPUT(user, data, len) \
-    if (!MSGPACK_VALIDATE_INPUT_DATA_LENGTH(data, len, (user)->eof)) { \
+    if ((len && !data) || !MSGPACK_VALIDATE_INPUT_DATA_LENGTH(data, len, (user)->eof)) { \
         return MSGPACK_UNPACK_PARSE_ERROR; \
     }
 
