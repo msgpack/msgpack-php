@@ -245,6 +245,10 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
             if (off < str_len) {
                 MSGPACK_WARNING("[msgpack] (%s) Extra bytes", __FUNCTION__);
             }
+            if (Z_ISREF_P(return_value)) {
+                /* this must not happen, but may happen on unserializing random invalid data */
+                ZVAL_UNREF(return_value);
+            }
             return SUCCESS;
         default:
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
