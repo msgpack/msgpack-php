@@ -263,6 +263,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
     container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
     ZVAL_UNDEF(&container_tmp);
 
+    ZEND_ASSERT(class_name);
     do {
         /* Try to find class directly */
         ce = zend_lookup_class(class_name);
@@ -648,9 +649,16 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
             MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
             return 0;
         } else {
-            switch (unpack->type) {
+            int type = unpack->type;
+            unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
+            
+            switch (type) {
                 case MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT:
-                    unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
+                {
+                    if (Z_TYPE_P(key) != IS_STRING) {
+                        MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
+                        return MSGPACK_UNPACK_PARSE_ERROR;
+                    }
 
                     ce = msgpack_unserialize_class(container, Z_STR_P(key), 0);
                     if (ce == NULL) {
@@ -664,7 +672,6 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                             __FUNCTION__, ZSTR_VAL(ce->name));
 
                         MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
-
                         return 0;
                     }
 
@@ -672,15 +679,14 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
 
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
                     return 0;
+                }
 
                 case MSGPACK_SERIALIZE_TYPE_RECURSIVE:
                 case MSGPACK_SERIALIZE_TYPE_OBJECT:
                 case MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE:
                 {
                     zval *rval;
-                    int type = unpack->type;
 
-                    unpack->type = MSGPACK_SERIALIZE_TYPE_NONE;
                     if (!(rval = msgpack_var_access(&unpack->var_hash, Z_LVAL_P(val) - 1)))  {
                         if (UNEXPECTED(Z_LVAL_P(val) == 1 /* access the retval */)) {
                             rval = unpack->retval;
