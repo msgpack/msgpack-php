@@ -169,10 +169,13 @@ static void msgpack_stack_pop(msgpack_unserialize_data_t *var_hashx, zval *v) /*
     var_entries *var_hash = var_hashx->last_dtor;
 
     while (var_hash && var_hash->used_slots == VAR_ENTRIES_MAX) {
+        if (var_hash->next && !var_hash->next->used_slots) {
+            break;
+        }
         var_hash = var_hash->next;
     }
 
-    if (!var_hash) {
+    if (!var_hash || !var_hash->used_slots) {
         return;
     }
 
