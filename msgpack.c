@@ -159,13 +159,13 @@ PS_SERIALIZER_DECODE_FUNC(msgpack) /* {{{ */ {
     msgpack_unpack_t mp;
     size_t off = 0;
 
-    template_init(&mp);
+    msgpack_unserialize_init(&mp);
 
     ZVAL_UNDEF(&tmp);
     mp.user.retval = &tmp;
     mp.user.eof = val + vallen;
 
-    ret = template_execute(&mp, val, vallen, &off);
+    ret = msgpack_unserialize_execute(&mp, val, vallen, &off);
     if (Z_TYPE_P(mp.user.retval) == IS_REFERENCE) {
         ZVAL_DEREF(mp.user.retval);
     }
@@ -216,12 +216,12 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
         return FAILURE;
     }
 
-    template_init(&mp);
+    msgpack_unserialize_init(&mp);
 
     mp.user.retval = return_value;
     mp.user.eof = str + str_len;
 
-    ret = template_execute(&mp, str, (size_t)str_len, &off);
+    ret = msgpack_unserialize_execute(&mp, str, (size_t)str_len, &off);
 
     switch (ret) {
         case MSGPACK_UNPACK_NOMEM_ERROR:

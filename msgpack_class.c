@@ -297,7 +297,7 @@ static ZEND_METHOD(msgpack_unpacker, __construct) /* {{{ */ {
     unpacker->finished = 0;
     unpacker->error = 0;
 
-    template_init(&unpacker->mp);
+    msgpack_unserialize_init(&unpacker->mp);
 }
 /* }}} */
 
@@ -385,7 +385,7 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
         msgpack_unserialize_var_destroy(&unpacker->mp.user.var_hash, unpacker->error);
         unpacker->error = 0;
 
-        template_init(&unpacker->mp);
+        msgpack_unserialize_init(&unpacker->mp);
     }
     (&unpacker->mp)->user.retval = &unpacker->retval;
     (&unpacker->mp)->user.eof = data + len;
@@ -393,7 +393,7 @@ static ZEND_METHOD(msgpack_unpacker, execute) /* {{{ */ {
     MSGPACK_G(error_display) = 0;
     MSGPACK_G(php_only) = unpacker->php_only;
 
-    ret = template_execute(&unpacker->mp, data, len, &off);
+    ret = msgpack_unserialize_execute(&unpacker->mp, data, len, &off);
 
     MSGPACK_G(error_display) = error_display;
     MSGPACK_G(php_only) = php_only;
@@ -474,7 +474,7 @@ static ZEND_METHOD(msgpack_unpacker, reset) /* {{{ */ {
     msgpack_unserialize_var_destroy(&unpacker->mp.user.var_hash, unpacker->error);
     unpacker->error = 0;
 
-    template_init(&unpacker->mp);
+    msgpack_unserialize_init(&unpacker->mp);
 }
 /* }}} */
 
