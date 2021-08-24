@@ -319,7 +319,9 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
             HashTable *props = Z_OBJPROP_P(container_val);
             ZEND_HASH_FOREACH_STR_KEY_VAL(HASH_OF(&container_tmp), str_key, val)
             {
-                update_property(ce, props, str_key, val);
+                if (str_key) {
+                    update_property(ce, props, str_key, val);
+                }
             }
             ZEND_HASH_FOREACH_END();
             zval_dtor(&container_tmp);
