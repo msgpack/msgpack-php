@@ -692,7 +692,7 @@ int msgpack_unserialize_map_item(msgpack_unserialize_data *unpack, zval **contai
                             rval = unpack->retval;
                         } else {
                             MSGPACK_WARNING("[msgpack] (%s) Invalid references value: %ld",
-                                    __FUNCTION__, Z_LVAL_P(val) - 1);
+                                    __FUNCTION__, (long) Z_LVAL_P(val) - 1);
 
                             MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
                             return 0;
