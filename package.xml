@@ -22,21 +22,19 @@
   <email>mike@php.net</email>
   <active>yes</active>
  </lead>
- <date>2020-11-27</date>
+ <date>2021-08-30</date>
  <version>
-  <release>2.1.2</release>
-  <api>2.0.3</api>
+  <release>2.2.0RC1</release>
+  <api>2.2.0</api>
  </version>
  <stability>
-  <release>stable</release>
+  <release>beta</release>
   <api>stable</api>
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
  <notes><![CDATA[
-* PHP-8 compatibility. (Remi Collet, Michael Wallner)
-* Fixed #152: Split tests for #67 regarding 32/64bit platforms. (Andy Postnikov)
-* Fixed #153 and #147: Small string optimization causes excessive memory 
-  consumption under specific workloads. (Michael Wallner)
+* Fixed PHP-8.1 compatibility (see gh issues #161, #157, and #156)
+* Added support for ZEND_ACC_NOT_SERIALIZABLE and magic __{,un}serialize
  ]]></notes>
  <contents>
   <dir name="/">
@@ -88,6 +86,7 @@
     <file name="019.phpt" role="test" />
     <file name="020.phpt" role="test" />
     <file name="021.phpt" role="test" />
+    <file name="021a.phpt" role="test" />
     <file name="022.phpt" role="test" />
     <file name="023.phpt" role="test" />
     <file name="024.phpt" role="test" />
