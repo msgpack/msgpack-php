@@ -99,10 +99,10 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
 #endif
 
 #if defined(HAVE_APCU_SUPPORT)
-	apc_register_serializer("msgpack",
-		APC_SERIALIZER_NAME(msgpack),
-		APC_UNSERIALIZER_NAME(msgpack),
-		NULL TSRMLS_CC);
+    apc_register_serializer("msgpack",
+        APC_SERIALIZER_NAME(msgpack),
+        APC_UNSERIALIZER_NAME(msgpack),
+        NULL);
 #endif
 
     msgpack_init_class();
@@ -128,7 +128,9 @@ static ZEND_MINFO_FUNCTION(msgpack) /* {{{ */ {
     php_info_print_table_row(2, "Session Support", "enabled" );
 #endif
 #if defined(HAVE_APCU_SUPPORT)
-	php_info_print_table_row(2, "APCu Serializer Support", "enabled" );
+    php_info_print_table_row(2, "MessagePack APCu Serializer ABI", APC_SERIALIZER_ABI);
+#else
+    php_info_print_table_row(2, "MessagePack APCu Serializer ABI", "no");
 #endif
     php_info_print_table_row(2, "extension Version", PHP_MSGPACK_VERSION);
     php_info_print_table_row(2, "header Version", MSGPACK_VERSION);
@@ -321,49 +323,25 @@ static ZEND_FUNCTION(msgpack_unserialize) /* {{{ */ {
 /* }}} */
 
 #if defined(HAVE_APCU_SUPPORT)
-/* {{{ apc_serialize function */
-static int APC_SERIALIZER_NAME(msgpack) ( APC_SERIALIZER_ARGS ) {
-	(void)config;
+static int APC_SERIALIZER_NAME(msgpack) ( APC_SERIALIZER_ARGS ) /* {{{ */ {
+    smart_str res = {0};
+    php_msgpack_serialize(&res, (zval *) value);
 
-	smart_str res = {0};
-	msgpack_serialize_data_t var_hash;
-
-	msgpack_serialize_var_init(&var_hash);
-	msgpack_serialize_zval(&res, (zval *) value, var_hash);
-	msgpack_serialize_var_destroy(&var_hash);
-
-	smart_str_0(&res);
-
-	*buf = (unsigned char *) estrndup(ZSTR_VAL(res.s), ZSTR_LEN(res.s));
-	*buf_len = ZSTR_LEN(res.s);
-
-	return 1;
+    if (res.s) {
+        smart_str_0(&res);
+        *buf = (unsigned char *) estrndup(ZSTR_VAL(res.s), ZSTR_LEN(res.s));
+        *buf_len = ZSTR_LEN(res.s);
+        return 1;
+    }
+    return 0;
 }
 /* }}} */
-/* {{{ apc_unserialize function */
-static int APC_UNSERIALIZER_NAME(msgpack) ( APC_UNSERIALIZER_ARGS ) {
-	(void)config;
 
-	int ret;
-	msgpack_unpack_t mp;
-	msgpack_unserialize_data_t var_hash;
-	size_t off = 0;
-
-	template_init(&mp);
-
-	msgpack_unserialize_var_init(&var_hash);
-
-	mp.user.retval = value;
-	mp.user.var_hash = &var_hash;
-
-	ret = template_execute(&mp, (char *) buf, buf_len, &off);
-	if (Z_TYPE_P(mp.user.retval) == IS_REFERENCE) {
-		ZVAL_DEREF(mp.user.retval);
-	}
-
-	msgpack_unserialize_var_destroy(&var_hash, 0);
-
-	return ret == MSGPACK_UNPACK_EXTRA_BYTES || ret == MSGPACK_UNPACK_SUCCESS;
+static int APC_UNSERIALIZER_NAME(msgpack) ( APC_UNSERIALIZER_ARGS ) /* {{{ */ {
+    if (buf_len > 0 && php_msgpack_unserialize(value, buf, buf_len) == SUCCESS) {
+        return 1;
+    }
+    return 0;
 }
 /* }}} */
 #endif
