@@ -21,6 +21,9 @@
 
 #include "msgpack/pack_template.h"
 
+#if PHP_VERSION_ID >= 80100
+# define msgpack_check_ht_is_map(array) (!zend_array_is_list(Z_ARRVAL_P(array)))
+#else
 static inline int msgpack_check_ht_is_map(zval *array) /* {{{ */ {
     Bucket *b;
     zend_ulong i = 0;
@@ -35,6 +38,7 @@ static inline int msgpack_check_ht_is_map(zval *array) /* {{{ */ {
     return 0;
 }
 /* }}} */
+#endif
 
 static inline int msgpack_var_add(HashTable *var_hash, zval *var, zend_long *var_old) /* {{{ */ {
     uint32_t len;
