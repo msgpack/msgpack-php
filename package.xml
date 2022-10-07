@@ -22,9 +22,9 @@
   <email>mike@php.net</email>
   <active>yes</active>
  </lead>
- <date>2021-08-30</date>
+ <date>2022-10-07</date>
  <version>
-  <release>2.2.0RC1</release>
+  <release>2.2.0RC2</release>
   <api>2.2.0</api>
  </version>
  <stability>
@@ -33,6 +33,7 @@
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
  <notes><![CDATA[
+* Fixed PHP-8.2 compatibility (see gh issue #165)
 * Fixed PHP-8.1 compatibility (see gh issues #161, #157, and #156)
 * Added support for ZEND_ACC_NOT_SERIALIZABLE and magic __{,un}serialize
  ]]></notes>
