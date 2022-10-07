@@ -8,6 +8,7 @@ if (!extension_loaded("msgpack")) {
 --FILE--
 <?php
 
+#[AllowDynamicProperties()]
 class magicClass {
     public function __set($name, $value) {
         echo 'Called __set' . PHP_EOL;
