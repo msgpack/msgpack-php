@@ -35,6 +35,7 @@ class Obj {
     }
 }
 
+#[AllowDynamicProperties()]
 class Obj2 {
     public $aa;
     protected $bb;
