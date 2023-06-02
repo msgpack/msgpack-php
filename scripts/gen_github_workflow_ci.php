@@ -15,7 +15,7 @@ function yesno(array $env, string $key) : string {
     } else {
         $check = $key;
     }
-    if ($env["enable_$check"] ?? null === "yes") {
+    if (($env["enable_$check"] ?? null) === "yes") {
         return $key;
     }
     return "no$key";
@@ -32,14 +32,14 @@ $job = $gen->github([
 	"enable_debug" => "yes",
 	"enable_maintainer_zts" => "yes",
 	"enable_session" => "yes",
-], 
+],
 "master" => [
 // master
     "PHP" => ["master"],
     "enable_debug" => "yes",
     "enable_zts" => "yes",
     "enable_session" => "yes",
-], 
+],
 "cur-matrix" => [
 // most useful for all additional versions except current
 	"PHP" => ["8.0", "8.1"],
@@ -51,14 +51,14 @@ $job = $gen->github([
 // everything disabled for current
     "PHP" => $cur,
     "enable_session" => "no",
-], 
+],
 "cur-dbg-zts" => [
 // everything enabled for current, switching debug/zts
     "PHP" => $cur,
     "enable_debug",
     "enable_zts",
     "enable_session" => "yes",
-], 
+],
 "cur-cov" => [
 // once everything enabled for current, with coverage
     "CFLAGS" => "-O0 -g --coverage",
