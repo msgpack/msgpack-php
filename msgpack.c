@@ -13,6 +13,10 @@
 #include "ext/session/php_session.h" /* for php_session_register_serializer */
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+#include "ext/apcu/apc_serializer.h"
+#endif /* HAVE_APCU_SUPPORT */
+
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
 #include "msgpack_unpack.h"
@@ -54,6 +58,12 @@ PHP_INI_END()
 PS_SERIALIZER_FUNCS(msgpack);
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+/** Apc serializer function prototypes */
+static int APC_SERIALIZER_NAME(msgpack) (APC_SERIALIZER_ARGS);
+static int APC_UNSERIALIZER_NAME(msgpack) (APC_UNSERIALIZER_ARGS);
+#endif
+
 static zend_function_entry msgpack_functions[] = {
     ZEND_FE(msgpack_serialize, arginfo_msgpack_serialize)
     ZEND_FE(msgpack_unserialize, arginfo_msgpack_unserialize)
@@ -88,6 +98,13 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
     php_session_register_serializer("msgpack", PS_SERIALIZER_ENCODE_NAME(msgpack), PS_SERIALIZER_DECODE_NAME(msgpack));
 #endif
 
+#if defined(HAVE_APCU_SUPPORT)
+    apc_register_serializer("msgpack",
+        APC_SERIALIZER_NAME(msgpack),
+        APC_UNSERIALIZER_NAME(msgpack),
+        NULL);
+#endif
+
     msgpack_init_class();
 
     REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_PHPONLY",
@@ -109,6 +126,11 @@ static ZEND_MINFO_FUNCTION(msgpack) /* {{{ */ {
     php_info_print_table_row(2, "MessagePack Support", "enabled");
 #if HAVE_PHP_SESSION
     php_info_print_table_row(2, "Session Support", "enabled" );
+#endif
+#if defined(HAVE_APCU_SUPPORT)
+    php_info_print_table_row(2, "MessagePack APCu Serializer ABI", APC_SERIALIZER_ABI);
+#else
+    php_info_print_table_row(2, "MessagePack APCu Serializer ABI", "no");
 #endif
     php_info_print_table_row(2, "extension Version", PHP_MSGPACK_VERSION);
     php_info_print_table_row(2, "header Version", MSGPACK_VERSION);
@@ -299,6 +321,30 @@ static ZEND_FUNCTION(msgpack_unserialize) /* {{{ */ {
     }
 }
 /* }}} */
+
+#if defined(HAVE_APCU_SUPPORT)
+static int APC_SERIALIZER_NAME(msgpack) ( APC_SERIALIZER_ARGS ) /* {{{ */ {
+    smart_str res = {0};
+    php_msgpack_serialize(&res, (zval *) value);
+
+    if (res.s) {
+        smart_str_0(&res);
+        *buf = (unsigned char *) estrndup(ZSTR_VAL(res.s), ZSTR_LEN(res.s));
+        *buf_len = ZSTR_LEN(res.s);
+        return 1;
+    }
+    return 0;
+}
+/* }}} */
+
+static int APC_UNSERIALIZER_NAME(msgpack) ( APC_UNSERIALIZER_ARGS ) /* {{{ */ {
+    if (buf_len > 0 && php_msgpack_unserialize(value, buf, buf_len) == SUCCESS) {
+        return 1;
+    }
+    return 0;
+}
+/* }}} */
+#endif
 
 /*
  * Local variables:
