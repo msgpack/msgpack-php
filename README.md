@@ -1,7 +1,7 @@
 # Msgpack for PHP
 [![Build Status](https://github.com/msgpack/msgpack-php/workflows/ci/badge.svg?branch=master)](https://github.com/msgpack/msgpack-php/actions?query=workflow%3Aci+branch%3Amaster)
 
-This extension provides an API for communicating with MessagePack serialization. 
+This extension provides an API for communicating with MessagePack serialization.
 
 MessagePack is a binary-based efficient object serialization library.
 It enables to exchange structured objects between many languages just like JSON.
@@ -13,7 +13,7 @@ But unlike JSON, it is very fast and small.
 ## Install
 
 ### Install from PECL
-Msgpack is an PECL extension, thus you can simply install it by:
+Msgpack is a PECL extension, thus you can simply install it by:
 
 ```shell
 pecl install msgpack
@@ -72,9 +72,9 @@ $buffer .= $packed2;
 while(true) {
    if($unpacker->execute($buffer, $nread)) {
        $msg = $unpacker->data();
-       
+
        var_dump($msg);
-       
+
        $unpacker->reset();
        $buffer = substr($buffer, $nread);
        $nread = 0;
