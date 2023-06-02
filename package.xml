@@ -22,20 +22,23 @@
   <email>mike@php.net</email>
   <active>yes</active>
  </lead>
- <date>2022-10-07</date>
+ <date>2023-06-02</date>
  <version>
-  <release>2.2.0RC2</release>
+  <release>2.2.0</release>
   <api>2.2.0</api>
  </version>
  <stability>
-  <release>beta</release>
+  <release>stable</release>
   <api>stable</api>
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
  <notes><![CDATA[
-* Fixed PHP-8.2 compatibility (see gh issue #165)
-* Fixed PHP-8.1 compatibility (see gh issues #161, #157, and #156)
-* Added support for ZEND_ACC_NOT_SERIALIZABLE and magic __{,un}serialize
+No changes from RC2.
+* RC2:
+  * Fix PHP-8.2 compatibility (see gh issue #165)
+* RC1:
+  * Fix PHP-8.1 compatibility (see gh issues #161, #157, and #156)
+  * Add support for ZEND_ACC_NOT_SERIALIZABLE and magic __{,un}serialize
  ]]></notes>
  <contents>
   <dir name="/">
