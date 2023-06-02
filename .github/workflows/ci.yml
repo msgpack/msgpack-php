@@ -287,7 +287,7 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-1:
-    name: php-8.2-debug-zts
+    name: php-8.2-nodebug-zts
     env:
       PHP: "8.2"
       enable_debug: "no"
@@ -315,7 +315,7 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-2:
-    name: php-8.2-debug-zts
+    name: php-8.2-debug-nozts
     env:
       PHP: "8.2"
       enable_debug: "yes"
@@ -343,7 +343,7 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-3:
-    name: php-8.2-debug-zts
+    name: php-8.2-nodebug-nozts
     env:
       PHP: "8.2"
       enable_debug: "no"
