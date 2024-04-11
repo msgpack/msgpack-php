@@ -6,6 +6,10 @@
 #include "ext/standard/php_incomplete_class.h"
 #include "ext/standard/php_var.h"
 
+#if PHP_VERSION_ID >= 80100
+#include "Zend/zend_enum.h"
+#endif
+
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
 #include "msgpack_errors.h"
@@ -407,6 +411,19 @@ static inline void msgpack_serialize_object(smart_str *buf, zval *val, HashTable
     if (ce && (ce->ce_flags & ZEND_ACC_NOT_SERIALIZABLE)) {
         msgpack_pack_nil(buf);
         zend_throw_exception_ex(NULL, 0, "Serialization of '%s' is not allowed", ZSTR_VAL(ce->name));
+        PHP_CLEANUP_CLASS_ATTRIBUTES();
+        return;
+    }
+    if (ce && (ce->ce_flags & ZEND_ACC_ENUM)) {
+        zval *enum_case_name = zend_enum_fetch_case_name(Z_OBJ_P(val_noref));
+        msgpack_pack_map(buf, 2);
+
+        msgpack_pack_nil(buf);
+        msgpack_pack_long(buf, MSGPACK_SERIALIZE_TYPE_ENUM);
+
+        msgpack_serialize_string(buf, ZSTR_VAL(ce->name), ZSTR_LEN(ce->name));
+        msgpack_serialize_string(buf, Z_STRVAL_P(enum_case_name), Z_STRLEN_P(enum_case_name));
+
         PHP_CLEANUP_CLASS_ATTRIBUTES();
         return;
     }
