@@ -46,7 +46,7 @@ function gc($time) {
 
 ini_set('session.serialize_handler', 'msgpack');
 
-session_set_save_handler('open', 'close', 'read', 'write', 'destroy', 'gc');
+@session_set_save_handler('open', 'close', 'read', 'write', 'destroy', 'gc');
 
 session_start();
 
