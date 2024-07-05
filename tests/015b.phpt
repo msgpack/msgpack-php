@@ -45,7 +45,7 @@ function gc($time) {
     return true;
 }
 
-session_set_save_handler('open', 'close', 'read', 'write', 'destroy', 'gc');
+@session_set_save_handler('open', 'close', 'read', 'write', 'destroy', 'gc');
 
 session_start();
 
