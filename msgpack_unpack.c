@@ -2,6 +2,10 @@
 #include "php_ini.h"
 #include "ext/standard/php_incomplete_class.h"
 
+#if PHP_VERSION_ID >= 80100
+#include "Zend/zend_enum.h"
+#endif
+
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
 #include "msgpack_unpack.h"
@@ -617,6 +621,7 @@ int msgpack_unserialize_map_item(msgpack_unpack_data *unpack, zval **container, 
                     case MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT:
                     case MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE:
                     case MSGPACK_SERIALIZE_TYPE_OBJECT:
+                    case MSGPACK_SERIALIZE_TYPE_ENUM:
                         unpack->type = Z_LVAL_P(val);
                         break;
                     default:
@@ -670,6 +675,26 @@ int msgpack_unserialize_map_item(msgpack_unpack_data *unpack, zval **container, 
 
                     ce->unserialize(*container, ce, (const unsigned char *)Z_STRVAL_P(val), Z_STRLEN_P(val) + 1, NULL);
 
+                    MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
+                    return 0;
+                }
+
+                case MSGPACK_SERIALIZE_TYPE_ENUM:
+                {
+                    if (Z_TYPE_P(key) != IS_STRING) {
+                        MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
+                        return MSGPACK_UNPACK_PARSE_ERROR;
+                    }
+
+#if PHP_VERSION_ID < 80100
+                    MSGPACK_WARNING(
+                        "[msgpack] (%s) Class %s is an Enum and not supported below PHP 8.1",
+                        __FUNCTION__, Z_STRVAL_P(key));
+#else
+                    ce = msgpack_unserialize_class(container, Z_STR_P(key), 0);
+                    zend_object *enum_instance = zend_enum_get_case(ce, Z_STR_P(val));
+                    ZVAL_OBJ(*container, enum_instance);
+#endif
                     MSGPACK_UNSERIALIZE_FINISH_MAP_ITEM(unpack, key, val);
                     return 0;
                 }

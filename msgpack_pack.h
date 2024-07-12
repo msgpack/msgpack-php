@@ -19,6 +19,7 @@ enum msgpack_serialize_type
     MSGPACK_SERIALIZE_TYPE_CUSTOM_OBJECT,
     MSGPACK_SERIALIZE_TYPE_OBJECT,
     MSGPACK_SERIALIZE_TYPE_OBJECT_REFERENCE,
+    MSGPACK_SERIALIZE_TYPE_ENUM,
 };
 
 void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash);
