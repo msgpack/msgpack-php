@@ -1,5 +1,14 @@
 --TEST--
 Enums
+--SKIPIF--
+<?php
+if (!extension_loaded("msgpack")) {
+    exit('skip because msgpack extension is missing');
+}
+if (version_compare(PHP_VERSION, '8.1.0', '<')) {
+    exit('skip Enum tests in PHP older than 8.1.0');
+}
+?>
 --FILE--
 <?php
 echo "Test\n";
