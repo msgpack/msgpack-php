@@ -36,6 +36,8 @@
 * Add support for PHP-8.1 Enums
   * merges #173
   * fixes #171
+* Add support for APCu
+  * merges #162, #93
  ]]></notes>
  <contents>
   <dir name="/">
@@ -183,6 +185,7 @@
     <file name="138.phpt" role="test" />
     <file name="139.phpt" role="test" />
     <file name="140.phpt" role="test" />
+    <file name="apcu.phpt" role="test" />
     <file name="bug002.phpt" role="test" />
     <file name="bug006.phpt" role="test" />
     <file name="bug011.phpt" role="test" />
