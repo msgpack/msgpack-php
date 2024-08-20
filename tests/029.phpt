@@ -49,6 +49,7 @@ extension Version => %s
 header Version => %s
 
 Directive => Local Value => Master Value
+msgpack.assoc => %s => %s
 msgpack.error_display => %s => %s
 msgpack.illegal_key_insert => %s => %s
 msgpack.php_only => %s => %s

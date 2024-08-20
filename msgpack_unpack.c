@@ -588,7 +588,7 @@ int msgpack_unserialize_map(msgpack_unpack_data *unpack, unsigned int count, zva
     unpack->count = count;
 
     if (count == 0) {
-        if (MSGPACK_G(php_only)) {
+        if (MSGPACK_G(php_only) || !MSGPACK_G(assoc)) {
             object_init(*obj);
         } else {
             array_init(*obj);
@@ -734,6 +734,10 @@ int msgpack_unserialize_map_item(msgpack_unpack_data *unpack, zval **container, 
     }
 
     container_val = Z_ISREF_P(*container) ? Z_REFVAL_P(*container) : *container;
+
+    if (!MSGPACK_G(assoc) && Z_TYPE_P(container_val) != IS_ARRAY && Z_TYPE_P(container_val) != IS_OBJECT) {
+        object_init(container_val);
+    }
 
     if (Z_TYPE_P(container_val) == IS_OBJECT) {
         switch (Z_TYPE_P(key)) {

@@ -260,7 +260,9 @@ static inline void msgpack_serialize_array(smart_str *buf, zval *val, HashTable 
     }
 
     if (object) {
-        if (MSGPACK_G(php_only)) {
+        if (!MSGPACK_G(assoc) && (!MSGPACK_G(php_only) || !strcmp(class_name, "stdClass"))) {
+            msgpack_pack_map(buf, n);
+        } else if (MSGPACK_G(php_only)) {
             if (is_ref) {
                 msgpack_pack_map(buf, n + 2);
                 msgpack_pack_nil(buf);

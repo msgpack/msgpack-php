@@ -47,6 +47,9 @@ STD_PHP_INI_BOOLEAN(
     "msgpack.php_only", "1", PHP_INI_ALL, OnUpdateBool,
     php_only, zend_msgpack_globals, msgpack_globals)
 STD_PHP_INI_BOOLEAN(
+    "msgpack.assoc", "1", PHP_INI_ALL, OnUpdateBool,
+    assoc, zend_msgpack_globals, msgpack_globals)
+STD_PHP_INI_BOOLEAN(
     "msgpack.illegal_key_insert", "0", PHP_INI_ALL, OnUpdateBool,
     illegal_key_insert, zend_msgpack_globals, msgpack_globals)
 STD_PHP_INI_BOOLEAN(
@@ -81,6 +84,7 @@ static void msgpack_init_globals(zend_msgpack_globals *msgpack_globals) /* {{{ *
     }
 
     msgpack_globals->php_only = 1;
+    msgpack_globals->assoc = 1;
 
     msgpack_globals->illegal_key_insert = 0;
     msgpack_globals->use_str8_serialization = 1;
@@ -109,6 +113,8 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
 
     REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_PHPONLY",
             MSGPACK_CLASS_OPT_PHPONLY, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_ASSOC",
+            MSGPACK_CLASS_OPT_ASSOC, CONST_CS | CONST_PERSISTENT);
 
     return SUCCESS;
 }
