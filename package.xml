@@ -224,10 +224,6 @@
  <providesextension>msgpack</providesextension>
  <extsrcrelease />
  <changelog>
-<<<<<<< HEAD
-
-=======
->>>>>>> ranvis-assoc
   <release>
    <date>2020-07-27</date>
     <version>
