@@ -22,13 +22,13 @@
   <email>mike@php.net</email>
   <active>yes</active>
  </lead>
- <date>2024-08-30</date>
+ <date>2024-08-23</date>
  <version>
-  <release>3.0.0</release>
+  <release>3.0.0RC1</release>
   <api>3.0.0</api>
  </version>
  <stability>
-  <release>stable</release>
+  <release>beta</release>
   <api>stable</api>
  </stability>
  <license filesource="LICENSE">3-Clause-BSD</license>
@@ -38,6 +38,8 @@
   * fixes #171
 * Add support for APCu
   * merges #162, #93
+* Add OPT_ASSOC for roundtrip serialization of map.
+  * merges #58
  ]]></notes>
  <contents>
   <dir name="/">
