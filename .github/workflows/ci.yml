@@ -8,9 +8,9 @@ on:
 
 jobs:
   old-matrix-0:
-    name: php-7.0-debug-zts
+    name: php-7.4-debug-zts
     env:
-      PHP: "7.0"
+      PHP: "7.4"
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
@@ -36,9 +36,9 @@ jobs:
           make -f scripts/ci/Makefile test
 
   old-matrix-1:
-    name: php-7.1-debug-zts
+    name: php-8.0-debug-nozts
     env:
-      PHP: "7.1"
+      PHP: "8.0"
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
@@ -64,9 +64,9 @@ jobs:
           make -f scripts/ci/Makefile test
 
   old-matrix-2:
-    name: php-7.2-debug-zts
+    name: php-8.1-debug-nozts
     env:
-      PHP: "7.2"
+      PHP: "8.1"
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
@@ -92,37 +92,9 @@ jobs:
           make -f scripts/ci/Makefile test
 
   old-matrix-3:
-    name: php-7.3-debug-zts
+    name: php-8.2-debug-nozts
     env:
-      PHP: "7.3"
-      enable_debug: "yes"
-      enable_maintainer_zts: "yes"
-      enable_session: "yes"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Install
-        run: |
-          sudo apt-get install -y \
-            php-cli \
-            php-pear \
-            re2c
-      - name: Prepare
-        run: |
-          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
-      - name: Build
-        run: |
-          make -f scripts/ci/Makefile ext PECL=msgpack
-      - name: Test
-        run: |
-          make -f scripts/ci/Makefile test
-
-  old-matrix-4:
-    name: php-7.4-debug-zts
-    env:
-      PHP: "7.4"
+      PHP: "8.2"
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
@@ -152,90 +124,6 @@ jobs:
     continue-on-error: true
     env:
       PHP: "master"
-      enable_debug: "yes"
-      enable_zts: "yes"
-      enable_session: "yes"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Install
-        run: |
-          sudo apt-get install -y \
-            php-cli \
-            php-pear \
-            re2c
-      - name: Prepare
-        run: |
-          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
-      - name: Build
-        run: |
-          make -f scripts/ci/Makefile ext PECL=msgpack
-      - name: Test
-        run: |
-          make -f scripts/ci/Makefile test
-
-  cur-matrix-0:
-    name: php-8.0-debug-zts
-    env:
-      PHP: "8.0"
-      enable_debug: "yes"
-      enable_zts: "yes"
-      enable_session: "yes"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Install
-        run: |
-          sudo apt-get install -y \
-            php-cli \
-            php-pear \
-            re2c
-      - name: Prepare
-        run: |
-          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
-      - name: Build
-        run: |
-          make -f scripts/ci/Makefile ext PECL=msgpack
-      - name: Test
-        run: |
-          make -f scripts/ci/Makefile test
-
-  cur-matrix-1:
-    name: php-8.1-debug-zts
-    env:
-      PHP: "8.1"
-      enable_debug: "yes"
-      enable_zts: "yes"
-      enable_session: "yes"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Install
-        run: |
-          sudo apt-get install -y \
-            php-cli \
-            php-pear \
-            re2c
-      - name: Prepare
-        run: |
-          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
-      - name: Build
-        run: |
-          make -f scripts/ci/Makefile ext PECL=msgpack
-      - name: Test
-        run: |
-          make -f scripts/ci/Makefile test
-
-  cur-matrix-2:
-    name: php-8.2-debug-zts
-    env:
-      PHP: "8.2"
       enable_debug: "yes"
       enable_zts: "yes"
       enable_session: "yes"

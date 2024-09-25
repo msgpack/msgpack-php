@@ -28,7 +28,7 @@ $cur = "8.3";
 $job = $gen->github([
 "old-matrix" => [
 // most useful for all additional versions except current
-	"PHP" => ["7.0", "7.1", "7.2", "7.3", "7.4"],
+	"PHP" => ["7.4", "8.0", "8.1", "8.2"],
 	"enable_debug" => "yes",
 	"enable_maintainer_zts" => "yes",
 	"enable_session" => "yes",
@@ -39,13 +39,6 @@ $job = $gen->github([
     "enable_debug" => "yes",
     "enable_zts" => "yes",
     "enable_session" => "yes",
-],
-"cur-matrix" => [
-// most useful for all additional versions except current
-	"PHP" => ["8.0", "8.1", "8.2"],
-	"enable_debug" => "yes",
-	"enable_zts" => "yes",
-	"enable_session" => "yes",
 ],
 "cur-none" => [
 // everything disabled for current
