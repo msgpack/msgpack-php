@@ -46,7 +46,6 @@
    <file name="LICENSE" role="doc" />
    <file name="README.md" role="doc" />
    <file name="CREDITS" role="doc" />
-   <file name="EXPERIMENTAL" role="doc" />
    <file name="config.m4" role="src" />
    <file name="config.w32" role="src" />
    <file name="msgpack.c" role="src" />
