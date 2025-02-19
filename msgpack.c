@@ -55,6 +55,9 @@ STD_PHP_INI_BOOLEAN(
 STD_PHP_INI_BOOLEAN(
     "msgpack.use_str8_serialization", "1", PHP_INI_ALL, OnUpdateBool,
     use_str8_serialization, zend_msgpack_globals, msgpack_globals)
+STD_PHP_INI_BOOLEAN(
+    "msgpack.force_f32", "0", PHP_INI_ALL, OnUpdateBool,
+    force_f32, zend_msgpack_globals, msgpack_globals)
 PHP_INI_END()
 
 #if HAVE_PHP_SESSION
@@ -115,6 +118,8 @@ static ZEND_MINIT_FUNCTION(msgpack) /* {{{ */ {
             MSGPACK_CLASS_OPT_PHPONLY, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_ASSOC",
             MSGPACK_CLASS_OPT_ASSOC, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("MESSAGEPACK_OPT_FORCE_F32",
+            MSGPACK_CLASS_OPT_FORCE_F32, CONST_CS | CONST_PERSISTENT);
 
     return SUCCESS;
 }

@@ -589,7 +589,11 @@ void msgpack_serialize_zval(smart_str *buf, zval *val, HashTable *var_hash) /* {
             msgpack_pack_long(buf, zval_get_long(val_noref));
             break;
         case IS_DOUBLE:
-            msgpack_pack_double(buf, Z_DVAL_P(val_noref));
+            if (MSGPACK_G(force_f32)) {
+                msgpack_pack_float(buf, (float) Z_DVAL_P(val_noref));
+            } else {
+                msgpack_pack_double(buf, Z_DVAL_P(val_noref));
+            }
             break;
         case IS_STRING:
             msgpack_serialize_string(buf, Z_STRVAL_P(val_noref), Z_STRLEN_P(val_noref));

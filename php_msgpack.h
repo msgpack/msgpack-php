@@ -26,6 +26,7 @@ ZEND_BEGIN_MODULE_GLOBALS(msgpack)
     zend_bool assoc;
     zend_bool illegal_key_insert;
     zend_bool use_str8_serialization;
+	zend_bool force_f32;
     struct {
         void *var_hash;
         unsigned level;
