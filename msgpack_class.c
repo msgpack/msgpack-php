@@ -11,6 +11,7 @@ typedef struct {
     long php_only;
     zend_bool assoc;
     zend_object object;
+    zend_bool force_f32;
 } php_msgpack_base_t;
 
 typedef struct {
@@ -178,6 +179,7 @@ static void php_msgpack_unpacker_free(zend_object *object) /* {{{ */ {
 static ZEND_METHOD(msgpack, __construct) /* {{{ */ {
     zend_bool php_only = MSGPACK_G(php_only);
     zend_bool assoc = MSGPACK_G(assoc);
+    zend_bool force_f32 = MSGPACK_G(force_f32);
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &php_only) == FAILURE) {
@@ -186,6 +188,7 @@ static ZEND_METHOD(msgpack, __construct) /* {{{ */ {
 
     base->php_only = php_only;
     base->assoc = assoc;
+    base->force_f32 = force_f32;
 }
 /* }}} */
 
@@ -205,6 +208,9 @@ static ZEND_METHOD(msgpack, setOption) /* {{{ */ {
         case MSGPACK_CLASS_OPT_ASSOC:
             base->assoc = i_zend_is_true(value);
             break;
+        case MSGPACK_CLASS_OPT_FORCE_F32:
+            base->force_f32 = i_zend_is_true(value);
+            break;
         default:
             MSGPACK_WARNING("[msgpack] (MessagePack::setOption) "
                             "error setting msgpack option");
@@ -221,6 +227,7 @@ static ZEND_METHOD(msgpack, pack) /* {{{ */ {
     smart_str buf = {0};
     int php_only = MSGPACK_G(php_only);
     zend_bool assoc = MSGPACK_G(assoc);
+    zend_bool force_f32 = MSGPACK_G(force_f32);
     php_msgpack_base_t *base = Z_MSGPACK_BASE_P(getThis());
 
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &parameter) == FAILURE) {
@@ -229,11 +236,13 @@ static ZEND_METHOD(msgpack, pack) /* {{{ */ {
 
     MSGPACK_G(php_only) = base->php_only;
     MSGPACK_G(assoc) = base->assoc;
+    MSGPACK_G(force_f32) = base->force_f32;
 
     php_msgpack_serialize(&buf, parameter);
 
     MSGPACK_G(php_only) = php_only;
     MSGPACK_G(assoc) = assoc;
+    MSGPACK_G(force_f32) = force_f32;
     if (buf.s) {
         smart_str_0(&buf);
         ZVAL_STR(return_value, buf.s);
@@ -512,6 +521,7 @@ void msgpack_init_class() /* {{{ */ {
 
     zend_declare_class_constant_long(msgpack_ce, ZEND_STRS("OPT_PHPONLY") - 1, MSGPACK_CLASS_OPT_PHPONLY);
     zend_declare_class_constant_long(msgpack_ce, ZEND_STRS("OPT_ASSOC") - 1, MSGPACK_CLASS_OPT_ASSOC);
+    zend_declare_class_constant_long(msgpack_ce, ZEND_STRS("OPT_FORCE_F32") - 1, MSGPACK_CLASS_OPT_FORCE_F32);
 
     /* unpacker */
     INIT_CLASS_ENTRY(ce, "MessagePackUnpacker", msgpack_unpacker_methods);
