@@ -24,11 +24,11 @@ function jobname(string $id, array $env) : string {
     return sprintf("php-%s-%s-%s", $env["PHP"], yesno($env, "debug"), yesno($env, "zts"));
 }
 $gen = include __DIR__ . "/ci/gen-matrix.php";
-$cur = "8.3";
+$cur = "8.4";
 $job = $gen->github([
 "old-matrix" => [
 // most useful for all additional versions except current
-	"PHP" => ["7.4", "8.0", "8.1", "8.2"],
+	"PHP" => ["7.4", "8.0", "8.1", "8.2", "8.3"],
 	"enable_debug" => "yes",
 	"enable_maintainer_zts" => "yes",
 	"enable_session" => "yes",
@@ -70,7 +70,7 @@ foreach ($job as $id => $env) {
         printf("      %s: \"%s\"\n", $key, $val);
     }
 ?>
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -93,9 +93,7 @@ foreach ($job as $id => $env) {
 <?php if (isset($env["CFLAGS"]) && strpos($env["CFLAGS"], "--coverage") != false) : ?>
       - name: Coverage
         if: success()
-        run: |
-          cd .libs
-          bash <(curl -s https://codecov.io/bash) -X xcode -X coveragepy
+        uses: codecov/codecov-action@v5
 <?php endif; ?>
 
 <?php

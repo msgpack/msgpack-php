@@ -14,7 +14,7 @@ jobs:
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -42,7 +42,7 @@ jobs:
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -70,7 +70,7 @@ jobs:
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -98,7 +98,35 @@ jobs:
       enable_debug: "yes"
       enable_maintainer_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install
+        run: |
+          sudo apt-get install -y \
+            php-cli \
+            php-pear \
+            re2c
+      - name: Prepare
+        run: |
+          make -f scripts/ci/Makefile php || make -f scripts/ci/Makefile clean php
+      - name: Build
+        run: |
+          make -f scripts/ci/Makefile ext PECL=msgpack
+      - name: Test
+        run: |
+          make -f scripts/ci/Makefile test
+
+  old-matrix-4:
+    name: php-8.3-debug-nozts
+    env:
+      PHP: "8.3"
+      enable_debug: "yes"
+      enable_maintainer_zts: "yes"
+      enable_session: "yes"
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -127,7 +155,7 @@ jobs:
       enable_debug: "yes"
       enable_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -149,11 +177,11 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-none-0:
-    name: php-8.3-nodebug-nozts
+    name: php-8.4-nodebug-nozts
     env:
-      PHP: "8.3"
+      PHP: "8.4"
       enable_session: "no"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -175,13 +203,13 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-0:
-    name: php-8.3-debug-zts
+    name: php-8.4-debug-zts
     env:
-      PHP: "8.3"
+      PHP: "8.4"
       enable_debug: "yes"
       enable_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -203,13 +231,13 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-1:
-    name: php-8.3-nodebug-zts
+    name: php-8.4-nodebug-zts
     env:
-      PHP: "8.3"
+      PHP: "8.4"
       enable_debug: "no"
       enable_zts: "yes"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -231,13 +259,13 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-2:
-    name: php-8.3-debug-nozts
+    name: php-8.4-debug-nozts
     env:
-      PHP: "8.3"
+      PHP: "8.4"
       enable_debug: "yes"
       enable_zts: "no"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -259,13 +287,13 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-dbg-zts-3:
-    name: php-8.3-nodebug-nozts
+    name: php-8.4-nodebug-nozts
     env:
-      PHP: "8.3"
+      PHP: "8.4"
       enable_debug: "no"
       enable_zts: "no"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -287,13 +315,13 @@ jobs:
           make -f scripts/ci/Makefile test
 
   cur-cov-0:
-    name: php-8.3-nodebug-nozts
+    name: php-8.4-nodebug-nozts
     env:
       CFLAGS: "-O0 -g --coverage"
       CXXFLAGS: "-O0 -g --coverage"
-      PHP: "8.3"
+      PHP: "8.4"
       enable_session: "yes"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -315,7 +343,5 @@ jobs:
           make -f scripts/ci/Makefile test
       - name: Coverage
         if: success()
-        run: |
-          cd .libs
-          bash <(curl -s https://codecov.io/bash) -X xcode -X coveragepy
+        uses: codecov/codecov-action@v5
 

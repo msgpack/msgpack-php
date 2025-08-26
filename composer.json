@@ -1,0 +1,12 @@
+{
+    "name": "msgpack/msgpack-php",
+    "type": "php-ext",
+    "license": "BSD-3-Clause",
+    "description": "MessagePack serialization API",
+    "require": {
+        "php": ">= 7.0.0"
+    },
+    "php-ext": {
+        "extension-name": "msgpack"
+    }
+}
