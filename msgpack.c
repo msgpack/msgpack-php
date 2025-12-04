@@ -280,7 +280,7 @@ PHP_MSGPACK_API int php_msgpack_unserialize(zval *return_value, char *str, size_
         default:
             MSGPACK_WARNING("[msgpack] (%s) Unknown result", __FUNCTION__);
     }
-    zval_dtor(return_value);
+    zval_ptr_dtor_nogc(return_value);
     msgpack_unserialize_var_destroy(&mp.user.var_hash, 1);
     RETVAL_FALSE;
     return FAILURE;

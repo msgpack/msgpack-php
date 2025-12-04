@@ -329,7 +329,7 @@ static zend_class_entry* msgpack_unserialize_class(zval **container, zend_string
                 }
             }
             ZEND_HASH_FOREACH_END();
-            zval_dtor(&container_tmp);
+            zval_ptr_dtor_nogc(&container_tmp);
         }
 
     }
