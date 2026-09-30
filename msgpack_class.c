@@ -1,4 +1,5 @@
 #include "php.h"
+#include "zend_interfaces.h"
 
 #include "php_msgpack.h"
 #include "msgpack_pack.h"
@@ -515,6 +516,12 @@ void msgpack_init_class() /* {{{ */ {
     INIT_CLASS_ENTRY(ce, "MessagePack", msgpack_base_methods);
     msgpack_ce = zend_register_internal_class(&ce);
     msgpack_ce->create_object = php_msgpack_base_new;
+#if PHP_VERSION_ID >= 80100
+    msgpack_ce->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
+#else
+    msgpack_ce->serialize = zend_class_serialize_deny;
+    msgpack_ce->unserialize = zend_class_unserialize_deny;
+#endif
     memcpy(&msgpack_handlers, zend_get_std_object_handlers(),sizeof msgpack_handlers);
     msgpack_handlers.offset = offsetof(php_msgpack_base_t, object);
     msgpack_handlers.free_obj = php_msgpack_base_free;
@@ -527,6 +534,12 @@ void msgpack_init_class() /* {{{ */ {
     INIT_CLASS_ENTRY(ce, "MessagePackUnpacker", msgpack_unpacker_methods);
     msgpack_unpacker_ce = zend_register_internal_class(&ce);
     msgpack_unpacker_ce->create_object = php_msgpack_unpacker_new;
+#if PHP_VERSION_ID >= 80100
+    msgpack_unpacker_ce->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
+#else
+    msgpack_unpacker_ce->serialize = zend_class_serialize_deny;
+    msgpack_unpacker_ce->unserialize = zend_class_unserialize_deny;
+#endif
     memcpy(&msgpack_unpacker_handlers, zend_get_std_object_handlers(),sizeof msgpack_unpacker_handlers);
     msgpack_unpacker_handlers.offset = offsetof(php_msgpack_unpacker_t, object);
     msgpack_unpacker_handlers.free_obj = php_msgpack_unpacker_free;
