@@ -92,6 +92,7 @@ static void msgpack_init_globals(zend_msgpack_globals *msgpack_globals) /* {{{ *
     msgpack_globals->illegal_key_insert = 0;
     msgpack_globals->use_str8_serialization = 1;
     msgpack_globals->serialize.var_hash = NULL;
+    msgpack_globals->serialize.var_keep = NULL;
     msgpack_globals->serialize.level = 0;
 }
 /* }}} */
