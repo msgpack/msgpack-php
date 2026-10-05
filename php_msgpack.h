@@ -29,6 +29,7 @@ ZEND_BEGIN_MODULE_GLOBALS(msgpack)
 	zend_bool force_f32;
     struct {
         void *var_hash;
+        void *var_keep;
         unsigned level;
     } serialize;
 ZEND_END_MODULE_GLOBALS(msgpack)

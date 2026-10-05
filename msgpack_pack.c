@@ -55,11 +55,11 @@ static inline int msgpack_var_add(HashTable *var_hash, zval *var, zend_long *var
         var_noref = var;
     }
 
-    if ((Z_TYPE_P(var_noref) == IS_OBJECT) && Z_OBJCE_P(var_noref)) {
-        p = zend_print_long_to_buf(
-                id + sizeof(id) - 1,
-                (((size_t)Z_OBJCE_P(var_noref) << 5)
-                 | ((size_t)Z_OBJCE_P(var_noref) >> (sizeof(long) * 8 - 5))) + (long)Z_OBJ_HANDLE_P(var_noref));
+    if (Z_TYPE_P(var_noref) == IS_OBJECT) {
+        /* key objects by their zend_object address; the 'o' prefix keeps
+         * them apart from the (purely numeric) array keys */
+        p = zend_print_ulong_to_buf(id + sizeof(id) - 1, (zend_ulong)(zend_uintptr_t)Z_OBJ_P(var_noref));
+        *--p = 'o';
         len = id + sizeof(id) - 1 - p;
     } else if (Z_TYPE_P(var_noref) == IS_ARRAY) {
         p = zend_print_long_to_buf(id + sizeof(id) - 1, (long)(var_noref));
@@ -81,6 +81,14 @@ static inline int msgpack_var_add(HashTable *var_hash, zval *var, zend_long *var
     ZVAL_LONG(&zv, zend_hash_num_elements(var_hash) + 1);
     zend_hash_str_add(var_hash, p, len, &zv);
 
+    if (Z_TYPE_P(var_noref) == IS_OBJECT) {
+        /* keep the object alive until packing ends, so that its address
+         * cannot be reused by another (temporary) object */
+        ZVAL_OBJ(&zv, Z_OBJ_P(var_noref));
+        Z_ADDREF(zv);
+        zend_hash_next_index_insert(MSGPACK_G(serialize).var_keep, &zv);
+    }
+
     return 1;
 }
 /* }}} */
@@ -94,6 +102,8 @@ void msgpack_serialize_var_init(msgpack_serialize_data_t *var_hash) /* {{{ */ {
         ALLOC_HASHTABLE(*var_hash_ptr);
         zend_hash_init(*var_hash_ptr, 10, NULL, NULL, 0);
         MSGPACK_G(serialize).var_hash = *var_hash_ptr;
+        ALLOC_HASHTABLE(MSGPACK_G(serialize).var_keep);
+        zend_hash_init(MSGPACK_G(serialize).var_keep, 10, NULL, ZVAL_PTR_DTOR, 0);
     }
     ++MSGPACK_G(serialize).level;
 }
@@ -106,6 +116,9 @@ void msgpack_serialize_var_destroy(msgpack_serialize_data_t *var_hash) /* {{{ */
     if (!MSGPACK_G(serialize).level) {
         zend_hash_destroy(*var_hash_ptr);
         FREE_HASHTABLE(*var_hash_ptr);
+        zend_hash_destroy(MSGPACK_G(serialize).var_keep);
+        FREE_HASHTABLE(MSGPACK_G(serialize).var_keep);
+        MSGPACK_G(serialize).var_keep = NULL;
     }
 }
 /* }}} */
