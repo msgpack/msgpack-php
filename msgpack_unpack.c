@@ -437,7 +437,7 @@ int msgpack_unserialize_uint64(msgpack_unpack_data *unpack, uint64_t data, zval 
 
     if (data <= (uint64_t) ZEND_LONG_MAX) {
         ZVAL_LONG(*obj, data);
-    } else if (data <= 1L<<52) {
+    } else if (data <= (uint64_t) 1 << 52) {
         ZVAL_DOUBLE(*obj, data);
     } else {
         char buf[0x20] = {0}, *ptr = print_u64_to_buf(&buf[sizeof(buf)-1], data);
