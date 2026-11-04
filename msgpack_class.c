@@ -10,8 +10,8 @@
 typedef struct {
     long php_only;
     zend_bool assoc;
-    zend_object object;
     zend_bool force_f32;
+    zend_object object;
 } php_msgpack_base_t;
 
 typedef struct {
